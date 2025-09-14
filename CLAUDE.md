@@ -1,0 +1,139 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Hatchbox AI is a TypeScript CLI tool that converts existing bash workflow scripts into a robust, testable system for managing isolated Git worktrees with Claude AI integration. The tool enables developers to work on multiple issues simultaneously without context confusion.
+
+**Core Commands**:
+- `hb start <issue-number>` - Create isolated workspace for an issue/PR
+- `hb finish <issue-number>` - Merge work and cleanup workspace
+- `hb cleanup [identifier]` - Remove workspaces
+- `hb list` - Show active workspaces
+- `hb switch <identifier>` - Switch to workspace context
+
+## Development Commands
+
+**Build & Test** (when implemented):
+```bash
+npm run build          # Build TypeScript to dist/
+npm test               # Run all tests with Vitest
+npm run test:watch     # Run tests in watch mode
+npm run test:coverage  # Generate coverage report (95% required)
+npm run lint           # Run ESLint
+npm run typecheck      # Run TypeScript compiler check
+```
+
+**Development Workflow**:
+```bash
+npm run dev            # Watch mode development
+npm run test:single -- <test-file>  # Run specific test file
+```
+
+## Architecture Overview
+
+**Test-Driven Development (TDD)**: All code must be written test-first with >95% coverage. Use comprehensive mock factories for external dependencies (Git, GitHub CLI, Neon CLI, Claude CLI).
+
+### Core Module Structure
+```
+src/
+├── cli.ts                    # Main CLI entry point
+├── commands/                 # CLI command implementations
+│   ├── start.ts             # Port of new-branch-workflow.sh
+│   ├── finish.ts            # Port of merge-and-clean.sh
+│   ├── cleanup.ts           # Port of cleanup-worktree.sh
+│   ├── list.ts              # Enhanced workspace listing
+│   └── switch.ts            # Context switching
+├── lib/                     # Core business logic
+│   ├── WorkspaceManager.ts  # Main orchestrator
+│   ├── GitWorktreeManager.ts # Git operations
+│   ├── GitHubService.ts     # GitHub CLI integration
+│   ├── EnvironmentManager.ts # .env file manipulation
+│   ├── DatabaseManager.ts   # Database provider abstraction
+│   └── ClaudeContextManager.ts # Claude context generation
+└── utils/                   # Utility functions
+    ├── git.ts, github.ts, env.ts, database.ts, shell.ts
+```
+
+### Key Architectural Patterns
+
+**Dependency Injection**: Core classes accept dependencies through constructor injection for complete test isolation.
+
+**Provider Pattern**: Database integrations (Neon, Supabase, PlanetScale) implement `DatabaseProvider` interface.
+
+**Command Pattern**: CLI commands are separate classes with full workflow testing.
+
+**Mock-First Testing**: All external dependencies (shell commands, APIs) are mocked using factory patterns.
+
+## Bash Script Migration Map
+
+The TypeScript implementation maintains exact functional parity with these bash scripts:
+
+- `bash/new-branch-workflow.sh` → `StartCommand` + `WorkspaceManager.createWorkspace()`
+- `bash/merge-and-clean.sh` → `FinishCommand` + `WorkspaceManager.finishWorkspace()`
+- `bash/cleanup-worktree.sh` → `CleanupCommand` + `WorkspaceManager.cleanupWorkspace()`
+- `bash/utils/env-utils.sh` → `EnvironmentManager`
+- `bash/utils/neon-utils.sh` → `NeonProvider`
+- `bash/utils/worktree-utils.sh` → `GitWorktreeManager`
+
+## Testing Requirements
+
+**Comprehensive Testing Strategy**:
+- **Unit Tests**: Every class/function with mocked externals
+- **Integration Tests**: Command workflows with temporary Git repos
+- **Regression Tests**: Automated comparison with bash script behavior
+- **Property-Based Tests**: Edge case discovery using fast-check
+- **Performance Tests**: Benchmarking against bash script performance
+
+**Mock Factories Required**:
+```typescript
+MockGitProvider        # Mock git commands and responses
+MockGitHubProvider     # Mock gh CLI responses
+MockNeonProvider       # Mock Neon CLI and API responses
+MockClaudeProvider     # Mock Claude CLI integration
+MockFileSystem         # Mock file operations
+```
+
+## Core Functionality Being Ported
+
+**From new-branch-workflow.sh**:
+- GitHub issue/PR detection and fetching
+- Branch name generation using Claude AI
+- Git worktree creation with sanitized naming
+- Environment setup (port calculation: 3000 + issue number)
+- Database branch creation (Neon integration)
+- Claude context generation and CLI launching
+
+**From merge-and-clean.sh**:
+- Uncommitted changes detection and auto-commit
+- Migration conflict handling (Payload CMS specific)
+- Pre-merge validation pipeline (typecheck, lint, test)
+- Claude-assisted error fixing workflows
+- Branch rebasing and fast-forward merge validation
+- Resource cleanup (worktrees, database branches)
+
+**Critical Integration Points**:
+- **GitHub CLI**: Issue/PR fetching, branch detection
+- **Claude CLI**: Context generation, branch naming, error fixing
+- **Neon CLI**: Database branch management for isolation
+- **Git**: Worktree operations, branch management, merge workflows
+- **pnpm**: Dependency installation in worktrees
+
+## Port Assignment Strategy
+
+Each workspace gets a unique port calculated as `3000 + issue/PR number`. This prevents conflicts when running multiple dev servers simultaneously.
+
+## Database Branch Isolation
+
+Uses Neon database branching to create isolated database copies per workspace. Each branch gets independent schema and data, preventing conflicts between features under development.
+
+## Claude Context Generation
+
+Automatically generates `.claude-context.md` files in each worktree containing:
+- Issue/PR details and requirements
+- Workspace-specific environment information
+- Port assignments and database connection details
+- Project-specific development commands
+
+This ensures Claude has complete context about the current workspace without confusion from other parallel work.
