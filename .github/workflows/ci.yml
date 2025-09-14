@@ -69,12 +69,19 @@ jobs:
 
       - name: Security audit
         run: |
-          if ! pnpm audit --audit-level moderate; then
-            echo "Security audit failed - creating issue"
+          if ! pnpm audit --audit-level moderate 2>&1 | tee audit_output.txt; then
+            echo "Security audit failed - extracting advisory URLs"
+
+            # Extract advisory URLs from output
+            advisory_urls=$(grep -o 'https://github.com/advisories/GHSA-[a-z0-9-]*' audit_output.txt || echo "No advisory URLs found")
+
+            echo "Found advisory URLs:"
+            echo "$advisory_urls"
+
             gh issue create \
               --title "Security audit failed on $(date +%Y-%m-%d)" \
               --label "security audit" \
-              --body "Security audit failed in CI. Please review and fix vulnerabilities."
+              --body "Security audit failed in CI. Please review and fix vulnerabilities. Advisory URLs: $advisory_urls. Please check these security advisories and update the affected packages."
             exit 1
           fi
         env:
