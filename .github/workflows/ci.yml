@@ -48,6 +48,9 @@ jobs:
   security:
     name: Security Audit
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -65,4 +68,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Security audit
-        run: pnpm audit
+        run: |
+          if ! pnpm audit --audit-level moderate; then
+            echo "Security audit failed - creating issue"
+            gh issue create \
+              --title "Security audit failed on $(date +%Y-%m-%d)" \
+              --label "security audit" \
+              --body "Security audit failed in CI. Please review and fix vulnerabilities."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
