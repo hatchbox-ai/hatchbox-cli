@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue create:*)",
+      "Bash(gh label:*)",
+      "Bash(gh issue list:*)",
+      "Bash(npm install)",
+      "Bash(pnpm install:*)",
+      "Bash(corepack enable)",
+      "Bash(corepack use:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm prettier:*)",
+      "Bash(pnpm vitest:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue edit:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm build:*)",
+      "Bash(npm link:*)",
+      "Bash(git worktree:*)",
+      "Bash(hb list:*)",
+      "Bash(hb:*)",
+      "Bash(git log:*)",
+      "Bash(gh issue comment:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm lint:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
