@@ -698,11 +698,11 @@ hatchbox-ai/
    - Builds on completed Issue #2
    - Critical UX improvement for worktree reuse
 
-3. **Issue #4** - Environment Management Module
+3. **Issue #4** - Environment Management Module - DONE
    - Required by start command
    - Port assignment logic
 
-4. **Issue #5** - Database Branch Management (Neon) ⭐ CRITICAL
+4. **Issue #5** - Database Branch Management (Neon) ⭐ CRITICAL - DEFERRED THIS CAN WAIT
    - Required by start/finish commands
    - Includes Vercel preview integration
 
@@ -711,7 +711,7 @@ hatchbox-ai/
 ### Wave 2: Core Commands
 **Goal:** Primary workflow commands with bash parity
 
-5. **Issue #3** - GitHub Integration Module
+5. **Issue #3** - GitHub Integration Module - DONE
    - Required by start/finish commands
    - Enhanced PR workflow support
 

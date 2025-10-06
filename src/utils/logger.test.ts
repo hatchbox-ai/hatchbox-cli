@@ -62,7 +62,7 @@ describe('Logger', () => {
       logger.debug('debug info')
       expect(stdoutSpy).toHaveBeenCalledOnce()
       expect(stderrSpy).not.toHaveBeenCalled()
-      expect(stdoutBuffer[0]).toContain('DEBUG: debug info')
+      expect(stdoutBuffer[0]).toContain('🔍 debug info')
     })
   })
 
@@ -204,7 +204,7 @@ describe('Logger', () => {
       expect(outputs[2]).toContain('Warning message')
       expect(outputs[3]).toContain('❌')
       expect(outputs[3]).toContain('Error message')
-      expect(outputs[4]).toContain('DEBUG:')
+      expect(outputs[4]).toContain('🔍')
       expect(outputs[4]).toContain('Debug message')
     })
   })

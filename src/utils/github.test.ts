@@ -1,0 +1,564 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { execa, type ExecaReturnValue } from 'execa'
+import {
+	executeGhCommand,
+	checkGhAuth,
+	hasProjectScope,
+	fetchGhIssue,
+	fetchGhPR,
+	fetchProjectList,
+	fetchProjectItems,
+	updateProjectItemField,
+	SimpleBranchNameStrategy,
+	ClaudeBranchNameStrategy,
+	TemplateBranchNameStrategy,
+} from './github.js'
+
+vi.mock('execa')
+
+type MockExecaReturn = Partial<ExecaReturnValue<string>>
+
+describe('github utils', () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
+	describe('executeGhCommand', () => {
+		it('should execute gh command successfully', async () => {
+			const expectedOutput = 'issue list output'
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: expectedOutput,
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await executeGhCommand<string>(['issue', 'list'])
+
+			expect(result).toBe(expectedOutput)
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				['issue', 'list'],
+				expect.objectContaining({
+					timeout: 30000,
+					encoding: 'utf8',
+				})
+			)
+		})
+
+		it('should parse JSON output when --json flag is present', async () => {
+			const jsonData = { number: 123, title: 'Test' }
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(jsonData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await executeGhCommand(['issue', 'view', '123', '--json'])
+
+			expect(result).toEqual(jsonData)
+		})
+
+		it('should handle command failure', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'Could not resolve',
+				message: 'Command failed',
+				exitCode: 1,
+			})
+
+			await expect(executeGhCommand(['issue', 'view', '999'])).rejects.toThrow('Command failed')
+		})
+
+		it('should use custom timeout when provided', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'command output',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await executeGhCommand<string>(['issue', 'list'], { timeout: 60000 })
+
+			expect(result).toBe('command output')
+
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				['issue', 'list'],
+				expect.objectContaining({
+					timeout: 60000,
+				})
+			)
+		})
+
+		it('should use custom cwd when provided', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'command output',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await executeGhCommand<string>(['issue', 'list'], { cwd: '/custom/path' })
+
+			expect(result).toBe('command output')
+
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				['issue', 'list'],
+				expect.objectContaining({
+					cwd: '/custom/path',
+				})
+			)
+		})
+	})
+
+	describe('checkGhAuth', () => {
+		it('should return auth status when authenticated', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'Logged in to github.com as testuser\nToken scopes: repo, project',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const status = await checkGhAuth()
+
+			expect(status.hasAuth).toBe(true)
+			expect(status.scopes).toEqual(['repo', 'project'])
+			expect(status.username).toBe('testuser')
+		})
+
+		it('should return not authenticated when gh reports no login', async () => {
+			const error = new Error('Failed') as Error & { stderr?: string }
+			error.stderr = 'You are not logged into any GitHub hosts'
+			vi.mocked(execa).mockRejectedValueOnce(error)
+
+			const status = await checkGhAuth()
+
+			expect(status.hasAuth).toBe(false)
+			expect(status.scopes).toEqual([])
+		})
+
+		it('should throw for other errors', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'Network error',
+				message: 'Failed',
+				exitCode: 1,
+			})
+
+			await expect(checkGhAuth()).rejects.toThrow('Failed')
+		})
+
+		it('should handle missing scope information', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'Logged in to github.com as testuser',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const status = await checkGhAuth()
+
+			expect(status.hasAuth).toBe(true)
+			expect(status.scopes).toEqual([])
+			expect(status.username).toBe('testuser')
+		})
+	})
+
+	describe('hasProjectScope', () => {
+		it('should return true when project scope exists', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'Token scopes: repo, project',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const hasScope = await hasProjectScope()
+
+			expect(hasScope).toBe(true)
+		})
+
+		it('should return false when project scope missing', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'Token scopes: repo',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const hasScope = await hasProjectScope()
+
+			expect(hasScope).toBe(false)
+		})
+	})
+
+	describe('fetchGhIssue', () => {
+		it('should fetch issue with correct parameters', async () => {
+			const issueData = {
+				number: 123,
+				title: 'Test Issue',
+				state: 'OPEN',
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(issueData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await fetchGhIssue(123)
+
+			expect(result).toEqual(issueData)
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'issue',
+					'view',
+					'123',
+					'--json',
+					'number,title,body,state,labels,assignees,url,createdAt,updatedAt',
+				],
+				expect.any(Object)
+			)
+		})
+	})
+
+	describe('fetchGhPR', () => {
+		it('should fetch PR with correct parameters', async () => {
+			const prData = {
+				number: 456,
+				title: 'Test PR',
+				state: 'OPEN',
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(prData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await fetchGhPR(456)
+
+			expect(result).toEqual(prData)
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'pr',
+					'view',
+					'456',
+					'--json',
+					'number,title,body,state,headRefName,baseRefName,url,isDraft,mergeable,createdAt,updatedAt',
+				],
+				expect.any(Object)
+			)
+		})
+	})
+
+	describe('fetchProjectList', () => {
+		it('should fetch project list for owner', async () => {
+			const projectData = {
+				projects: [
+					{ number: 1, id: 'proj-1', name: 'Project 1', fields: [] },
+				],
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(projectData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await fetchProjectList('testowner')
+
+			expect(result).toEqual(projectData.projects)
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'project',
+					'list',
+					'--owner',
+					'testowner',
+					'--limit',
+					'100',
+					'--format',
+					'json',
+				],
+				expect.any(Object)
+			)
+		})
+	})
+
+	describe('fetchProjectItems', () => {
+		it('should fetch project items', async () => {
+			const itemsData = {
+				items: [{ id: 'item-1', content: { type: 'Issue', number: 123 } }],
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(itemsData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await fetchProjectItems(1, 'testowner')
+
+			expect(result).toEqual(itemsData.items)
+		})
+	})
+
+	describe('updateProjectItemField', () => {
+		it('should update project item field', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify({ success: true }),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			await updateProjectItemField(
+				'item-1',
+				'proj-1',
+				'field-1',
+				'opt-1'
+			)
+
+			// Should complete without throwing
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'project',
+					'item-edit',
+					'--id',
+					'item-1',
+					'--project-id',
+					'proj-1',
+					'--field-id',
+					'field-1',
+					'--single-select-option-id',
+					'opt-1',
+					'--format',
+					'json',
+				],
+				expect.any(Object)
+			)
+		})
+	})
+
+	describe('SimpleBranchNameStrategy', () => {
+		it('should generate simple branch name', async () => {
+			const strategy = new SimpleBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add feature')
+
+			expect(name).toBe('feat/issue-123-add-feature')
+		})
+
+		it('should slugify title in simple strategy', async () => {
+			const strategy = new SimpleBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add Authentication Feature')
+
+			expect(name).toBe('feat/issue-123-add-authentication-f')
+		})
+	})
+
+	describe('ClaudeBranchNameStrategy', () => {
+		it('should generate branch name using Claude', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'feat/issue-123-add-authentication',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const strategy = new ClaudeBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add authentication')
+
+			expect(name).toBe('feat/issue-123-add-authentication')
+			expect(execa).toHaveBeenCalledWith(
+				'claude',
+				expect.arrayContaining(['-p', '--model']),
+				expect.objectContaining({
+					input: expect.stringContaining('Add authentication'),
+					timeout: 10000,
+				})
+			)
+		})
+
+		it('should fall back to simple strategy on Claude failure', async () => {
+			vi.mocked(execa).mockRejectedValueOnce(new Error('Claude not available'))
+
+			const strategy = new ClaudeBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add feature')
+
+			expect(name).toMatch(/^feat\/issue-123-/)
+		})
+
+		it('should fall back to simple strategy on invalid branch name', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'INVALID BRANCH NAME!',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const strategy = new ClaudeBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add feature')
+
+			expect(name).toMatch(/^feat\/issue-123-/)
+		})
+
+		it('should use custom Claude model', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'feat/issue-123-test',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const strategy = new ClaudeBranchNameStrategy('custom-model')
+			await strategy.generate(123, 'Test')
+
+			expect(execa).toHaveBeenCalledWith(
+				'claude',
+				expect.arrayContaining(['--model', 'custom-model']),
+				expect.objectContaining({
+					input: expect.stringContaining('Test'),
+					timeout: 10000,
+				})
+			)
+		})
+
+		it('should reject branch name over 50 characters', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout:
+					'feat/this-is-a-very-long-branch-name-that-exceeds-fifty-characters-issue-123',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const strategy = new ClaudeBranchNameStrategy()
+			const name = await strategy.generate(123, 'Long title')
+
+			expect(name).toMatch(/^feat\/issue-123-/)
+		})
+
+		it('should reject branch name with uppercase letters', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: 'Feat/Issue-123-Add-Feature',
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const strategy = new ClaudeBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add feature')
+
+			expect(name).toMatch(/^feat\/issue-123-/)
+		})
+	})
+
+	describe('TemplateBranchNameStrategy', () => {
+		it('should generate branch name from template', async () => {
+			const strategy = new TemplateBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add authentication')
+
+			expect(name).toMatch(/^feat\/issue-123-/)
+			expect(name).toContain('authentication')
+		})
+
+		it('should detect fix prefix from title', async () => {
+			const strategy = new TemplateBranchNameStrategy()
+			const name = await strategy.generate(456, 'Fix authentication bug')
+
+			expect(name).toMatch(/^fix\/issue-456-/)
+		})
+
+		it('should detect docs prefix from title', async () => {
+			const strategy = new TemplateBranchNameStrategy()
+			const name = await strategy.generate(789, 'Update documentation')
+
+			expect(name).toMatch(/^docs\/issue-789-/)
+		})
+
+		it('should detect test prefix from title', async () => {
+			const strategy = new TemplateBranchNameStrategy()
+			const name = await strategy.generate(101, 'Add tests for auth')
+
+			expect(name).toMatch(/^test\/issue-101-/)
+		})
+
+		it('should detect refactor prefix from title', async () => {
+			const strategy = new TemplateBranchNameStrategy()
+			const name = await strategy.generate(102, 'Refactor database layer')
+
+			expect(name).toMatch(/^refactor\/issue-102-/)
+		})
+
+		it('should sanitize title to slug', async () => {
+			const strategy = new TemplateBranchNameStrategy()
+			const name = await strategy.generate(123, 'Add "special" chars & symbols!')
+
+			expect(name).toBe('feat/issue-123-add-special-chars-symbols')
+		})
+
+		it('should limit slug length to 30 characters', async () => {
+			const strategy = new TemplateBranchNameStrategy()
+			const longTitle = 'This is a very long title that should be truncated'
+			const name = await strategy.generate(123, longTitle)
+
+			const slug = name.split('issue-123-')[1]
+			expect(slug?.length).toBeLessThanOrEqual(30)
+		})
+
+		it('should use custom template', async () => {
+			const strategy = new TemplateBranchNameStrategy('{number}-{slug}')
+			const name = await strategy.generate(123, 'Add feature')
+
+			expect(name).toBe('123-add-feature')
+		})
+	})
+
+	describe('error handling', () => {
+		it('should throw on command failure', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'Could not resolve to an Issue',
+				message: 'Command failed',
+				exitCode: 1,
+			})
+
+			await expect(executeGhCommand(['issue', 'view', '999'])).rejects.toThrow('Command failed')
+		})
+
+		it('should throw on authentication error', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'HTTP 401: authentication required',
+				message: 'Authentication required',
+				exitCode: 1,
+			})
+
+			await expect(executeGhCommand(['issue', 'list'])).rejects.toThrow('Authentication required')
+		})
+
+		it('should throw on rate limit error', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'rate limit exceeded',
+				message: 'Rate limit exceeded',
+				exitCode: 1,
+			})
+
+			await expect(executeGhCommand(['issue', 'list'])).rejects.toThrow('Rate limit exceeded')
+		})
+
+		it('should throw on missing scope error', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'missing required scope',
+				message: 'Missing required scope',
+				exitCode: 1,
+			})
+
+			await expect(executeGhCommand(['project', 'list'])).rejects.toThrow('Missing required scope')
+		})
+
+		it('should throw for unknown errors', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'Unknown error occurred',
+				message: 'Unknown error',
+				exitCode: 1,
+			})
+
+			await expect(executeGhCommand(['issue', 'list'])).rejects.toThrow('Unknown error')
+		})
+	})
+})

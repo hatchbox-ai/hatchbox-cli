@@ -7,6 +7,7 @@ export interface LoggerOptions {
   timestamp?: boolean
   silent?: boolean
   forceColor?: boolean | undefined | null
+  debug?: boolean
 }
 
 export interface Logger {
@@ -15,6 +16,7 @@ export interface Logger {
   warn: (message: string, ...args: unknown[]) => void
   error: (message: string, ...args: unknown[]) => void
   debug: (message: string, ...args: unknown[]) => void
+  setDebug: (enabled: boolean) => void
 }
 
 // Lines 19-29: Stream-specific chalk instances
@@ -29,6 +31,9 @@ function formatMessage(message: string, ...args: unknown[]): string {
   )
   return formattedArgs.length > 0 ? `${message} ${formattedArgs.join(' ')}` : message
 }
+
+// Global debug flag - defaulting to true temporarily for debugging
+let globalDebugEnabled = true
 
 // Lines 47-96: Main logger implementation
 /* eslint-disable no-console */
@@ -54,15 +59,24 @@ export const logger: Logger = {
   },
 
   debug: (message: string, ...args: unknown[]): void => {
-    const formatted = formatMessage(message, ...args)
-    console.log(`DEBUG: ${formatted}`)
+    if (globalDebugEnabled) {
+      const formatted = formatMessage(message, ...args)
+      console.log(stdoutChalk.gray(`🔍 ${formatted}`))
+    }
+  },
+
+  setDebug: (enabled: boolean): void => {
+    globalDebugEnabled = enabled
   }
 }
 /* eslint-enable no-console */
 
 // Lines 98-145: Factory function for custom logger instances
 export function createLogger(options: LoggerOptions = {}): Logger {
-  const { prefix = '', timestamp = false, silent = false, forceColor } = options
+  const { prefix = '', timestamp = false, silent = false, forceColor, debug = globalDebugEnabled } = options
+
+  // Local debug flag for this logger instance
+  let localDebugEnabled = debug
 
   // Create chalk instances with forced color if needed
   const customStdoutChalk = forceColor !== undefined
@@ -82,7 +96,8 @@ export function createLogger(options: LoggerOptions = {}): Logger {
       success: (): void => {},
       warn: (): void => {},
       error: (): void => {},
-      debug: (): void => {}
+      debug: (): void => {},
+      setDebug: (): void => {}
     }
   }
 
@@ -105,8 +120,13 @@ export function createLogger(options: LoggerOptions = {}): Logger {
       console.error(customStderrChalk.red(`❌ ${getTimestamp()}${prefixStr}${formatted}`))
     },
     debug: (message: string, ...args: unknown[]): void => {
-      const formatted = formatMessage(message, ...args)
-      console.log(`DEBUG: ${getTimestamp()}${prefixStr}${formatted}`)
+      if (localDebugEnabled) {
+        const formatted = formatMessage(message, ...args)
+        console.log(customStdoutChalk.gray(`🔍 ${getTimestamp()}${prefixStr}${formatted}`))
+      }
+    },
+    setDebug: (enabled: boolean): void => {
+      localDebugEnabled = enabled
     }
   }
   /* eslint-enable no-console */
