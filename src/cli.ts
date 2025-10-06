@@ -1,5 +1,5 @@
 import { program } from 'commander'
-import chalk from 'chalk'
+import { logger } from './utils/logger.js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -21,12 +21,12 @@ program
   .option('--urgent', 'Mark as urgent workspace')
   .option('--no-claude', 'Skip Claude integration')
   .action(async (identifier: string, _options: { urgent?: boolean; claude?: boolean }) => {
-    console.log(chalk.blue('🚀 Starting workspace for:'), chalk.bold(identifier))
+    logger.info(`Starting workspace for: ${identifier}`)
     if (_options.urgent) {
-      console.log(chalk.yellow('⚡ Urgent mode enabled'))
+      logger.warn('Urgent mode enabled')
     }
     // TODO: Implement start command
-    console.log(chalk.gray('Command not yet implemented'))
+    logger.debug('Command not yet implemented')
   })
 
 program
@@ -35,9 +35,9 @@ program
   .argument('<identifier>', 'Issue number, PR number, or branch name')
   .option('--force', 'Force finish even with uncommitted changes')
   .action(async (_identifier: string, _options: { force?: boolean }) => {
-    console.log(chalk.green('✅ Finishing workspace for:'), chalk.bold(_identifier))
+    logger.success(`Finishing workspace for: ${_identifier}`)
     // TODO: Implement finish command
-    console.log(chalk.gray('Command not yet implemented'))
+    logger.debug('Command not yet implemented')
   })
 
 program
@@ -47,9 +47,9 @@ program
   .option('--all', 'Remove all workspaces')
   .option('--issue <number>', 'Remove all workspaces for specific issue')
   .action(async (_identifier?: string, _options?: { all?: boolean; issue?: string }) => {
-    console.log(chalk.red('🧹 Cleaning up workspaces'))
+    logger.info('🧹 Cleaning up workspaces')
     // TODO: Implement cleanup command
-    console.log(chalk.gray('Command not yet implemented'))
+    logger.debug('Command not yet implemented')
   })
 
 program
@@ -57,9 +57,9 @@ program
   .description('Show active workspaces')
   .option('--json', 'Output as JSON')
   .action(async (_options: { json?: boolean }) => {
-    console.log(chalk.cyan('📋 Active workspaces:'))
+    logger.info('📋 Active workspaces:')
     // TODO: Implement list command
-    console.log(chalk.gray('No workspaces found (command not yet implemented)'))
+    logger.debug('No workspaces found (command not yet implemented)')
   })
 
 program
@@ -67,9 +67,9 @@ program
   .description('Switch to workspace context')
   .argument('<identifier>', 'Issue number, PR number, or branch name')
   .action(async (identifier: string) => {
-    console.log(chalk.magenta('🔄 Switching to workspace:'), chalk.bold(identifier))
+    logger.info(`🔄 Switching to workspace: ${identifier}`)
     // TODO: Implement switch command
-    console.log(chalk.gray('Command not yet implemented'))
+    logger.debug('Command not yet implemented')
   })
 
 // Parse CLI arguments
@@ -77,7 +77,7 @@ try {
   await program.parseAsync()
 } catch (error) {
   if (error instanceof Error) {
-    console.error(chalk.red('Error:'), error.message)
+    logger.error(`Error: ${error.message}`)
     process.exit(1)
   }
 }
