@@ -45,3 +45,5 @@ coverage/
 # Logs
 logs/
 *.log
+
+tmp/

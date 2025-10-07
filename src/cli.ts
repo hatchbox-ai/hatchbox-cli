@@ -1,6 +1,7 @@
 import { program } from 'commander'
 import { logger } from './utils/logger.js'
 import { GitWorktreeManager } from './lib/GitWorktreeManager.js'
+import type { StartOptions } from './types/index.js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -51,12 +52,15 @@ program
   .argument('<identifier>', 'Issue number, PR number, or branch name')
   .option('--urgent', 'Mark as urgent workspace')
   .option('--no-claude', 'Skip Claude integration')
-  .action((identifier: string) => {
-    notImplemented(
-      'start',
-      ['GitHubService (Issue #3)', 'EnvironmentManager (Issue #4)', 'WorkspaceManager (Issue #6)', 'ClaudeContextManager (Issue #11)'],
-      `bash/new-branch-workflow.sh ${identifier}`
-    )
+  .action(async (identifier: string, options: StartOptions) => {
+    try {
+      const { StartCommand } = await import('./commands/start.js')
+      const command = new StartCommand()
+      await command.execute({ identifier, options })
+    } catch (error) {
+      logger.error(`Failed to start workspace: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      process.exit(1)
+    }
   })
 
 program
