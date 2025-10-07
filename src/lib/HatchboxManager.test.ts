@@ -12,6 +12,11 @@ vi.mock('./GitHubService.js')
 vi.mock('./EnvironmentManager.js')
 vi.mock('./ClaudeContextManager.js')
 
+// Mock branchExists utility
+vi.mock('../utils/git.js', () => ({
+  branchExists: vi.fn().mockResolvedValue(false),
+}))
+
 describe('HatchboxManager', () => {
   let manager: HatchboxManager
   let mockGitWorktree: vi.Mocked<GitWorktreeManager>
@@ -321,6 +326,217 @@ describe('HatchboxManager', () => {
   describe('cleanupHatchbox', () => {
     it('should throw not implemented error', async () => {
       await expect(manager.cleanupHatchbox('123')).rejects.toThrow('Not implemented')
+    })
+  })
+
+  describe('branch name generation', () => {
+    it('should use generateBranchName for issues', async () => {
+      const mockGenerateBranchName = vi.fn().mockResolvedValue('feature/123-test-issue')
+      vi.mocked(mockGitHub.generateBranchName).mockImplementation(mockGenerateBranchName)
+
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 123,
+        originalInput: '123',
+      }
+
+      const mockIssue = {
+        number: 123,
+        title: 'Test Issue',
+        body: 'Issue body',
+        state: 'open' as const,
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/123',
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue(mockIssue)
+
+      const expectedPath = '/test/worktree-feature-123-test-issue'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3123)
+      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+
+      await manager.createHatchbox(input)
+
+      expect(mockGenerateBranchName).toHaveBeenCalledWith({
+        issueNumber: 123,
+        title: 'Test Issue',
+      })
+    })
+
+    it('should use PR branch for PRs', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'pr',
+        identifier: 456,
+        originalInput: 'pr/456',
+      }
+
+      const mockPR = {
+        number: 456,
+        title: 'Test PR',
+        body: 'PR body',
+        state: 'open' as const,
+        branch: 'existing-feature-branch',
+        baseBranch: 'main',
+        url: 'https://github.com/test/repo/pull/456',
+        isDraft: false,
+      }
+
+      vi.mocked(mockGitHub.fetchPR).mockResolvedValue(mockPR)
+
+      const expectedPath = '/test/worktree-existing-feature-branch'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3456)
+      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+
+      const result = await manager.createHatchbox(input)
+
+      expect(result.branch).toBe('existing-feature-branch')
+      // generateBranchName should not be called for PRs
+      expect(mockGitHub.generateBranchName).not.toHaveBeenCalled()
+    })
+
+    it('should use branch name directly for branch type', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'branch',
+        identifier: 'my-custom-branch',
+        originalInput: 'my-custom-branch',
+      }
+
+      const expectedPath = '/test/worktree-my-custom-branch'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3000)
+      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+
+      const result = await manager.createHatchbox(input)
+
+      expect(result.branch).toBe('my-custom-branch')
+      // generateBranchName should not be called for branch type
+      expect(mockGitHub.generateBranchName).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('branch existence checking', () => {
+    it('should check branch existence before creating worktree for issues', async () => {
+      const { branchExists } = await import('../utils/git.js')
+      vi.mocked(branchExists).mockResolvedValue(true)
+
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 123,
+        originalInput: '123',
+      }
+
+      const mockIssue = {
+        number: 123,
+        title: 'Test Issue',
+        body: '',
+        state: 'open' as const,
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/123',
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue(mockIssue)
+      vi.mocked(mockGitHub.generateBranchName).mockResolvedValue('feature/123-test')
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue('/test/path')
+
+      await expect(manager.createHatchbox(input)).rejects.toThrow(
+        /branch .* already exists/
+      )
+    })
+
+    it('should check branch existence before creating worktree for branches', async () => {
+      const { branchExists } = await import('../utils/git.js')
+      vi.mocked(branchExists).mockResolvedValue(true)
+
+      const input: CreateHatchboxInput = {
+        type: 'branch',
+        identifier: 'existing-branch',
+        originalInput: 'existing-branch',
+      }
+
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue('/test/path')
+
+      await expect(manager.createHatchbox(input)).rejects.toThrow(
+        /branch .* already exists/
+      )
+    })
+
+    it('should not check branch existence for PRs', async () => {
+      const { branchExists } = await import('../utils/git.js')
+      vi.mocked(branchExists).mockResolvedValue(false)
+
+      const input: CreateHatchboxInput = {
+        type: 'pr',
+        identifier: 456,
+        originalInput: 'pr/456',
+      }
+
+      const mockPR = {
+        number: 456,
+        title: 'Test PR',
+        body: '',
+        state: 'open' as const,
+        branch: 'pr-branch',
+        baseBranch: 'main',
+        url: 'https://github.com/test/repo/pull/456',
+        isDraft: false,
+      }
+
+      vi.mocked(mockGitHub.fetchPR).mockResolvedValue(mockPR)
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue('/test/path')
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue('/test/path')
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3456)
+      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+
+      await manager.createHatchbox(input)
+
+      // branchExists should not be called for PRs
+      expect(branchExists).not.toHaveBeenCalled()
+    })
+
+    it('should create worktree when branch does not exist', async () => {
+      const { branchExists } = await import('../utils/git.js')
+      vi.mocked(branchExists).mockResolvedValue(false)
+
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 123,
+        originalInput: '123',
+      }
+
+      const mockIssue = {
+        number: 123,
+        title: 'Test Issue',
+        body: '',
+        state: 'open' as const,
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/123',
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue(mockIssue)
+      vi.mocked(mockGitHub.generateBranchName).mockResolvedValue('feature/123-test')
+
+      const expectedPath = '/test/worktree-feature-123-test'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3123)
+      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+
+      const result = await manager.createHatchbox(input)
+
+      expect(result.branch).toBe('feature/123-test')
+      expect(mockGitWorktree.createWorktree).toHaveBeenCalledWith({
+        path: expectedPath,
+        branch: 'feature/123-test',
+        createBranch: true,
+      })
     })
   })
 })

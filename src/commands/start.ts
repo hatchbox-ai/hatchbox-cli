@@ -4,6 +4,7 @@ import { HatchboxManager } from '../lib/HatchboxManager.js'
 import { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
 import { EnvironmentManager } from '../lib/EnvironmentManager.js'
 import { ClaudeContextManager } from '../lib/ClaudeContextManager.js'
+import { branchExists } from '../utils/git.js'
 import type { StartOptions } from '../types/index.js'
 
 export interface StartCommandInput {
@@ -142,23 +143,29 @@ export class StartCommand {
 	 */
 	private async validateInput(parsed: ParsedInput): Promise<void> {
 		switch (parsed.type) {
-			case 'pr':
+			case 'pr': {
 				if (!parsed.number) {
 					throw new Error('Invalid PR number')
 				}
-				// Additional PR validation will use GitHubService in full implementation
+				// Fetch and validate PR state
+				const pr = await this.gitHubService.fetchPR(parsed.number)
+				await this.gitHubService.validatePRState(pr)
 				logger.debug(`Validated PR #${parsed.number}`)
 				break
+			}
 
-			case 'issue':
+			case 'issue': {
 				if (!parsed.number) {
 					throw new Error('Invalid issue number')
 				}
-				// Additional issue validation will use GitHubService in full implementation
+				// Fetch and validate issue state
+				const issue = await this.gitHubService.fetchIssue(parsed.number)
+				await this.gitHubService.validateIssueState(issue)
 				logger.debug(`Validated issue #${parsed.number}`)
 				break
+			}
 
-			case 'branch':
+			case 'branch': {
 				if (!parsed.branchName) {
 					throw new Error('Invalid branch name')
 				}
@@ -168,8 +175,14 @@ export class StartCommand {
 						'Invalid branch name. Use only letters, numbers, hyphens, underscores, and slashes'
 					)
 				}
+				// Check if branch already exists
+				const exists = await branchExists(parsed.branchName)
+				if (exists) {
+					throw new Error(`Branch '${parsed.branchName}' already exists`)
+				}
 				logger.debug(`Validated branch name: ${parsed.branchName}`)
 				break
+			}
 
 			default: {
 				const unknownType = parsed as { type: string }

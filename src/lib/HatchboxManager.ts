@@ -3,6 +3,7 @@ import { GitWorktreeManager } from './GitWorktreeManager.js'
 import { GitHubService } from './GitHubService.js'
 import { EnvironmentManager } from './EnvironmentManager.js'
 import { ClaudeContextManager } from './ClaudeContextManager.js'
+import { branchExists } from '../utils/git.js'
 // import { DatabaseManager } from './DatabaseManager.js'
 import type { Hatchbox, CreateHatchboxInput } from '../types/hatchbox.js'
 import type { GitWorktree } from '../types/worktree.js'
@@ -31,7 +32,7 @@ export class HatchboxManager {
     const githubData = await this.fetchGitHubData(input)
 
     // 2. Generate or validate branch name
-    const branchName = this.prepareBranchName(input, githubData)
+    const branchName = await this.prepareBranchName(input, githubData)
 
     // 3. Create git worktree
     const worktreePath = await this.createWorktree(input, branchName)
@@ -138,10 +139,10 @@ export class HatchboxManager {
   /**
    * Prepare branch name based on input type and GitHub data
    */
-  private prepareBranchName(
+  private async prepareBranchName(
     input: CreateHatchboxInput,
     githubData: Issue | PullRequest | null
-  ): string {
+  ): Promise<string> {
     if (input.type === 'branch') {
       return input.identifier as string
     }
@@ -150,10 +151,16 @@ export class HatchboxManager {
       return githubData.branch
     }
 
-    if (input.type === 'issue') {
-      return `issue-${input.identifier}`
+    if (input.type === 'issue' && githubData) {
+      // Use Claude AI-powered branch name generation
+      const branchName = await this.github.generateBranchName({
+        issueNumber: input.identifier as number,
+        title: githubData.title,
+      })
+      return branchName
     }
 
+    // Fallback for edge cases
     if (input.type === 'pr') {
       return `pr-${input.identifier}`
     }
@@ -169,6 +176,17 @@ export class HatchboxManager {
     branchName: string
   ): Promise<string> {
     const worktreePath = this.gitWorktree.generateWorktreePath(branchName)
+
+    // Check if branch already exists before attempting to create worktree
+    if (input.type !== 'pr') {
+      const exists = await branchExists(branchName)
+      if (exists) {
+        throw new Error(
+          `Cannot create worktree: branch '${branchName}' already exists. ` +
+          `Use 'git branch -D ${branchName}' to delete it first if needed.`
+        )
+      }
+    }
 
     await this.gitWorktree.createWorktree({
       path: worktreePath,

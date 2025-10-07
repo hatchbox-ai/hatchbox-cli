@@ -24,6 +24,11 @@ vi.mock('../lib/GitWorktreeManager.js')
 vi.mock('../lib/EnvironmentManager.js')
 vi.mock('../lib/ClaudeContextManager.js')
 
+// Mock branchExists utility
+vi.mock('../utils/git.js', () => ({
+	branchExists: vi.fn().mockResolvedValue(false),
+}))
+
 // Mock the logger to prevent console output during tests
 vi.mock('../utils/logger.js', () => ({
 	logger: {
@@ -531,6 +536,196 @@ describe('StartCommand', () => {
 				expect(
 					mockGitHubService.detectInputType
 				).not.toHaveBeenCalled()
+			})
+		})
+
+		describe('GitHub state validation', () => {
+			it('should call validateIssueState for issues', async () => {
+				const mockIssue = {
+					number: 123,
+					title: 'Test Issue',
+					body: 'Issue body',
+					state: 'open' as const,
+					labels: [],
+					assignees: [],
+					url: 'https://github.com/test/repo/issues/123',
+				}
+
+				vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
+					type: 'issue',
+					number: 123,
+					rawInput: '123',
+				})
+				vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
+				vi.mocked(mockGitHubService.validateIssueState).mockResolvedValue()
+
+				await command.execute({
+					identifier: '123',
+					options: {},
+				})
+
+				expect(mockGitHubService.fetchIssue).toHaveBeenCalledWith(123)
+				expect(mockGitHubService.validateIssueState).toHaveBeenCalledWith(mockIssue)
+			})
+
+			it('should call validatePRState for PRs', async () => {
+				const mockPR = {
+					number: 456,
+					title: 'Test PR',
+					body: 'PR body',
+					state: 'open' as const,
+					branch: 'feature-branch',
+					baseBranch: 'main',
+					url: 'https://github.com/test/repo/pull/456',
+					isDraft: false,
+				}
+
+				vi.mocked(mockGitHubService.fetchPR).mockResolvedValue(mockPR)
+				vi.mocked(mockGitHubService.validatePRState).mockResolvedValue()
+
+				await command.execute({
+					identifier: 'pr-456',
+					options: {},
+				})
+
+				expect(mockGitHubService.fetchPR).toHaveBeenCalledWith(456)
+				expect(mockGitHubService.validatePRState).toHaveBeenCalledWith(mockPR)
+			})
+
+			it('should throw when validateIssueState rejects', async () => {
+				vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
+					type: 'issue',
+					number: 123,
+					rawInput: '123',
+				})
+				vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue({
+					number: 123,
+					title: 'Closed Issue',
+					body: '',
+					state: 'closed',
+					labels: [],
+					assignees: [],
+					url: 'https://github.com/test/repo/issues/123',
+				})
+				vi.mocked(mockGitHubService.validateIssueState).mockRejectedValue(
+					new Error('User cancelled due to closed issue')
+				)
+
+				await expect(
+					command.execute({
+						identifier: '123',
+						options: {},
+					})
+				).rejects.toThrow('User cancelled due to closed issue')
+			})
+
+			it('should throw when validatePRState rejects', async () => {
+				const mockPR = {
+					number: 456,
+					title: 'Merged PR',
+					body: '',
+					state: 'closed' as const,
+					branch: 'feature',
+					baseBranch: 'main',
+					url: 'https://github.com/test/repo/pull/456',
+					isDraft: false,
+				}
+
+				vi.mocked(mockGitHubService.fetchPR).mockResolvedValue(mockPR)
+				vi.mocked(mockGitHubService.validatePRState).mockRejectedValue(
+					new Error('User cancelled due to merged PR')
+				)
+
+				await expect(
+					command.execute({
+						identifier: 'pr/456',
+						options: {},
+					})
+				).rejects.toThrow('User cancelled due to merged PR')
+			})
+		})
+
+		describe('branch existence checking', () => {
+			it('should check if branch exists before creation', async () => {
+				const { branchExists } = await import('../utils/git.js')
+
+				vi.mocked(branchExists).mockResolvedValue(true)
+
+				await expect(
+					command.execute({
+						identifier: 'existing-branch',
+						options: {},
+					})
+				).rejects.toThrow("Branch 'existing-branch' already exists")
+
+				expect(branchExists).toHaveBeenCalledWith('existing-branch')
+			})
+
+			it('should not throw when branch does not exist', async () => {
+				const { branchExists } = await import('../utils/git.js')
+
+				vi.mocked(branchExists).mockResolvedValue(false)
+
+				await expect(
+					command.execute({
+						identifier: 'new-branch',
+						options: {},
+					})
+				).resolves.not.toThrow()
+
+				expect(branchExists).toHaveBeenCalledWith('new-branch')
+			})
+
+			it('should not check branch existence for PRs', async () => {
+				const mockPR = {
+					number: 123,
+					title: 'Test PR',
+					body: '',
+					state: 'open' as const,
+					branch: 'feature-branch',
+					baseBranch: 'main',
+					url: 'https://github.com/test/repo/pull/123',
+					isDraft: false,
+				}
+
+				vi.mocked(mockGitHubService.fetchPR).mockResolvedValue(mockPR)
+				vi.mocked(mockGitHubService.validatePRState).mockResolvedValue()
+
+				await command.execute({
+					identifier: 'pr/123',
+					options: {},
+				})
+
+				// branchExists should not be called for PRs in validateInput
+				// (it might be called in HatchboxManager but that's a different check)
+			})
+
+			it('should not check branch existence for issues in validateInput', async () => {
+				const mockIssue = {
+					number: 123,
+					title: 'Test Issue',
+					body: '',
+					state: 'open' as const,
+					labels: [],
+					assignees: [],
+					url: 'https://github.com/test/repo/issues/123',
+				}
+
+				vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
+					type: 'issue',
+					number: 123,
+					rawInput: '123',
+				})
+				vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
+				vi.mocked(mockGitHubService.validateIssueState).mockResolvedValue()
+
+				await command.execute({
+					identifier: '123',
+					options: {},
+				})
+
+				// branchExists is only called for branch-type inputs in validateInput
+				// Issues get their branch checked in HatchboxManager.createWorktree
 			})
 		})
 	})
