@@ -297,9 +297,27 @@ export class GitWorktreeManager {
   /**
    * Generate a suggested worktree path for a branch
    */
-  generateWorktreePath(branchName: string, customRoot?: string): string {
+  generateWorktreePath(
+    branchName: string,
+    customRoot?: string,
+    options?: { isPR?: boolean; prNumber?: number }
+  ): string {
     const root = customRoot ?? this.repoPath
-    return generateWorktreePath(branchName, root)
+    return generateWorktreePath(branchName, root, options)
+  }
+
+  /**
+   * Sanitize a branch name for use as a directory name
+   * Replaces slashes with dashes and removes invalid filesystem characters
+   * Ports logic from bash script line 593: ${BRANCH_NAME//\\//-}
+   */
+  sanitizeBranchName(branchName: string): string {
+    return branchName
+      .replace(/\//g, '-')  // Replace slashes with dashes
+      .replace(/[^a-zA-Z0-9-]/g, '-')  // Replace invalid chars (including underscores) with dashes
+      .replace(/-+/g, '-')  // Collapse multiple dashes
+      .replace(/^-|-$/g, '')  // Remove leading/trailing dashes
+      .toLowerCase()
   }
 
   /**

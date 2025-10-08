@@ -5,6 +5,7 @@ import { GitHubService } from './GitHubService.js'
 import { EnvironmentManager } from './EnvironmentManager.js'
 import { ClaudeContextManager } from './ClaudeContextManager.js'
 import type { CreateHatchboxInput } from '../types/hatchbox.js'
+import { installDependencies } from '../utils/package-manager.js'
 
 // Mock all dependencies
 vi.mock('./GitWorktreeManager.js')
@@ -15,6 +16,11 @@ vi.mock('./ClaudeContextManager.js')
 // Mock branchExists utility
 vi.mock('../utils/git.js', () => ({
   branchExists: vi.fn().mockResolvedValue(false),
+}))
+
+// Mock package-manager utilities
+vi.mock('../utils/package-manager.js', () => ({
+  installDependencies: vi.fn().mockResolvedValue(undefined),
 }))
 
 describe('HatchboxManager', () => {
@@ -79,6 +85,9 @@ describe('HatchboxManager', () => {
       expect(result.port).toBe(3123)
       expect(result.githubData?.title).toBe('Test Issue')
       expect(result.createdAt).toBeInstanceOf(Date)
+
+      // Verify installDependencies was called with the correct path
+      expect(installDependencies).toHaveBeenCalledWith(expectedPath, true)
     })
 
     it('should create hatchbox for PR successfully', async () => {
@@ -117,6 +126,9 @@ describe('HatchboxManager', () => {
       expect(result.identifier).toBe(456)
       expect(result.port).toBe(3456)
       expect(result.branch).toBe('feature-branch')
+
+      // Verify installDependencies was called with the correct path
+      expect(installDependencies).toHaveBeenCalledWith(expectedPath, true)
     })
 
     it('should create hatchbox for branch successfully', async () => {
@@ -143,6 +155,9 @@ describe('HatchboxManager', () => {
       expect(result.identifier).toBe('feature-xyz')
       expect(result.branch).toBe('feature-xyz')
       expect(result.port).toBeGreaterThanOrEqual(3000)
+
+      // Verify installDependencies was called with the correct path
+      expect(installDependencies).toHaveBeenCalledWith(expectedPath, true)
     })
 
     it('should calculate correct port for issue', async () => {
@@ -220,6 +235,36 @@ describe('HatchboxManager', () => {
       )
 
       await expect(manager.createHatchbox(baseInput)).rejects.toThrow('Environment setup failed')
+    })
+
+    it('should continue creation even if installDependencies fails', async () => {
+      // Mock installDependencies to throw an error
+      vi.mocked(installDependencies).mockRejectedValueOnce(new Error('npm install failed'))
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 123,
+        title: 'Test',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/owner/repo/issues/123',
+      })
+
+      const expectedPath = '/test/path'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3123)
+      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+
+      // Should not throw even if installDependencies fails
+      const result = await manager.createHatchbox(baseInput)
+
+      expect(result.path).toBe(expectedPath)
+      expect(installDependencies).toHaveBeenCalledWith(expectedPath, true)
+
+      // Reset mock for next tests
+      vi.mocked(installDependencies).mockResolvedValue(undefined)
     })
 
     it('should skip Claude context when skipClaude option is true', async () => {

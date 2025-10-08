@@ -223,17 +223,17 @@ describe('Git Utility Functions', () => {
         {
           branch: 'feature-branch',
           root: '/Users/dev/project',
-          expected: '/Users/dev/worktree-feature-branch',
+          expected: '/Users/dev/feature-branch',
         },
         {
           branch: 'pr/123',
           root: '/Users/dev/project',
-          expected: '/Users/dev/worktree-pr-123',
+          expected: '/Users/dev/pr-123',
         },
         {
           branch: 'feature/complex-name',
           root: '/home/user/code',
-          expected: '/home/user/worktree-feature-complex-name',
+          expected: '/home/user/feature-complex-name',
         },
       ]
 
@@ -247,23 +247,39 @@ describe('Git Utility Functions', () => {
         {
           branch: 'feature/with@special#characters',
           root: '/project',
-          expected: '/worktree-feature-with-special-characters',
+          expected: '/feature-with@special#characters',
         },
         {
           branch: 'branch---with---dashes',
           root: '/project',
-          expected: '/worktree-branch-with-dashes',
+          expected: '/branch---with---dashes',
         },
         {
           branch: '-leading-and-trailing-',
           root: '/project',
-          expected: '/worktree-leading-and-trailing',
+          expected: '/-leading-and-trailing-',
         },
       ]
 
       testCases.forEach(({ branch, root, expected }) => {
         expect(generateWorktreePath(branch, root)).toBe(expected)
       })
+    })
+
+    it('should add PR suffix when options provided', () => {
+      const result = generateWorktreePath('feature/branch', '/project', {
+        isPR: true,
+        prNumber: 123
+      })
+      expect(result).toBe('/feature-branch_pr_123')
+    })
+
+    it('should not add PR suffix when isPR is false', () => {
+      const result = generateWorktreePath('feature/branch', '/project', {
+        isPR: false,
+        prNumber: 123
+      })
+      expect(result).toBe('/feature-branch')
     })
   })
 })

@@ -4,6 +4,7 @@ import { GitHubService } from './GitHubService.js'
 import { EnvironmentManager } from './EnvironmentManager.js'
 import { ClaudeContextManager } from './ClaudeContextManager.js'
 import { branchExists } from '../utils/git.js'
+import { installDependencies } from '../utils/package-manager.js'
 // import { DatabaseManager } from './DatabaseManager.js'
 import type { Hatchbox, CreateHatchboxInput } from '../types/hatchbox.js'
 import type { GitWorktree } from '../types/worktree.js'
@@ -175,7 +176,13 @@ export class HatchboxManager {
     input: CreateHatchboxInput,
     branchName: string
   ): Promise<string> {
-    const worktreePath = this.gitWorktree.generateWorktreePath(branchName)
+    const worktreePath = this.gitWorktree.generateWorktreePath(
+      branchName,
+      undefined,
+      input.type === 'pr'
+        ? { isPR: true, prNumber: input.identifier as number }
+        : undefined
+    )
 
     // Check if branch already exists before attempting to create worktree
     if (input.type !== 'pr') {
@@ -194,6 +201,14 @@ export class HatchboxManager {
       createBranch: input.type !== 'pr', // PRs use existing branches
       ...(input.baseBranch && { baseBranch: input.baseBranch }),
     })
+
+    // Install dependencies in the new worktree
+    try {
+      await installDependencies(worktreePath, true)
+    } catch (error) {
+      // Log warning but don't fail - matches bash script behavior (lines 764-765)
+      logger.warn(`Failed to install dependencies: ${error instanceof Error ? error.message : 'Unknown error'}`, error)
+    }
 
     return worktreePath
   }

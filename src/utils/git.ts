@@ -149,17 +149,24 @@ export function isWorktreePath(path: string): boolean {
 
 /**
  * Generate a worktree path based on branch name and root directory
+ * For PRs, adds _pr_<PR_NUM> suffix to distinguish from issue branches
  */
-export function generateWorktreePath(branchName: string, rootDir: string = process.cwd()): string {
-  // Sanitize branch name for filesystem
-  const sanitized = branchName
-    .replace(/[^a-zA-Z0-9\-_]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .toLowerCase()
+export function generateWorktreePath(
+  branchName: string,
+  rootDir: string = process.cwd(),
+  options?: { isPR?: boolean; prNumber?: number }
+): string {
+  // Replace slashes with dashes (matches bash line 593)
+  let sanitized = branchName.replace(/\//g, '-')
+
+  // Add PR suffix if this is a PR (matches bash lines 595-597)
+  if (options?.isPR && options?.prNumber) {
+    sanitized = `${sanitized}_pr_${options.prNumber}`
+  }
 
   const parentDir = path.dirname(rootDir)
-  return path.join(parentDir, `worktree-${sanitized}`)
+  // Don't add 'worktree-' prefix, use sanitized name directly (matches bash line 598)
+  return path.join(parentDir, sanitized)
 }
 
 /**

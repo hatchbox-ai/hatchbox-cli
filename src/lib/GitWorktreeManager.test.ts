@@ -525,7 +525,7 @@ describe('GitWorktreeManager', () => {
       const result = manager.generateWorktreePath(branchName)
 
       expect(result).toBe(expectedPath)
-      expect(gitUtils.generateWorktreePath).toHaveBeenCalledWith(branchName, mockRepoPath)
+      expect(gitUtils.generateWorktreePath).toHaveBeenCalledWith(branchName, mockRepoPath, undefined)
     })
 
     it('should use custom root when provided', () => {
@@ -538,7 +538,7 @@ describe('GitWorktreeManager', () => {
       const result = manager.generateWorktreePath(branchName, customRoot)
 
       expect(result).toBe(expectedPath)
-      expect(gitUtils.generateWorktreePath).toHaveBeenCalledWith(branchName, customRoot)
+      expect(gitUtils.generateWorktreePath).toHaveBeenCalledWith(branchName, customRoot, undefined)
     })
   })
 
@@ -635,6 +635,95 @@ describe('GitWorktreeManager', () => {
         {
           cwd: mockRepoPath,
         }
+      )
+    })
+  })
+
+  describe('sanitizeBranchName', () => {
+    it('should replace slashes with dashes', () => {
+      const result = manager.sanitizeBranchName('feature/my-branch')
+      expect(result).toBe('feature-my-branch')
+    })
+
+    it('should handle complex branch names', () => {
+      const result = manager.sanitizeBranchName('feature/ISSUE-123/add_new@feature!')
+      expect(result).toBe('feature-issue-123-add-new-feature')
+    })
+
+    it('should collapse multiple dashes', () => {
+      const result = manager.sanitizeBranchName('feature///branch')
+      expect(result).toBe('feature-branch')
+    })
+
+    it('should remove leading and trailing dashes', () => {
+      const result = manager.sanitizeBranchName('-feature-branch-')
+      expect(result).toBe('feature-branch')
+    })
+
+    it('should convert to lowercase', () => {
+      const result = manager.sanitizeBranchName('FEATURE/Branch')
+      expect(result).toBe('feature-branch')
+    })
+
+    it('should handle branch names with underscores', () => {
+      const result = manager.sanitizeBranchName('feature_branch_name')
+      expect(result).toBe('feature-branch-name')
+    })
+
+    it('should handle branch names with dots', () => {
+      const result = manager.sanitizeBranchName('release/v1.2.3')
+      expect(result).toBe('release-v1-2-3')
+    })
+
+    it('should handle already sanitized branch names', () => {
+      const result = manager.sanitizeBranchName('feature-branch')
+      expect(result).toBe('feature-branch')
+    })
+  })
+
+  describe('generateWorktreePath with PR suffix', () => {
+    it('should add PR suffix when specified', () => {
+      vi.mocked(gitUtils.generateWorktreePath).mockReturnValue('/test/parent/feature-branch_pr_123')
+
+      const result = manager.generateWorktreePath('feature/branch', undefined, {
+        isPR: true,
+        prNumber: 123
+      })
+
+      expect(result).toBe('/test/parent/feature-branch_pr_123')
+      expect(gitUtils.generateWorktreePath).toHaveBeenCalledWith(
+        'feature/branch',
+        mockRepoPath,
+        { isPR: true, prNumber: 123 }
+      )
+    })
+
+    it('should not add PR suffix for regular branches', () => {
+      vi.mocked(gitUtils.generateWorktreePath).mockReturnValue('/test/parent/feature-branch')
+
+      const result = manager.generateWorktreePath('feature/branch')
+
+      expect(result).toBe('/test/parent/feature-branch')
+      expect(gitUtils.generateWorktreePath).toHaveBeenCalledWith(
+        'feature/branch',
+        mockRepoPath,
+        undefined
+      )
+    })
+
+    it('should handle PR suffix with custom root', () => {
+      vi.mocked(gitUtils.generateWorktreePath).mockReturnValue('/custom/root/hotfix-123_pr_456')
+
+      const result = manager.generateWorktreePath('hotfix/123', '/custom/root', {
+        isPR: true,
+        prNumber: 456
+      })
+
+      expect(result).toBe('/custom/root/hotfix-123_pr_456')
+      expect(gitUtils.generateWorktreePath).toHaveBeenCalledWith(
+        'hotfix/123',
+        '/custom/root',
+        { isPR: true, prNumber: 456 }
       )
     })
   })
