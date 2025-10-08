@@ -239,7 +239,7 @@ describe('claude utils', () => {
 				expect(result).toBeUndefined()
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					[prompt],
+					['--', prompt],
 					expect.objectContaining({
 						stdio: 'inherit',
 						// No timeout in interactive mode anymore
@@ -263,7 +263,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['--model', 'opusplan', '--permission-mode', 'plan', '--add-dir', '/workspace', prompt],
+					['--model', 'opusplan', '--permission-mode', 'plan', '--add-dir', '/workspace', '--', prompt],
 					expect.objectContaining({
 						stdio: 'inherit',
 					})

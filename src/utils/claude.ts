@@ -81,6 +81,7 @@ export async function launchClaude(
 		} else {
 			// Interactive mode: let user interact with Claude
 			// Add the prompt as final argument
+			args.push("--")
 			args.push(prompt)
 
 			// TODO: This implementation is temporary and will likely be replaced

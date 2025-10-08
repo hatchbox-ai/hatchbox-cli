@@ -69,9 +69,9 @@ export class HatchboxManager {
       }
     }
 
-    // 7. Generate Claude context (unless skipped)
+    // 7. Launch Claude with context (unless skipped)
     if (!input.options?.skipClaude) {
-      await this.claude.prepareContext({
+      await this.claude.launchWithContext({
         workspacePath: worktreePath,
         type: input.type === 'branch' ? 'regular' : input.type,
         identifier: input.identifier,

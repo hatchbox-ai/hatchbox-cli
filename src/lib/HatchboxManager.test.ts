@@ -89,8 +89,8 @@ describe('HatchboxManager', () => {
       // Mock environment setup
       vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3123)
 
-      // Mock Claude context preparation
-      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+      // Mock Claude launch with context
+      vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
       const result = await manager.createHatchbox(baseInput)
 
@@ -133,8 +133,8 @@ describe('HatchboxManager', () => {
       // Mock environment setup
       vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3456)
 
-      // Mock Claude context preparation
-      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+      // Mock Claude launch with context
+      vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
       const result = await manager.createHatchbox(prInput)
 
@@ -162,8 +162,8 @@ describe('HatchboxManager', () => {
       // Mock environment setup
       vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3000)
 
-      // Mock Claude context preparation
-      vi.mocked(mockClaude.prepareContext).mockResolvedValue()
+      // Mock Claude launch with context
+      vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
       const result = await manager.createHatchbox(branchInput)
 
@@ -283,7 +283,7 @@ describe('HatchboxManager', () => {
       vi.mocked(installDependencies).mockResolvedValue(undefined)
     })
 
-    it('should skip Claude context when skipClaude option is true', async () => {
+    it('should skip Claude launch when skipClaude option is true', async () => {
       const inputWithSkipClaude: CreateHatchboxInput = {
         ...baseInput,
         options: { skipClaude: true },
@@ -306,7 +306,7 @@ describe('HatchboxManager', () => {
 
       await manager.createHatchbox(inputWithSkipClaude)
 
-      expect(mockClaude.prepareContext).not.toHaveBeenCalled()
+      expect(mockClaude.launchWithContext).not.toHaveBeenCalled()
     })
   })
 
