@@ -998,4 +998,451 @@ describe('HatchboxManager', () => {
       expect(mockGitWorktree.createWorktree).toHaveBeenCalled()
     })
   })
+
+  describe('findExistingHatchbox', () => {
+    it('should find existing hatchbox for issue input', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 39,
+        originalInput: '39',
+      }
+
+      const existingWorktree = {
+        path: '/test/worktree-issue-39',
+        branch: 'issue-39-test',
+        commit: 'abc123',
+        bare: false,
+        detached: false,
+        locked: false,
+      }
+
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(existingWorktree)
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 39,
+        title: 'Test Issue',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/39',
+      })
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: ['web'],
+        binEntries: {},
+      })
+
+      const result = await manager.createHatchbox(input)
+
+      expect(result.path).toBe('/test/worktree-issue-39')
+      expect(result.branch).toBe('issue-39-test')
+      expect(mockGitWorktree.findWorktreeForIssue).toHaveBeenCalledWith(39)
+      expect(mockGitWorktree.createWorktree).not.toHaveBeenCalled()
+      expect(installDependencies).not.toHaveBeenCalled()
+    })
+
+    it('should find existing hatchbox for PR input', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'pr',
+        identifier: 42,
+        originalInput: 'pr/42',
+      }
+
+      const existingWorktree = {
+        path: '/test/worktree-feat-test_pr_42',
+        branch: 'feat/test-feature',
+        commit: 'def456',
+        bare: false,
+        detached: false,
+        locked: false,
+      }
+
+      vi.mocked(mockGitHub.fetchPR).mockResolvedValue({
+        number: 42,
+        title: 'Test PR',
+        body: '',
+        state: 'open',
+        branch: 'feat/test-feature',
+        baseBranch: 'main',
+        url: 'https://github.com/test/repo/pull/42',
+        isDraft: false,
+      })
+      vi.mocked(mockGitWorktree.findWorktreeForPR).mockResolvedValue(existingWorktree)
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: ['web'],
+        binEntries: {},
+      })
+
+      const result = await manager.createHatchbox(input)
+
+      expect(result.path).toBe('/test/worktree-feat-test_pr_42')
+      expect(result.branch).toBe('feat/test-feature')
+      expect(mockGitWorktree.findWorktreeForPR).toHaveBeenCalledWith(42, 'feat/test-feature')
+      expect(mockGitWorktree.createWorktree).not.toHaveBeenCalled()
+      expect(installDependencies).not.toHaveBeenCalled()
+    })
+
+    it('should return null for branch input (branches always create new)', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'branch',
+        identifier: 'test-branch',
+        originalInput: 'test-branch',
+      }
+
+      const expectedPath = '/test/worktree-test-branch'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3000)
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      await manager.createHatchbox(input)
+
+      expect(mockGitWorktree.findWorktreeForIssue).not.toHaveBeenCalled()
+      expect(mockGitWorktree.findWorktreeForPR).not.toHaveBeenCalled()
+      expect(mockGitWorktree.createWorktree).toHaveBeenCalled()
+    })
+
+    it('should create new worktree when no existing found for issue', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 99,
+        originalInput: '99',
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 99,
+        title: 'New Issue',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/99',
+      })
+      vi.mocked(mockGitHub.generateBranchName).mockResolvedValue('issue-99-new-issue')
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(null)
+
+      const expectedPath = '/test/worktree-issue-99'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3099)
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: ['web'],
+        binEntries: {},
+      })
+
+      await manager.createHatchbox(input)
+
+      expect(mockGitWorktree.findWorktreeForIssue).toHaveBeenCalledWith(99)
+      expect(mockGitWorktree.createWorktree).toHaveBeenCalled()
+      expect(installDependencies).toHaveBeenCalled()
+    })
+  })
+
+  describe('reuseHatchbox', () => {
+    it('should return hatchbox metadata without creating worktree', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 39,
+        originalInput: '39',
+      }
+
+      const existingWorktree = {
+        path: '/test/worktree-issue-39',
+        branch: 'issue-39-test',
+        commit: 'abc123',
+        bare: false,
+        detached: false,
+        locked: false,
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 39,
+        title: 'Test Issue',
+        body: 'Test description',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/39',
+      })
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(existingWorktree)
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: ['web'],
+        binEntries: {},
+      })
+
+      const result = await manager.createHatchbox(input)
+
+      expect(result.path).toBe('/test/worktree-issue-39')
+      expect(result.branch).toBe('issue-39-test')
+      expect(result.type).toBe('issue')
+      expect(result.identifier).toBe(39)
+      expect(result.githubData?.title).toBe('Test Issue')
+      expect(mockGitWorktree.createWorktree).not.toHaveBeenCalled()
+    })
+
+    it('should still call moveIssueToInProgress for issue reuse', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 39,
+        originalInput: '39',
+      }
+
+      const existingWorktree = {
+        path: '/test/worktree-issue-39',
+        branch: 'issue-39-test',
+        commit: 'abc123',
+        bare: false,
+        detached: false,
+        locked: false,
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 39,
+        title: 'Test Issue',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/39',
+      })
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(existingWorktree)
+      vi.mocked(mockGitHub.moveIssueToInProgress).mockResolvedValue()
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      await manager.createHatchbox(input)
+
+      expect(mockGitHub.moveIssueToInProgress).toHaveBeenCalledWith(39)
+    })
+
+    it('should NOT call moveIssueToInProgress for PR reuse', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'pr',
+        identifier: 42,
+        originalInput: 'pr/42',
+      }
+
+      const existingWorktree = {
+        path: '/test/worktree-feat-test_pr_42',
+        branch: 'feat/test-feature',
+        commit: 'def456',
+        bare: false,
+        detached: false,
+        locked: false,
+      }
+
+      vi.mocked(mockGitHub.fetchPR).mockResolvedValue({
+        number: 42,
+        title: 'Test PR',
+        body: '',
+        state: 'open',
+        branch: 'feat/test-feature',
+        baseBranch: 'main',
+        url: 'https://github.com/test/repo/pull/42',
+        isDraft: false,
+      })
+      vi.mocked(mockGitWorktree.findWorktreeForPR).mockResolvedValue(existingWorktree)
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      await manager.createHatchbox(input)
+
+      expect(mockGitHub.moveIssueToInProgress).not.toHaveBeenCalled()
+    })
+
+    it('should launch components for reused hatchbox', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 39,
+        originalInput: '39',
+        options: { enableClaude: true },
+      }
+
+      const existingWorktree = {
+        path: '/test/worktree-issue-39',
+        branch: 'issue-39-test',
+        commit: 'abc123',
+        bare: false,
+        detached: false,
+        locked: false,
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 39,
+        title: 'Test Issue',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/39',
+      })
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(existingWorktree)
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      await manager.createHatchbox(input)
+
+      // HatchboxLauncher is dynamically imported, so we can't directly verify its calls
+      // But we verify the flow completes successfully
+      expect(mockGitWorktree.findWorktreeForIssue).toHaveBeenCalled()
+    })
+
+    it('should warn but not fail when moveIssueToInProgress throws GitHubError', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 39,
+        originalInput: '39',
+      }
+
+      const existingWorktree = {
+        path: '/test/worktree-issue-39',
+        branch: 'issue-39-test',
+        commit: 'abc123',
+        bare: false,
+        detached: false,
+        locked: false,
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 39,
+        title: 'Test Issue',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/39',
+      })
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(existingWorktree)
+      vi.mocked(mockGitHub.moveIssueToInProgress).mockRejectedValue(
+        new Error('Missing project scope')
+      )
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      // Should not throw - warning logged but hatchbox creation succeeds
+      const result = await manager.createHatchbox(input)
+
+      expect(result).toBeDefined()
+      expect(result.path).toBe('/test/worktree-issue-39')
+      expect(mockGitHub.moveIssueToInProgress).toHaveBeenCalledWith(39)
+    })
+  })
+
+  describe('GitHub issue status updates', () => {
+    it('should move issue to In Progress when creating new worktree', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 39,
+        originalInput: '39',
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 39,
+        title: 'Test Issue',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/39',
+      })
+      vi.mocked(mockGitHub.generateBranchName).mockResolvedValue('issue-39-test')
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(null)
+
+      const expectedPath = '/test/worktree-issue-39'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3039)
+      vi.mocked(mockGitHub.moveIssueToInProgress).mockResolvedValue()
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      await manager.createHatchbox(input)
+
+      expect(mockGitHub.moveIssueToInProgress).toHaveBeenCalledWith(39)
+    })
+
+    it('should NOT move PR to In Progress', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'pr',
+        identifier: 42,
+        originalInput: 'pr/42',
+      }
+
+      vi.mocked(mockGitHub.fetchPR).mockResolvedValue({
+        number: 42,
+        title: 'Test PR',
+        body: '',
+        state: 'open',
+        branch: 'feat/test',
+        baseBranch: 'main',
+        url: 'https://github.com/test/repo/pull/42',
+        isDraft: false,
+      })
+      vi.mocked(mockGitWorktree.findWorktreeForPR).mockResolvedValue(null)
+
+      const expectedPath = '/test/worktree-feat-test'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3042)
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      await manager.createHatchbox(input)
+
+      expect(mockGitHub.moveIssueToInProgress).not.toHaveBeenCalled()
+    })
+
+    it('should warn but not fail when moveIssueToInProgress throws error for new worktree', async () => {
+      const input: CreateHatchboxInput = {
+        type: 'issue',
+        identifier: 39,
+        originalInput: '39',
+      }
+
+      vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
+        number: 39,
+        title: 'Test Issue',
+        body: '',
+        state: 'open',
+        labels: [],
+        assignees: [],
+        url: 'https://github.com/test/repo/issues/39',
+      })
+      vi.mocked(mockGitHub.generateBranchName).mockResolvedValue('issue-39-test')
+      vi.mocked(mockGitWorktree.findWorktreeForIssue).mockResolvedValue(null)
+
+      const expectedPath = '/test/worktree-issue-39'
+      vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)
+      vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
+      vi.mocked(mockEnvironment.setPortForWorkspace).mockResolvedValue(3039)
+      vi.mocked(mockGitHub.moveIssueToInProgress).mockRejectedValue(
+        new Error('Missing project scope')
+      )
+      vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
+        capabilities: [],
+        binEntries: {},
+      })
+
+      // Should not throw - warning logged but hatchbox creation succeeds
+      const result = await manager.createHatchbox(input)
+
+      expect(result).toBeDefined()
+      expect(result.path).toBe(expectedPath)
+      expect(mockGitHub.moveIssueToInProgress).toHaveBeenCalledWith(39)
+    })
+  })
 })

@@ -33,15 +33,30 @@ export class HatchboxManager {
   /**
    * Create a new hatchbox (isolated workspace)
    * Orchestrates worktree creation, environment setup, and Claude context generation
+   * NEW: Checks for existing worktrees and reuses them if found
    */
   async createHatchbox(input: CreateHatchboxInput): Promise<Hatchbox> {
     // 1. Fetch GitHub data if needed
+    logger.info('Fetching GitHub data...')
     const githubData = await this.fetchGitHubData(input)
 
+    // NEW: Check for existing worktree BEFORE generating branch name (for efficiency)
+    if (input.type === 'issue' || input.type === 'pr') {
+      logger.info('Checking for existing worktree...')
+      const existing = await this.findExistingHatchbox(input, githubData)
+      if (existing) {
+        logger.success(`Found existing worktree, reusing: ${existing.path}`)
+        return await this.reuseHatchbox(existing, input, githubData)
+      }
+      logger.info('No existing worktree found, creating new one...')
+    }
+
     // 2. Generate or validate branch name
+    logger.info('Preparing branch name...')
     const branchName = await this.prepareBranchName(input, githubData)
 
     // 3. Create git worktree
+    logger.info('Creating git worktree...')
     const worktreePath = await this.createWorktree(input, branchName)
 
     // 4. Detect project capabilities
@@ -79,6 +94,20 @@ export class HatchboxManager {
         // Log warning but don't fail - colors are cosmetic
         logger.warn(
           `Failed to apply color synchronization: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error
+        )
+      }
+    }
+
+    // NEW: Move issue to In Progress (for new worktrees)
+    if (input.type === 'issue') {
+      try {
+        logger.info('Moving issue to In Progress...')
+        await this.github.moveIssueToInProgress(input.identifier as number)
+      } catch (error) {
+        // Warn but don't fail - matches bash script behavior
+        logger.warn(
+          `Failed to move issue to In Progress: ${error instanceof Error ? error.message : 'Unknown error'}`,
           error
         )
       }
@@ -361,5 +390,109 @@ export class HatchboxManager {
         lastAccessed: new Date(),
       }
     })
+  }
+
+  /**
+   * NEW: Find existing hatchbox for the given input
+   * Checks for worktrees matching the issue/PR identifier
+   */
+  private async findExistingHatchbox(
+    input: CreateHatchboxInput,
+    githubData: Issue | PullRequest | null
+  ): Promise<GitWorktree | null> {
+    if (input.type === 'issue') {
+      return await this.gitWorktree.findWorktreeForIssue(input.identifier as number)
+    } else if (input.type === 'pr' && githubData && 'branch' in githubData) {
+      return await this.gitWorktree.findWorktreeForPR(
+        input.identifier as number,
+        githubData.branch
+      )
+    }
+    return null
+  }
+
+  /**
+   * NEW: Reuse an existing hatchbox
+   * Skips worktree/dependency setup, but still launches components
+   * Ports: handle_existing_worktree() from bash script lines 168-215
+   */
+  private async reuseHatchbox(
+    worktree: GitWorktree,
+    input: CreateHatchboxInput,
+    githubData: Issue | PullRequest | null
+  ): Promise<Hatchbox> {
+    const worktreePath = worktree.path
+    const branchName = worktree.branch
+
+    // 1. Detect capabilities (quick, no installation)
+    const { capabilities, binEntries } = await this.capabilityDetector.detectCapabilities(worktreePath)
+
+    // 2. Get port from environment or calculate
+    let port = 3000
+    if (capabilities.includes('web')) {
+      port = this.calculatePort(input)
+    }
+
+    // NEW: Move issue to In Progress (for reused worktrees too)
+    if (input.type === 'issue') {
+      try {
+        logger.info('Moving issue to In Progress...')
+        await this.github.moveIssueToInProgress(input.identifier as number)
+      } catch (error) {
+        logger.warn(
+          `Failed to move issue to In Progress: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error
+        )
+      }
+    }
+
+    // 3. Launch components (same as new worktree)
+    const enableClaude = input.options?.enableClaude !== false
+    const enableCode = input.options?.enableCode !== false
+    const enableDevServer = input.options?.enableDevServer !== false
+
+    if (enableClaude || enableCode || enableDevServer) {
+      logger.info('Launching workspace components...')
+      const { HatchboxLauncher } = await import('./HatchboxLauncher.js')
+      const launcher = new HatchboxLauncher()
+
+      await launcher.launchHatchbox({
+        enableClaude,
+        enableCode,
+        enableDevServer,
+        worktreePath,
+        branchName,
+        port,
+        capabilities,
+        workflowType: input.type === 'branch' ? 'regular' : input.type,
+        identifier: input.identifier,
+        ...(githubData?.title && { title: githubData.title }),
+      })
+    }
+
+    // 4. Return hatchbox metadata
+    const hatchbox: Hatchbox = {
+      id: this.generateHatchboxId(input),
+      path: worktreePath,
+      branch: branchName,
+      type: input.type,
+      identifier: input.identifier,
+      port,
+      createdAt: new Date(), // We don't have actual creation date, use now
+      lastAccessed: new Date(),
+      ...(capabilities.length > 0 && { capabilities }),
+      ...(Object.keys(binEntries).length > 0 && { binEntries }),
+      ...(githubData !== null && {
+        githubData: {
+          title: githubData.title,
+          body: githubData.body,
+          url: githubData.url,
+          state: githubData.state,
+        },
+      }),
+    }
+
+    logger.success(`Reused existing hatchbox: ${hatchbox.id} at ${hatchbox.path}`)
+    return hatchbox
   }
 }

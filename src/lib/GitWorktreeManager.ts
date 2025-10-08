@@ -389,6 +389,38 @@ export class GitWorktreeManager {
   }
 
   /**
+   * Find worktree for a specific issue number using exact pattern matching
+   * Matches: issue-{N} at start OR after /, -, _ (but NOT issue-{N}X where X is a digit)
+   * Supports patterns like: issue-44, feat/issue-44-feature, feat-issue-44, bugfix_issue-44, etc.
+   * Avoids false matches like: tissue-44, myissue-44
+   * Ports: find_existing_worktree() from bash script lines 131-165
+   */
+  async findWorktreeForIssue(issueNumber: number): Promise<GitWorktree | null> {
+    const worktrees = await this.listWorktrees({ porcelain: true })
+
+    // Pattern: starts with 'issue-{N}' OR has '/issue-{N}', '-issue-{N}', '_issue-{N}' but not 'issue-{N}{digit}'
+    const pattern = new RegExp(`(?:^|[/_-])issue-${issueNumber}(?:-|$)`)
+
+    return worktrees.find(wt => pattern.test(wt.branch)) ?? null
+  }
+
+  /**
+   * Find worktree for a specific PR by branch name
+   * Ports: find_existing_worktree() for PR type from bash script lines 149-160
+   */
+  async findWorktreeForPR(prNumber: number, branchName: string): Promise<GitWorktree | null> {
+    const worktrees = await this.listWorktrees({ porcelain: true })
+
+    // Find by exact branch name match (prioritized)
+    const byBranch = worktrees.find(wt => wt.branch === branchName)
+    if (byBranch) return byBranch
+
+    // Also check directory name pattern: *_pr_{N}
+    const pathPattern = new RegExp(`_pr_${prNumber}$`)
+    return worktrees.find(wt => pathPattern.test(wt.path)) ?? null
+  }
+
+  /**
    * Remove multiple worktrees
    * Returns a summary of successes and failures
    * Automatically filters out the main worktree

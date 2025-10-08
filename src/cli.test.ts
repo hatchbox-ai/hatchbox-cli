@@ -53,7 +53,7 @@ describe('CLI', () => {
     const { stdout, code } = await runCLI(['start', '--help'])
     expect(code).toBe(0)
     expect(stdout).toContain('Create isolated workspace')
-    expect(stdout).toContain('<identifier>')
+    expect(stdout).toContain('[identifier]') // Changed to optional format for interactive prompting
   })
 
   it('should handle invalid commands gracefully', async () => {

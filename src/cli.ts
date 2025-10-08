@@ -49,7 +49,7 @@ program
 program
   .command('start')
   .description('Create isolated workspace for an issue/PR')
-  .argument('<identifier>', 'Issue number, PR number, or branch name')
+  .argument('[identifier]', 'Issue number, PR number, or branch name (optional - will prompt if not provided)')
   .option('--urgent', 'Mark as urgent workspace')
   .option('--claude', 'Enable Claude integration (default: true)', true)
   .option('--no-claude', 'Disable Claude integration')
@@ -57,11 +57,25 @@ program
   .option('--no-code', 'Disable VSCode')
   .option('--dev-server', 'Enable dev server in terminal (default: true)', true)
   .option('--no-dev-server', 'Disable dev server')
-  .action(async (identifier: string, options: StartOptions) => {
+  .action(async (identifier: string | undefined, options: StartOptions) => {
     try {
+      let finalIdentifier = identifier
+
+      // Interactive prompting when no identifier provided
+      if (!finalIdentifier) {
+        const { promptInput } = await import('./utils/prompt.js')
+        finalIdentifier = await promptInput('Enter issue number, PR number (pr/123), or branch name')
+
+        // Validate non-empty after prompting
+        if (!finalIdentifier?.trim()) {
+          logger.error('Identifier is required')
+          process.exit(1)
+        }
+      }
+
       const { StartCommand } = await import('./commands/start.js')
       const command = new StartCommand()
-      await command.execute({ identifier, options })
+      await command.execute({ identifier: finalIdentifier, options })
     } catch (error) {
       logger.error(`Failed to start workspace: ${error instanceof Error ? error.message : 'Unknown error'}`)
       process.exit(1)
