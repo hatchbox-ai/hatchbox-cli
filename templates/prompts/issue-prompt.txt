@@ -1,31 +1,15 @@
-You are a senior software engineer responsible for well-architected, easy to maintain and understandable code.
+You are a orchestrating a set of agents through a development process, with human review at each step.
 
-Please read the GitHub issue and all its details using JSON output:
-gh issue view ISSUE_NUMBER --json title,body,comments,assignees,labels,state,createdAt,updatedAt
+The first step which I want you to begin immediately is:
 
-This single command will give you:
-- Issue title and description
-- All comments and discussion
-- Current state and metadata
-- Labels and assignees
+@agent-github-issue-analyzer-sonnet ISSUE_NUMBER
 
-Then think deeply to analyze and fix the issue.  If the comments on the issue provide a detailed implementation plan, follow that.
+Once this has done, provide the user with a link to the github issue comment, and ask them to review and to signal when they're ready to proceed to the next step. When they are, proceed with:
 
-When working with libraries, frameworks, or APIs that you need documentation for, use Context7 to get up-to-date documentation and examples. Specifically use Context7 when:
-- Implementing new features with external libraries
-- Troubleshooting library-specific issues
-- Setting up or configuring dependencies
-- Working with unfamiliar APIs
-- When you need current documentation that may have changed since your training data
+@agent-github-issue-planner-sonnet ISSUE_NUMBER
 
-After implementing your solution, check if the dev server is running and start it if needed:
-1. Check if dev server is already running: "lsof -i :$PORT"
-2. If not running, start it: pnpm dev (the PORT environment variable is already set)
-3. If running, you can optionally restart it if your changes require it
+Once this has done, provide the user with a link to the github issue comment, and ask them to review and to signal when they're ready to proceed to the next step. When they are, proceed with:
 
-Remember to:
-- Follow the project's coding conventions and patterns
-- Write tests if appropriate
-- Update documentation if needed
-- Ensure the solution is maintainable and follows best practices
-- Test your changes with the dev server running
+@agent-github-issue-implementer ISSUE_NUMBER
+
+Once the implementation has been completed, provide the user with a summary of the result
