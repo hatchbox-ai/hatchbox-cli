@@ -4,8 +4,10 @@ pnpm run lint
 # Run type checking
 pnpm run typecheck
 
-# Run tests to ensure nothing is broken
-pnpm run test
+# Run tests to ensure nothing is broken (output suppressed)
+echo "Running tests..."
+pnpm run test > /dev/null 2>&1
 
 # Run build to ensure it still works
-pnpm run build
+echo "Running build..."
+pnpm run build > /dev/null 2>&1
