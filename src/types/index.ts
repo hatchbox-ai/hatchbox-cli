@@ -102,10 +102,21 @@ export interface FinishOptions {
   force?: boolean
 }
 
+/**
+ * Options for the cleanup command
+ * All flags are optional and can be combined (subject to validation)
+ */
 export interface CleanupOptions {
+  /** List all worktrees without removing anything */
+  list?: boolean
+  /** Remove all worktrees (interactive confirmation required unless --force) */
   all?: boolean
-  issue?: string
+  /** Cleanup by specific issue number */
+  issue?: number
+  /** Skip confirmations and force removal */
   force?: boolean
+  /** Show what would be done without actually doing it */
+  dryRun?: boolean
 }
 
 export interface ListOptions {

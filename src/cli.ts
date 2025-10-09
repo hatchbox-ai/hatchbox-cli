@@ -1,7 +1,7 @@
 import { program } from 'commander'
 import { logger } from './utils/logger.js'
 import { GitWorktreeManager } from './lib/GitWorktreeManager.js'
-import type { StartOptions } from './types/index.js'
+import type { StartOptions, CleanupOptions } from './types/index.js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -98,58 +98,23 @@ program
 program
   .command('cleanup')
   .description('Remove workspaces')
-  .argument('[identifier]', 'Specific workspace to cleanup (optional)')
-  .option('--all', 'Remove all workspaces')
-  .option('--force', 'Force removal even with uncommitted changes')
-  .option('--remove-branch', 'Also remove the associated branch')
-  .action(async (identifier?: string, options?: { all?: boolean; force?: boolean; removeBranch?: boolean }) => {
+  .argument('[identifier]', 'Branch name or issue number to cleanup (auto-detected)')
+  .option('-l, --list', 'List all worktrees')
+  .option('-a, --all', 'Remove all worktrees (interactive confirmation)')
+  .option('-i, --issue <number>', 'Cleanup by issue number', parseInt)
+  .option('-f, --force', 'Skip confirmations and force removal')
+  .option('--dry-run', 'Show what would be done without doing it')
+  .action(async (identifier?: string, options?: CleanupOptions) => {
     try {
-      const manager = new GitWorktreeManager()
-
-      // Determine which worktrees to remove
-      let toRemove = identifier
-        ? await manager.findWorktreesByIdentifier(identifier)
-        : await manager.listWorktrees({ porcelain: true })
-
-      // Validate input
-      if (!identifier && !options?.all) {
-        logger.error('Either provide an identifier or use --all flag')
-        process.exit(1)
+      const { CleanupCommand } = await import('./commands/cleanup.js')
+      const command = new CleanupCommand()
+      const input: { identifier?: string; options: CleanupOptions } = {
+        options: options ?? {}
       }
-
-      if (identifier && toRemove.length === 0) {
-        logger.error(`No worktree found matching: ${identifier}`)
-        process.exit(1)
+      if (identifier) {
+        input.identifier = identifier
       }
-
-      logger.info(`Removing ${toRemove.length} worktree(s)...`)
-
-      // Remove worktrees
-      const { successes, failures, skipped } = await manager.removeWorktrees(toRemove, {
-        force: options?.force ?? false,
-        removeBranch: options?.removeBranch ?? false,
-      })
-
-      // Report results
-      for (const { worktree } of successes) {
-        logger.success(`Removed: ${worktree.branch}`)
-      }
-
-      for (const { worktree, reason } of skipped) {
-        logger.info(`Skipped: ${worktree.branch} (${reason})`)
-      }
-
-      for (const { worktree, error } of failures) {
-        logger.error(`Failed to remove ${worktree.branch}: ${error}`)
-      }
-
-      if (successes.length === 0 && failures.length === 0) {
-        logger.info('No worktrees to remove')
-      }
-
-      if (failures.length > 0) {
-        process.exit(1)
-      }
+      await command.execute(input)
     } catch (error) {
       logger.error(`Failed to cleanup worktrees: ${error instanceof Error ? error.message : 'Unknown error'}`)
       process.exit(1)
