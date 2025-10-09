@@ -8,13 +8,14 @@ import { type GitWorktree } from '../types/worktree.js'
  */
 export async function executeGitCommand(
   args: string[],
-  options?: { cwd?: string; timeout?: number }
+  options?: { cwd?: string; timeout?: number; stdio?: 'inherit' | 'pipe' }
 ): Promise<string> {
   try {
     const result = await execa('git', args, {
       cwd: options?.cwd ?? process.cwd(),
       timeout: options?.timeout ?? 30000,
       encoding: 'utf8',
+      stdio: options?.stdio ?? 'pipe',
     })
 
     return result.stdout

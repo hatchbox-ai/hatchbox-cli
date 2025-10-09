@@ -9,6 +9,7 @@ export interface ClaudeCliOptions {
 	addDir?: string
 	headless?: boolean
 	branchName?: string // Optional branch name for terminal coloring
+	timeout?: number // Timeout in milliseconds
 }
 
 /**
@@ -52,7 +53,7 @@ export async function launchClaude(
 	prompt: string,
 	options: ClaudeCliOptions = {}
 ): Promise<string | void> {
-	const { model, permissionMode, addDir, headless = false, branchName } = options
+	const { model, permissionMode, addDir, headless = false, branchName, timeout = 1200000 } = options
 
 	// Build command arguments
 	const args: string[] = []
@@ -78,7 +79,7 @@ export async function launchClaude(
 			// Headless mode: capture and return output
 			const result = await execa('claude', args, {
 				input: prompt,
-				timeout: 1200000, // 20 mins
+				timeout,
 				...(addDir && { cwd: addDir }), // Run Claude in the worktree directory
 			})
 			return result.stdout.trim()
