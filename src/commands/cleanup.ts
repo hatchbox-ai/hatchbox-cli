@@ -1,6 +1,10 @@
 import { logger } from '../utils/logger.js'
 import { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
+import { ResourceCleanup } from '../lib/ResourceCleanup.js'
+import { ProcessManager } from '../lib/process/ProcessManager.js'
+import { promptConfirmation } from '../utils/prompt.js'
 import type { CleanupOptions } from '../types/index.js'
+import type { CleanupResult } from '../types/cleanup.js'
 
 /**
  * Input structure for CleanupCommand.execute()
@@ -31,12 +35,21 @@ export interface ParsedCleanupInput {
  * Actual cleanup operations are deferred to subsequent sub-issues.
  */
 export class CleanupCommand {
-  // Will be used in subsequent sub-issues for actual cleanup operations
-  // @ts-expect-error - Intentionally unused until sub-issues 2-5 implement cleanup operations
   private readonly gitWorktreeManager: GitWorktreeManager
+  private readonly resourceCleanup: ResourceCleanup
 
-  constructor(gitWorktreeManager?: GitWorktreeManager) {
+  constructor(
+    gitWorktreeManager?: GitWorktreeManager,
+    resourceCleanup?: ResourceCleanup
+  ) {
     this.gitWorktreeManager = gitWorktreeManager ?? new GitWorktreeManager()
+
+    // Initialize ResourceCleanup if not provided
+    this.resourceCleanup = resourceCleanup ?? new ResourceCleanup(
+      this.gitWorktreeManager,
+      new ProcessManager(),
+      undefined // DatabaseManager optional
+    )
   }
 
   /**
@@ -51,25 +64,21 @@ export class CleanupCommand {
       // Step 2: Validate option combinations
       this.validateInput(parsed)
 
-      // Step 3: Log what mode was determined (for now - actual operations in later issues)
+      // Step 3: Execute based on mode
       logger.info(`Cleanup mode: ${parsed.mode}`)
-      if (parsed.mode === 'list') {
-        logger.info('Would list all worktrees')
+
+      if (parsed.mode === 'single') {
+        await this.executeSingleCleanup(parsed)
+      } else if (parsed.mode === 'list') {
+        logger.info('Would list all worktrees')  // TODO: Implement in Sub-issue #2
+        logger.success('Command parsing and validation successful')
       } else if (parsed.mode === 'all') {
-        logger.info('Would remove all worktrees')
+        logger.info('Would remove all worktrees')  // TODO: Implement in Sub-issue #5
+        logger.success('Command parsing and validation successful')
       } else if (parsed.mode === 'issue') {
-        logger.info(`Would cleanup worktrees for issue #${parsed.issueNumber}`)
-      } else if (parsed.mode === 'single') {
-        logger.info(`Would cleanup worktree: ${parsed.branchName}`)
+        logger.info(`Would cleanup worktrees for issue #${parsed.issueNumber}`)  // TODO: Implement in Sub-issue #4
+        logger.success('Command parsing and validation successful')
       }
-
-      // Actual cleanup operations will be implemented in subsequent sub-issues:
-      // - Sub-issue #2: List functionality
-      // - Sub-issue #3: Single worktree removal
-      // - Sub-issue #4: Issue-based cleanup
-      // - Sub-issue #5: Bulk cleanup (all)
-
-      logger.success('Command parsing and validation successful')
     } catch (error) {
       if (error instanceof Error) {
         logger.error(`${error.message}`)
@@ -215,5 +224,110 @@ export class CleanupCommand {
     }
 
     // Note: --force and --dry-run are compatible with all modes (no conflicts)
+  }
+
+  /**
+   * Execute cleanup for single worktree
+   * Implements two-stage confirmation: worktree removal, then branch deletion
+   */
+  private async executeSingleCleanup(parsed: ParsedCleanupInput): Promise<void> {
+    const identifier = parsed.branchName ?? parsed.identifier ?? ''
+    if (!identifier) {
+      throw new Error('No identifier found for cleanup')
+    }
+    const { force, dryRun } = parsed.options
+
+    // Step 1: Validate cleanup safety
+    const safety = await this.resourceCleanup.validateCleanupSafety(identifier)
+
+    // Display blockers (fatal errors)
+    if (!safety.isSafe) {
+      const blockerMessage = safety.blockers.join(', ')
+      throw new Error(`Cannot cleanup: ${blockerMessage}`)
+    }
+
+    // Display warnings (non-fatal)
+    if (safety.warnings.length > 0) {
+      safety.warnings.forEach(warning => logger.warn(warning))
+    }
+
+    // Display worktree details
+    logger.info(`Preparing to cleanup worktree: ${identifier}`)
+
+    // Step 2: First confirmation - worktree removal
+    if (!force) {
+      const confirmWorktree = await promptConfirmation('Remove this worktree?', true)
+      if (!confirmWorktree) {
+        logger.info('Cleanup cancelled')
+        return
+      }
+    }
+
+    // Step 3: Execute worktree cleanup
+    // With --force, delete branch automatically; otherwise handle separately
+    const cleanupResult = await this.resourceCleanup.cleanupWorktree(identifier, {
+      dryRun: dryRun ?? false,
+      force: force ?? false,
+      deleteBranch: force ?? false,  // Delete branch immediately if --force, otherwise prompt later
+      keepDatabase: false,
+    })
+
+    // Step 4: Report cleanup results
+    this.reportCleanupResults(cleanupResult)
+
+    // Step 5: Second confirmation - branch deletion (only if not forced and worktree cleanup succeeded)
+    if (cleanupResult.success && !force && cleanupResult.branchName) {
+      const confirmBranch = await promptConfirmation('Also delete the branch?', true)
+      if (confirmBranch) {
+        await this.deleteBranchForCleanup(cleanupResult.branchName, { force: force ?? false, dryRun: dryRun ?? false })
+      }
+    }
+
+    // Final success message
+    if (cleanupResult.success) {
+      logger.success('Cleanup completed successfully')
+    } else {
+      logger.warn('Cleanup completed with errors - see details above')
+    }
+  }
+
+  /**
+   * Delete branch as part of cleanup operation
+   */
+  private async deleteBranchForCleanup(
+    branchName: string,
+    options: { force?: boolean; dryRun?: boolean }
+  ): Promise<void> {
+    try {
+      await this.resourceCleanup.deleteBranch(branchName, options)
+      logger.success(`Branch deleted: ${branchName}`)
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(`Failed to delete branch: ${error.message}`)
+      }
+      // Don't throw - branch deletion is optional/secondary operation
+    }
+  }
+
+  /**
+   * Report cleanup operation results to user
+   */
+  private reportCleanupResults(result: CleanupResult): void {
+    logger.info('Cleanup operations:')
+
+    result.operations.forEach(op => {
+      const status = op.success ? '✓' : '✗'
+      const message = op.error ? `${op.message}: ${op.error}` : op.message
+
+      if (op.success) {
+        logger.info(`  ${status} ${message}`)
+      } else {
+        logger.error(`  ${status} ${message}`)
+      }
+    })
+
+    if (result.errors.length > 0) {
+      logger.warn(`${result.errors.length} error(s) occurred during cleanup`)
+    }
   }
 }

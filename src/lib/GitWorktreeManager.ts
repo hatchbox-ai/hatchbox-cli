@@ -135,11 +135,18 @@ export class GitWorktreeManager {
     worktreePath: string,
     options: WorktreeCleanupOptions = {}
   ): Promise<string | void> {
-    // Validate worktree exists
-    const worktrees = await this.listWorktrees()
+    // Validate worktree exists - use porcelain format for consistent parsing
+    const worktrees = await this.listWorktrees({ porcelain: true })
     const worktree = worktrees.find(wt => wt.path === worktreePath)
 
     if (!worktree) {
+      // Add debug logging to help diagnose the issue
+      const { logger } = await import('../utils/logger.js')
+      logger.debug(`Looking for worktree path: ${worktreePath}`)
+      logger.debug(`Found ${worktrees.length} worktrees:`)
+      worktrees.forEach((wt, i) => {
+        logger.debug(`  ${i}: path="${wt.path}", branch="${wt.branch}"`)
+      })
       throw new Error(`Worktree not found: ${worktreePath}`)
     }
 

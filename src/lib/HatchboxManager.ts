@@ -180,13 +180,6 @@ export class HatchboxManager {
     throw new Error('Not implemented - see Issue #7')
   }
 
-  /**
-   * Cleanup a hatchbox (remove workspace)
-   * Not yet implemented - see Issue #8
-   */
-  async cleanupHatchbox(_identifier: string): Promise<void> {
-    throw new Error('Not implemented - see Issue #8')
-  }
 
   /**
    * List all active hatchboxes

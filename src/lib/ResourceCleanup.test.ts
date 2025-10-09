@@ -191,6 +191,26 @@ describe('ResourceCleanup', () => {
 			expect(mockProcessManager.detectDevServer).not.toHaveBeenCalled()
 			expect(mockGitWorktree.removeWorktree).not.toHaveBeenCalled()
 		})
+
+		it('should log debug information about worktree discovery', async () => {
+			vi.mocked(mockGitWorktree.findWorktreesByIdentifier).mockResolvedValueOnce([mockWorktree])
+			vi.mocked(mockProcessManager.calculatePort).mockReturnValue(3025)
+			vi.mocked(mockProcessManager.detectDevServer).mockResolvedValueOnce(null)
+			vi.mocked(mockGitWorktree.removeWorktree).mockResolvedValueOnce(undefined)
+
+			// Mock logger.debug to capture debug logs
+			const { logger } = await import('../utils/logger.js')
+			const debugSpy = vi.spyOn(logger, 'debug')
+
+			await resourceCleanup.cleanupWorktree('issue-25', {
+				keepDatabase: true,
+			})
+
+			// Verify debug information was logged
+			expect(debugSpy).toHaveBeenCalledWith('Found 1 worktrees for identifier "issue-25":')
+			expect(debugSpy).toHaveBeenCalledWith('  0: path="/path/to/worktree", branch="feat/issue-25"')
+			expect(debugSpy).toHaveBeenCalledWith('Selected worktree: path="/path/to/worktree", branch="feat/issue-25"')
+		})
 	})
 
 	describe('terminateDevServer', () => {

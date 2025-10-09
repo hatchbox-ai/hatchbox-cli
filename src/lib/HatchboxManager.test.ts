@@ -396,11 +396,6 @@ describe('HatchboxManager', () => {
     })
   })
 
-  describe('cleanupHatchbox', () => {
-    it('should throw not implemented error', async () => {
-      await expect(manager.cleanupHatchbox('123')).rejects.toThrow('Not implemented')
-    })
-  })
 
   describe('branch name generation', () => {
     it('should use generateBranchName for issues', async () => {

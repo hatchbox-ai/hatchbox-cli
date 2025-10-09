@@ -20,6 +20,8 @@ export interface ResourceCleanupOptions {
 export interface CleanupResult {
 	/** Identifier that was cleaned up */
 	identifier: string
+	/** Actual branch name that was found (will differ from identifier) */
+	branchName?: string
 	/** Overall success status */
 	success: boolean
 	/** Individual operation results */

@@ -410,6 +410,39 @@ describe('GitWorktreeManager', () => {
 
       expect(fs.remove).toHaveBeenCalledWith(worktreePath)
     })
+
+    it('should use porcelain format consistently for worktree lookup', async () => {
+      const worktreePath = '/test/worktree-feature'
+      const mockWorktrees = [
+        {
+          path: worktreePath,
+          branch: 'feature-branch',
+          commit: 'abc123',
+          bare: false,
+          detached: false,
+          locked: false,
+        },
+      ]
+
+      // Mock the git command execution for porcelain output
+      vi.mocked(gitUtils.executeGitCommand).mockResolvedValue('Worktree removed')
+      vi.mocked(gitUtils.parseWorktreeList).mockReturnValue(mockWorktrees)
+      vi.mocked(gitUtils.hasUncommittedChanges).mockResolvedValue(false)
+
+      await manager.removeWorktree(worktreePath)
+
+      // Verify that listWorktrees was called with porcelain: true
+      expect(gitUtils.executeGitCommand).toHaveBeenCalledWith(
+        ['worktree', 'list', '--porcelain'],
+        { cwd: mockRepoPath }
+      )
+
+      // Verify worktree removal was attempted
+      expect(gitUtils.executeGitCommand).toHaveBeenCalledWith(
+        ['worktree', 'remove', worktreePath],
+        { cwd: mockRepoPath }
+      )
+    })
   })
 
   describe('validateWorktree', () => {

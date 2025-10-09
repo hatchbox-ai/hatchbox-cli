@@ -75,11 +75,17 @@ export class ResourceCleanup {
 		let worktree: GitWorktree | null = null
 		try {
 			const worktrees = await this.gitWorktree.findWorktreesByIdentifier(identifier)
+			logger.debug(`Found ${worktrees.length} worktrees for identifier "${identifier}":`)
+			worktrees.forEach((wt, i) => {
+				logger.debug(`  ${i}: path="${wt.path}", branch="${wt.branch}"`)
+			})
 			worktree = worktrees[0] ?? null
 
 			if (!worktree) {
 				throw new Error(`No worktree found for identifier: ${identifier}`)
 			}
+
+			logger.debug(`Selected worktree: path="${worktree.path}", branch="${worktree.branch}"`)
 		} catch (error) {
 			const err = error instanceof Error ? error : new Error('Unknown error')
 			errors.push(err)
@@ -200,6 +206,7 @@ export class ResourceCleanup {
 
 		return {
 			identifier,
+			branchName: worktree?.branch,
 			success,
 			operations,
 			errors,
@@ -275,10 +282,19 @@ export class ResourceCleanup {
 				throw error
 			}
 
-			// If safe delete failed, provide helpful message
-			throw new Error(
-				`Cannot delete unmerged branch '${branchName}'. Use --force to delete anyway.`
-			)
+			// For safe delete failures, check if it's actually an unmerged branch error
+			// and provide helpful message only in that case, otherwise show the real error
+			const errorMessage = error instanceof Error ? error.message : String(error)
+
+			// Git error for unmerged branch typically contains "not fully merged"
+			if (errorMessage.includes('not fully merged')) {
+				throw new Error(
+					`Cannot delete unmerged branch '${branchName}'. Use --force to delete anyway.`
+				)
+			}
+
+			// For other errors (like branch doesn't exist), show the actual git error
+			throw error
 		}
 	}
 
