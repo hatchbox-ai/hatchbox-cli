@@ -1,7 +1,7 @@
 import { program } from 'commander'
 import { logger } from './utils/logger.js'
 import { GitWorktreeManager } from './lib/GitWorktreeManager.js'
-import type { StartOptions, CleanupOptions } from './types/index.js'
+import type { StartOptions, CleanupOptions, FinishOptions } from './types/index.js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -85,14 +85,19 @@ program
 program
   .command('finish')
   .description('Merge work and cleanup workspace')
-  .argument('<identifier>', 'Issue number, PR number, or branch name')
-  .option('--force', 'Force finish even with uncommitted changes')
-  .action((identifier: string) => {
-    notImplemented(
-      'finish',
-      ['GitHubService (Issue #3)', 'DatabaseManager (Issue #5)', 'WorkspaceManager (Issue #6)'],
-      `bash/merge-and-clean.sh ${identifier}`
-    )
+  .argument('[identifier]', 'Issue number, PR number, or branch name (auto-detected if omitted)')
+  .option('-f, --force', 'Skip confirmation prompts')
+  .option('-n, --dry-run', 'Preview actions without executing')
+  .option('--pr <number>', 'Treat input as PR number', parseFloat)
+  .action(async (identifier: string | undefined, options: FinishOptions) => {
+    try {
+      const { FinishCommand } = await import('./commands/finish.js')
+      const command = new FinishCommand()
+      await command.execute({ identifier, options })
+    } catch (error) {
+      logger.error(`Failed to finish workspace: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      process.exit(1)
+    }
   })
 
 program

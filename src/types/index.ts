@@ -99,7 +99,9 @@ export interface StartOptions {
 }
 
 export interface FinishOptions {
-  force?: boolean
+  force?: boolean      // -f, --force - Skip confirmation prompts
+  dryRun?: boolean    // -n, --dry-run - Preview actions without executing
+  pr?: number         // --pr <number> - Treat input as PR number
 }
 
 /**
