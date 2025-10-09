@@ -3,6 +3,7 @@ import { FinishCommand } from './finish.js'
 import { GitHubService } from '../lib/GitHubService.js'
 import { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
 import { ValidationRunner } from '../lib/ValidationRunner.js'
+import { CommitManager } from '../lib/CommitManager.js'
 import type { Issue, PullRequest } from '../types/index.js'
 import type { GitWorktree } from '../types/worktree.js'
 
@@ -10,6 +11,7 @@ import type { GitWorktree } from '../types/worktree.js'
 vi.mock('../lib/GitHubService.js')
 vi.mock('../lib/GitWorktreeManager.js')
 vi.mock('../lib/ValidationRunner.js')
+vi.mock('../lib/CommitManager.js')
 
 // Mock the logger to prevent console output during tests
 vi.mock('../utils/logger.js', () => ({
@@ -27,11 +29,13 @@ describe('FinishCommand', () => {
 	let mockGitHubService: GitHubService
 	let mockGitWorktreeManager: GitWorktreeManager
 	let mockValidationRunner: ValidationRunner
+	let mockCommitManager: CommitManager
 
 	beforeEach(() => {
 		mockGitHubService = new GitHubService()
 		mockGitWorktreeManager = new GitWorktreeManager()
 		mockValidationRunner = new ValidationRunner()
+		mockCommitManager = new CommitManager()
 
 		// Mock ValidationRunner.runValidations to always succeed by default
 		vi.mocked(mockValidationRunner.runValidations).mockResolvedValue({
@@ -40,10 +44,24 @@ describe('FinishCommand', () => {
 			totalDuration: 0,
 		})
 
+		// Mock CommitManager.detectUncommittedChanges to return no changes by default
+		vi.mocked(mockCommitManager.detectUncommittedChanges).mockResolvedValue({
+			hasUncommittedChanges: false,
+			unstagedFiles: [],
+			stagedFiles: [],
+			currentBranch: 'main',
+			isAheadOfRemote: false,
+			isBehindRemote: false,
+		})
+
+		// Mock CommitManager.commitChanges to succeed by default
+		vi.mocked(mockCommitManager.commitChanges).mockResolvedValue(undefined)
+
 		command = new FinishCommand(
 			mockGitHubService,
 			mockGitWorktreeManager,
-			mockValidationRunner
+			mockValidationRunner,
+			mockCommitManager
 		)
 	})
 
@@ -1277,6 +1295,136 @@ describe('FinishCommand', () => {
 			})
 		})
 
+		describe('workflow execution order', () => {
+			it('should run validation BEFORE detecting and committing changes', async () => {
+				// Test the correct workflow order: validate → detect → commit
+				const executionOrder: string[] = []
+
+				// Mock ValidationRunner to track execution order
+				vi.mocked(mockValidationRunner.runValidations).mockImplementation(async () => {
+					executionOrder.push('validation')
+					return {
+						success: true,
+						steps: [],
+						totalDuration: 0,
+					}
+				})
+
+				// Mock CommitManager to track execution order
+				vi.mocked(mockCommitManager.detectUncommittedChanges).mockImplementation(async () => {
+					executionOrder.push('commit-detect')
+					return {
+						hasUncommittedChanges: true,
+						unstagedFiles: ['src/test.ts'],
+						stagedFiles: [],
+						currentBranch: 'feat/issue-123',
+						isAheadOfRemote: false,
+						isBehindRemote: false,
+					}
+				})
+
+				vi.mocked(mockCommitManager.commitChanges).mockImplementation(async () => {
+					executionOrder.push('commit-execute')
+				})
+
+				vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
+					type: 'issue',
+					number: 123,
+					rawInput: '123',
+				})
+				vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue({
+					number: 123,
+					title: 'Test Issue',
+					state: 'open',
+					body: '',
+					labels: [],
+					assignees: [],
+					url: 'https://github.com/test/repo/issues/123',
+				} as Issue)
+				vi.mocked(mockGitWorktreeManager.findWorktreesByIdentifier).mockResolvedValue([
+					{ path: '/test/issue-123', branch: 'feat/issue-123', commit: 'abc123', bare: false },
+				] as GitWorktree[])
+
+				// This should succeed with the correct order
+				await expect(
+					command.execute({
+						identifier: '123',
+						options: {},
+					})
+				).resolves.not.toThrow()
+
+				// ✅ CORRECT: The implementation should follow this order
+				expect(executionOrder).toEqual([
+					'validation',     // ✅ First: Ensure code quality
+					'commit-detect',  // ✅ Second: Check if there are changes to commit
+					'commit-execute'  // ✅ Third: Only commit if validation passed
+				])
+			})
+
+			it('should NOT commit if validation fails', async () => {
+				// Test that validation failure prevents committing
+				const executionOrder: string[] = []
+
+				// Mock ValidationRunner to simulate failure
+				vi.mocked(mockValidationRunner.runValidations).mockImplementation(async () => {
+					executionOrder.push('validation')
+					throw new Error('Validation failed: TypeScript errors found')
+				})
+
+				// Mock CommitManager - these should NOT be called if validation fails
+				vi.mocked(mockCommitManager.detectUncommittedChanges).mockImplementation(async () => {
+					executionOrder.push('commit-detect')
+					return {
+						hasUncommittedChanges: true,
+						unstagedFiles: ['src/test.ts'],
+						stagedFiles: [],
+						currentBranch: 'feat/issue-123',
+						isAheadOfRemote: false,
+						isBehindRemote: false,
+					}
+				})
+
+				vi.mocked(mockCommitManager.commitChanges).mockImplementation(async () => {
+					executionOrder.push('commit-execute')
+				})
+
+				vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
+					type: 'issue',
+					number: 123,
+					rawInput: '123',
+				})
+				vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue({
+					number: 123,
+					title: 'Test Issue',
+					state: 'open',
+					body: '',
+					labels: [],
+					assignees: [],
+					url: 'https://github.com/test/repo/issues/123',
+				} as Issue)
+				vi.mocked(mockGitWorktreeManager.findWorktreesByIdentifier).mockResolvedValue([
+					{ path: '/test/issue-123', branch: 'feat/issue-123', commit: 'abc123', bare: false },
+				] as GitWorktree[])
+
+				// This should fail at validation step
+				await expect(
+					command.execute({
+						identifier: '123',
+						options: {},
+					})
+				).rejects.toThrow('Validation failed: TypeScript errors found')
+
+				// ✅ CORRECT: Validation fails, so we never detect or commit changes
+				expect(executionOrder).toEqual([
+					'validation'  // ✅ Validation fails, workflow stops here
+				])
+
+				// Verify CommitManager methods were never called
+				expect(mockCommitManager.detectUncommittedChanges).not.toHaveBeenCalled()
+				expect(mockCommitManager.commitChanges).not.toHaveBeenCalled()
+			})
+		})
+
 		describe('dependency injection', () => {
 			it('should accept GitHubService via constructor', () => {
 				const customService = new GitHubService()
@@ -1293,6 +1441,12 @@ describe('FinishCommand', () => {
 			it('should accept ValidationRunner via constructor', () => {
 				const customRunner = new ValidationRunner()
 				const cmd = new FinishCommand(undefined, undefined, customRunner)
+				expect(cmd).toBeDefined()
+			})
+
+			it('should accept CommitManager via constructor', () => {
+				const customCommitManager = new CommitManager()
+				const cmd = new FinishCommand(undefined, undefined, undefined, customCommitManager)
 				expect(cmd).toBeDefined()
 			})
 

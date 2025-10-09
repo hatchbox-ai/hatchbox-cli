@@ -2,7 +2,8 @@ import { logger } from '../utils/logger.js'
 import { GitHubService } from '../lib/GitHubService.js'
 import { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
 import { ValidationRunner } from '../lib/ValidationRunner.js'
-import type { FinishOptions, GitWorktree } from '../types/index.js'
+import { CommitManager } from '../lib/CommitManager.js'
+import type { FinishOptions, GitWorktree, CommitOptions } from '../types/index.js'
 import path from 'path'
 
 export interface FinishCommandInput {
@@ -22,16 +23,19 @@ export class FinishCommand {
 	private gitHubService: GitHubService
 	private gitWorktreeManager: GitWorktreeManager
 	private validationRunner: ValidationRunner
+	private commitManager: CommitManager
 
 	constructor(
 		gitHubService?: GitHubService,
 		gitWorktreeManager?: GitWorktreeManager,
-		validationRunner?: ValidationRunner
+		validationRunner?: ValidationRunner,
+		commitManager?: CommitManager
 	) {
 		// Dependency injection for testing
 		this.gitHubService = gitHubService ?? new GitHubService()
 		this.gitWorktreeManager = gitWorktreeManager ?? new GitWorktreeManager()
 		this.validationRunner = validationRunner ?? new ValidationRunner()
+		this.commitManager = commitManager ?? new CommitManager()
 	}
 
 	/**
@@ -48,13 +52,14 @@ export class FinishCommand {
 			// Step 3: Log success
 			logger.info(`Validated input: ${this.formatParsedInput(parsed)}`)
 
-			// Step 4: Run pre-merge validations (Sub-Issue #47)
-			if (!input.options.dryRun) {
-				const worktree = worktrees[0]
-				if (!worktree) {
-					throw new Error('No worktree found')
-				}
+			// Get worktree for steps 4 and 5
+			const worktree = worktrees[0]
+			if (!worktree) {
+				throw new Error('No worktree found')
+			}
 
+			// Step 4: Run pre-merge validations FIRST (Sub-Issue #47)
+			if (!input.options.dryRun) {
 				logger.info('Running pre-merge validations...')
 
 				await this.validationRunner.runValidations(worktree.path, {
@@ -65,7 +70,34 @@ export class FinishCommand {
 				logger.info('[DRY RUN] Would run pre-merge validations')
 			}
 
-			// Step 5: Additional workflow steps (PLACEHOLDER - implemented in later sub-issues)
+			// Step 5: Detect uncommitted changes AFTER validation passes
+			const gitStatus = await this.commitManager.detectUncommittedChanges(worktree.path)
+
+			// Step 6: Commit changes only if validation passed AND changes exist
+			if (gitStatus.hasUncommittedChanges) {
+				if (input.options.dryRun) {
+					logger.info('[DRY RUN] Would auto-commit uncommitted changes (validation passed)')
+				} else {
+					logger.info('Validation passed, auto-committing uncommitted changes...')
+
+					const commitOptions: CommitOptions = {
+						dryRun: input.options.dryRun ?? false,
+					}
+
+					// Only add issueNumber if it's an issue
+					if (parsed.type === 'issue' && parsed.number) {
+						commitOptions.issueNumber = parsed.number
+					}
+
+					await this.commitManager.commitChanges(worktree.path, commitOptions)
+
+					logger.success('Changes committed successfully')
+				}
+			} else {
+				logger.debug('No uncommitted changes found')
+			}
+
+			// Step 6: Additional workflow steps (PLACEHOLDER - implemented in later sub-issues)
 			// Migration handling, rebasing, merging, etc.
 			if (input.options.dryRun) {
 				logger.info('[DRY RUN] Would proceed with finish workflow')

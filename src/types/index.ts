@@ -186,3 +186,10 @@ export interface ValidationResult {
 	steps: ValidationStepResult[]
 	totalDuration: number
 }
+
+// Commit management types
+export interface CommitOptions {
+	dryRun?: boolean
+	issueNumber?: number  // For "Fixes #N" trailer
+	message?: string      // Custom message override
+}
