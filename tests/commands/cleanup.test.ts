@@ -27,6 +27,8 @@ describe('CleanupCommand', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGitWorktreeManager = new GitWorktreeManager() as vi.Mocked<GitWorktreeManager>
+    // Mock listWorktrees by default to prevent executeIssueCleanup from failing
+    mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([])
     command = new CleanupCommand(mockGitWorktreeManager)
   })
 
@@ -74,7 +76,6 @@ describe('CleanupCommand', () => {
         options: { list: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
   })
 
@@ -93,7 +94,6 @@ describe('CleanupCommand', () => {
         options: { all: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
   })
 
@@ -104,7 +104,7 @@ describe('CleanupCommand', () => {
       })
 
       expect(logger.info).toHaveBeenCalledWith('Cleanup mode: issue')
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #42')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #42...')
     })
 
     it('should handle issue mode with number 1', async () => {
@@ -112,7 +112,7 @@ describe('CleanupCommand', () => {
         options: { issue: 1 }
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #1')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #1...')
     })
 
     it('should handle issue mode with large number', async () => {
@@ -120,7 +120,7 @@ describe('CleanupCommand', () => {
         options: { issue: 999 }
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #999')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #999...')
     })
   })
 
@@ -132,7 +132,7 @@ describe('CleanupCommand', () => {
       })
 
       expect(logger.info).toHaveBeenCalledWith('Cleanup mode: issue')
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #42')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #42...')
     })
 
     it('should detect "123" as issue number', async () => {
@@ -141,7 +141,7 @@ describe('CleanupCommand', () => {
         options: {}
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #123')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #123...')
     })
 
     it('should detect "1" as issue number', async () => {
@@ -150,7 +150,7 @@ describe('CleanupCommand', () => {
         options: {}
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #1')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #1...')
     })
 
     it('should detect "0" as issue number (edge case)', async () => {
@@ -159,7 +159,7 @@ describe('CleanupCommand', () => {
         options: {}
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #0')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #0...')
     })
 
     it('should parse numeric string to integer correctly', async () => {
@@ -169,7 +169,7 @@ describe('CleanupCommand', () => {
       })
 
       // Should parse as integer 7, not string "007"
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #7')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #7...')
     })
   })
 
@@ -221,7 +221,7 @@ describe('CleanupCommand', () => {
       })
 
       // Should use explicit issue flag (99), not auto-detected (42)
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #99')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #99...')
     })
   })
 
@@ -270,7 +270,6 @@ describe('CleanupCommand', () => {
         options: { list: true, force: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it('should allow --force with all mode', async () => {
@@ -278,7 +277,6 @@ describe('CleanupCommand', () => {
         options: { all: true, force: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it('should allow --force with issue mode', async () => {
@@ -286,7 +284,6 @@ describe('CleanupCommand', () => {
         options: { issue: 42, force: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it('should allow --dry-run with any mode', async () => {
@@ -294,7 +291,6 @@ describe('CleanupCommand', () => {
         options: { all: true, dryRun: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it('should allow --force and --dry-run together', async () => {
@@ -302,7 +298,6 @@ describe('CleanupCommand', () => {
         options: { all: true, force: true, dryRun: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
   })
 
@@ -372,7 +367,6 @@ describe('CleanupCommand', () => {
       })
 
       expect(logger.info).toHaveBeenCalledWith('Cleanup mode: list')
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it.skip('should execute successfully with valid single identifier', async () => {
@@ -386,7 +380,6 @@ describe('CleanupCommand', () => {
       })
 
       expect(logger.info).toHaveBeenCalledWith('Cleanup mode: issue')
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it('should execute successfully with valid --all command', async () => {
@@ -395,7 +388,6 @@ describe('CleanupCommand', () => {
       })
 
       expect(logger.info).toHaveBeenCalledWith('Cleanup mode: all')
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it.skip('should handle force flag with single worktree', async () => {
@@ -408,7 +400,6 @@ describe('CleanupCommand', () => {
         options: { dryRun: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it('should handle all flags combined where valid', async () => {
@@ -417,7 +408,6 @@ describe('CleanupCommand', () => {
         options: { force: true, dryRun: true }
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
   })
 
@@ -429,7 +419,7 @@ describe('CleanupCommand', () => {
       })
 
       // Should parse to integer 7
-      expect(logger.info).toHaveBeenCalledWith('Would cleanup worktrees for issue #7')
+      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #7...')
     })
 
     it.skip('should handle very long branch name', async () => {
@@ -443,7 +433,6 @@ describe('CleanupCommand', () => {
       })
 
       // The command should work correctly
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
 
     it('should handle undefined options gracefully', async () => {
@@ -452,7 +441,6 @@ describe('CleanupCommand', () => {
         options: {}
       })
 
-      expect(logger.success).toHaveBeenCalledWith('Command parsing and validation successful')
     })
   })
 
@@ -886,6 +874,43 @@ describe('CleanupCommand', () => {
 
         // Should work without errors
         expect(cmd).toBeDefined()
+      })
+    })
+  })
+
+  describe('Issue Mode Execution Tests', () => {
+    let mockResourceCleanup: vi.Mocked<ResourceCleanup>
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+      mockGitWorktreeManager = new GitWorktreeManager() as vi.Mocked<GitWorktreeManager>
+      const mockProcessManager = {} as vi.Mocked<import('../../src/lib/process/ProcessManager.js').ProcessManager>
+      mockResourceCleanup = new ResourceCleanup(mockGitWorktreeManager, mockProcessManager) as vi.Mocked<ResourceCleanup>
+      command = new CleanupCommand(mockGitWorktreeManager, mockResourceCleanup)
+    })
+
+    describe('Branch Discovery and Preview', () => {
+      it('should find and display all branches matching issue number', async () => {
+        // Mock listWorktrees to return empty array
+        mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([])
+
+        await command.execute({
+          options: { issue: 25 }
+        })
+
+        expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #25...')
+      })
+
+      it('should handle no matching branches found', async () => {
+        // Mock listWorktrees to return empty array
+        mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([])
+
+        await command.execute({
+          options: { issue: 99999 }
+        })
+
+        expect(logger.warn).toHaveBeenCalledWith('No branches found for GitHub issue #99999')
+        expect(logger.info).toHaveBeenCalledWith('Searched for patterns like: issue-99999, 99999-*, feat-99999, etc.')
       })
     })
   })

@@ -273,3 +273,103 @@ export async function getDefaultBranch(path: string = process.cwd()): Promise<st
     return 'main'
   }
 }
+
+/**
+ * Find all branches related to a GitHub issue number
+ * Matches patterns like: issue-25, issue/25, 25-feature, feat-25, feat/issue-25
+ *
+ * Based on bash cleanup-worktree.sh find_issue_branches() (lines 133-154)
+ */
+export async function findAllBranchesForIssue(
+  issueNumber: number,
+  path: string = process.cwd()
+): Promise<string[]> {
+  // Get all branches (local and remote)
+  const output = await executeGitCommand(['branch', '-a'], { cwd: path })
+
+  const branches: string[] = []
+  const lines = output.split('\n').filter(Boolean)
+
+  // Protected branches to exclude
+  const protectedBranches = ['main', 'master', 'develop']
+
+  for (const line of lines) {
+    // Skip remotes/origin/HEAD pointer
+    if (line.includes('remotes/origin/HEAD')) {
+      continue
+    }
+
+    // Clean the branch name:
+    // 1. Remove git status markers (* + spaces at start)
+    let cleanBranch = line.replace(/^[*+ ]+/, '')
+
+    // 2. Remove 'origin/' prefix if present
+    cleanBranch = cleanBranch.replace(/^origin\//, '')
+
+    // 3. Remove 'remotes/origin/' prefix if present
+    cleanBranch = cleanBranch.replace(/^remotes\/origin\//, '')
+
+    // 4. Trim any remaining whitespace
+    cleanBranch = cleanBranch.trim()
+
+    // Skip protected branches
+    if (protectedBranches.includes(cleanBranch)) {
+      continue
+    }
+
+    // Check if branch contains issue number with strict word boundary pattern
+    // The issue number must NOT be:
+    // - Part of a larger number (preceded or followed by a digit)
+    // - After an unknown word (like "tissue-25")
+    // The issue number CAN be:
+    // - At start: "25-feature"
+    // - After known prefix + separator: "issue-25", "feat-25", "fix-25", "pr-25"
+    // - After just a separator with no prefix: test_25 (separator at start)
+
+    // First check: not part of a larger number
+    const notPartOfNumber = new RegExp(`(?<!\\d)${issueNumber}(?!\\d)`)
+    if (!notPartOfNumber.test(cleanBranch)) {
+      continue
+    }
+
+    // Second check: if preceded by letters, validate they're known issue-related prefixes
+    // This prevents "tissue-25" but allows "issue-25", "feat-25", etc.
+    const beforeNumber = cleanBranch.substring(0, cleanBranch.indexOf(String(issueNumber)))
+
+    if (beforeNumber) {
+      // Extract the last word (letters) before the number
+      const lastWord = beforeNumber.match(/([a-zA-Z]+)[-_/\s]*$/)
+      if (lastWord?.[1]) {
+        const word = lastWord[1].toLowerCase()
+        // Known prefixes for issue-related branches
+        const knownPrefixes = [
+          'issue', 'issues',
+          'feat', 'feature', 'features',
+          'fix', 'fixes', 'bugfix', 'hotfix',
+          'pr', 'pull',
+          'test', 'tests',
+          'chore',
+          'docs',
+          'refactor',
+          'perf',
+          'style',
+          'ci',
+          'build',
+          'revert'
+        ]
+
+        // If we found a word and it's NOT in the known list, skip this branch
+        if (!knownPrefixes.includes(word)) {
+          continue
+        }
+      }
+    }
+
+    // Passed all checks - add to results
+    if (!branches.includes(cleanBranch)) {
+      branches.push(cleanBranch)
+    }
+  }
+
+  return branches
+}

@@ -67,7 +67,7 @@ describe('GitWorktreeManager', () => {
       const result = await manager.listWorktrees()
 
       expect(result).toEqual(mockWorktrees)
-      expect(gitUtils.executeGitCommand).toHaveBeenCalledWith(['worktree', 'list'], {
+      expect(gitUtils.executeGitCommand).toHaveBeenCalledWith(['worktree', 'list', '--porcelain'], {
         cwd: mockRepoPath,
       })
       expect(gitUtils.parseWorktreeList).toHaveBeenCalledWith('mock worktree output')
@@ -90,7 +90,7 @@ describe('GitWorktreeManager', () => {
 
       await manager.listWorktrees({ verbose: true })
 
-      expect(gitUtils.executeGitCommand).toHaveBeenCalledWith(['worktree', 'list', '-v'], {
+      expect(gitUtils.executeGitCommand).toHaveBeenCalledWith(['worktree', 'list', '--porcelain', '-v'], {
         cwd: mockRepoPath,
       })
     })

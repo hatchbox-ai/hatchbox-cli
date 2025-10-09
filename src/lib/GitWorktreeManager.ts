@@ -34,11 +34,13 @@ export class GitWorktreeManager {
 
   /**
    * List all worktrees in the repository
+   * Defaults to porcelain format for reliable machine parsing
    * Equivalent to: git worktree list --porcelain
    */
   async listWorktrees(options: WorktreeListOptions = {}): Promise<GitWorktree[]> {
     const args = ['worktree', 'list']
-    if (options.porcelain) args.push('--porcelain')
+    // Default to porcelain format for consistent parsing (can be disabled with porcelain: false)
+    if (options.porcelain !== false) args.push('--porcelain')
     if (options.verbose) args.push('-v')
 
     const output = await executeGitCommand(args, { cwd: this.repoPath })

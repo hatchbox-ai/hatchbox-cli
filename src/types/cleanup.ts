@@ -69,3 +69,33 @@ export interface BranchDeleteOptions {
 	/** Preview without executing */
 	dryRun?: boolean
 }
+
+/**
+ * Target for batch cleanup - represents a branch that may or may not have a worktree
+ */
+export interface BranchCleanupTarget {
+	/** Branch name */
+	branchName: string
+	/** Whether this branch has an associated worktree */
+	hasWorktree: boolean
+	/** Path to worktree if it exists */
+	worktreePath?: string
+}
+
+/**
+ * Result of batch cleanup operation for an issue
+ */
+export interface BatchCleanupResult {
+	/** Issue number that was cleaned up */
+	issueNumber: number
+	/** Number of branches found matching the issue */
+	targetsFound: number
+	/** Number of worktrees successfully removed */
+	worktreesRemoved: number
+	/** Number of branches successfully deleted */
+	branchesDeleted: number
+	/** Number of failed operations */
+	failed: number
+	/** Individual cleanup results for each branch */
+	results: CleanupResult[]
+}
