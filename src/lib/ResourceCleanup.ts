@@ -1,0 +1,399 @@
+import { GitWorktreeManager } from './GitWorktreeManager.js'
+import { DatabaseManager } from './DatabaseManager.js'
+import { ProcessManager } from './process/ProcessManager.js'
+import { logger } from '../utils/logger.js'
+import type {
+	ResourceCleanupOptions,
+	CleanupResult,
+	OperationResult,
+	SafetyCheck,
+	BranchDeleteOptions,
+} from '../types/cleanup.js'
+import type { GitWorktree } from '../types/worktree.js'
+
+/**
+ * Manages resource cleanup for worktrees
+ * Provides shared cleanup functionality for finish and cleanup commands
+ */
+export class ResourceCleanup {
+	constructor(
+		private gitWorktree: GitWorktreeManager,
+		private processManager: ProcessManager,
+		private database?: DatabaseManager
+	) {}
+
+	/**
+	 * Cleanup a worktree and associated resources
+	 * Main orchestration method
+	 */
+	async cleanupWorktree(
+		identifier: string,
+		options: ResourceCleanupOptions = {}
+	): Promise<CleanupResult> {
+		const operations: OperationResult[] = []
+		const errors: Error[] = []
+
+		logger.info(`Starting cleanup for: ${identifier}`)
+
+		// Parse identifier to determine type and extract number
+		const { number } = this.parseIdentifier(identifier)
+
+		// Step 1: Terminate dev server if applicable
+		if (number !== undefined) {
+			const port = this.processManager.calculatePort(number)
+
+			if (options.dryRun) {
+				operations.push({
+					type: 'dev-server',
+					success: true,
+					message: `[DRY RUN] Would check for dev server on port ${port}`,
+				})
+			} else {
+				try {
+					const terminated = await this.terminateDevServer(port)
+					operations.push({
+						type: 'dev-server',
+						success: true,
+						message: terminated
+							? `Dev server on port ${port} terminated`
+							: `No dev server running on port ${port}`,
+					})
+				} catch (error) {
+					const err = error instanceof Error ? error : new Error('Unknown error')
+					errors.push(err)
+					operations.push({
+						type: 'dev-server',
+						success: false,
+						message: `Failed to terminate dev server`,
+						error: err.message,
+					})
+				}
+			}
+		}
+
+		// Step 2: Find worktree
+		let worktree: GitWorktree | null = null
+		try {
+			const worktrees = await this.gitWorktree.findWorktreesByIdentifier(identifier)
+			worktree = worktrees[0] ?? null
+
+			if (!worktree) {
+				throw new Error(`No worktree found for identifier: ${identifier}`)
+			}
+		} catch (error) {
+			const err = error instanceof Error ? error : new Error('Unknown error')
+			errors.push(err)
+
+			return {
+				identifier,
+				success: false,
+				operations,
+				errors,
+				rollbackRequired: false,
+			}
+		}
+
+		// Step 3: Remove worktree
+		if (options.dryRun) {
+			operations.push({
+				type: 'worktree',
+				success: true,
+				message: `[DRY RUN] Would remove worktree: ${worktree.path}`,
+			})
+		} else {
+			try {
+				const worktreeOptions: { force?: boolean; removeDirectory: true; removeBranch: false } =
+					{
+						removeDirectory: true,
+						removeBranch: false, // Handle branch separately
+					}
+				if (options.force !== undefined) {
+					worktreeOptions.force = options.force
+				}
+				await this.gitWorktree.removeWorktree(worktree.path, worktreeOptions)
+
+				operations.push({
+					type: 'worktree',
+					success: true,
+					message: `Worktree removed: ${worktree.path}`,
+				})
+			} catch (error) {
+				const err = error instanceof Error ? error : new Error('Unknown error')
+				errors.push(err)
+				operations.push({
+					type: 'worktree',
+					success: false,
+					message: `Failed to remove worktree`,
+					error: err.message,
+				})
+			}
+		}
+
+		// Step 4: Delete branch if requested
+		if (options.deleteBranch && worktree) {
+			if (options.dryRun) {
+				operations.push({
+					type: 'branch',
+					success: true,
+					message: `[DRY RUN] Would delete branch: ${worktree.branch}`,
+				})
+			} else {
+				try {
+					const branchOptions: BranchDeleteOptions = { dryRun: false }
+					if (options.force !== undefined) {
+						branchOptions.force = options.force
+					}
+					await this.deleteBranch(worktree.branch, branchOptions)
+
+					operations.push({
+						type: 'branch',
+						success: true,
+						message: `Branch deleted: ${worktree.branch}`,
+					})
+				} catch (error) {
+					const err = error instanceof Error ? error : new Error('Unknown error')
+					errors.push(err)
+					operations.push({
+						type: 'branch',
+						success: false,
+						message: `Failed to delete branch`,
+						error: err.message,
+					})
+				}
+			}
+		}
+
+		// Step 5: Cleanup database if not explicitly kept
+		if (!options.keepDatabase && worktree) {
+			if (options.dryRun) {
+				operations.push({
+					type: 'database',
+					success: true,
+					message: `[DRY RUN] Would cleanup database branch for: ${worktree.branch}`,
+				})
+			} else {
+				try {
+					const cleaned = await this.cleanupDatabase(worktree.branch)
+
+					operations.push({
+						type: 'database',
+						success: true,
+						message: cleaned
+							? `Database branch cleaned up`
+							: `Database cleanup skipped (not available)`,
+					})
+				} catch (error) {
+					const err = error instanceof Error ? error : new Error('Unknown error')
+					errors.push(err)
+					operations.push({
+						type: 'database',
+						success: false,
+						message: `Database cleanup failed`,
+						error: err.message,
+					})
+				}
+			}
+		}
+
+		// Calculate overall success
+		const success = errors.length === 0
+
+		return {
+			identifier,
+			success,
+			operations,
+			errors,
+			rollbackRequired: false, // Cleanup operations are generally not reversible
+		}
+	}
+
+	/**
+	 * Terminate dev server on specified port
+	 */
+	async terminateDevServer(port: number): Promise<boolean> {
+		logger.debug(`Checking for dev server on port ${port}`)
+
+		const processInfo = await this.processManager.detectDevServer(port)
+
+		if (!processInfo) {
+			logger.debug(`No process found on port ${port}`)
+			return false
+		}
+
+		if (!processInfo.isDevServer) {
+			logger.warn(
+				`Process on port ${port} (${processInfo.name}) doesn't appear to be a dev server, skipping`
+			)
+			return false
+		}
+
+		logger.info(`Terminating dev server: ${processInfo.name} (PID: ${processInfo.pid})`)
+
+		await this.processManager.terminateProcess(processInfo.pid)
+
+		// Verify termination
+		const isFree = await this.processManager.verifyPortFree(port)
+		if (!isFree) {
+			throw new Error(`Dev server may still be running on port ${port}`)
+		}
+
+		return true
+	}
+
+	/**
+	 * Delete a Git branch with safety checks
+	 */
+	async deleteBranch(
+		branchName: string,
+		options: BranchDeleteOptions = {}
+	): Promise<boolean> {
+		// Check for protected branches
+		//TODO [CONFIG]: Make this configurable
+		const protectedBranches = ['main', 'master', 'develop']
+		if (protectedBranches.includes(branchName)) {
+			throw new Error(`Cannot delete protected branch: ${branchName}`)
+		}
+
+		if (options.dryRun) {
+			logger.info(`[DRY RUN] Would delete branch: ${branchName}`)
+			return true
+		}
+
+		// Use GitWorktreeManager's removeWorktree with removeBranch option
+		// Or execute git branch -D directly via executeGitCommand
+		const { executeGitCommand } = await import('../utils/git.js')
+
+		try {
+			// Use safe delete (-d) unless force is specified
+			const deleteFlag = options.force ? '-D' : '-d'
+			await executeGitCommand(['branch', deleteFlag, branchName])
+
+			logger.info(`Branch deleted: ${branchName}`)
+			return true
+		} catch (error) {
+			if (options.force) {
+				throw error
+			}
+
+			// If safe delete failed, provide helpful message
+			throw new Error(
+				`Cannot delete unmerged branch '${branchName}'. Use --force to delete anyway.`
+			)
+		}
+	}
+
+	/**
+	 * Cleanup database branch
+	 * Gracefully handles missing DatabaseManager
+	 */
+	async cleanupDatabase(_branchName: string): Promise<boolean> {
+		if (!this.database) {
+			logger.warn('Database manager not available, skipping database cleanup')
+			return false
+		}
+
+		// TODO: Implement when DatabaseManager is complete (Issue #5)
+		// For now, just log a warning
+		logger.warn('Database cleanup not yet implemented (pending Issue #5)')
+		return false
+
+		// Future implementation:
+		// try {
+		//   await this.database.deleteBranch(branchName)
+		//   logger.info(`Database branch deleted: ${branchName}`)
+		//   return true
+		// } catch (error) {
+		//   logger.warn(`Database cleanup failed: ${error.message}`)
+		//   return false
+		// }
+	}
+
+	/**
+	 * Cleanup multiple worktrees
+	 */
+	async cleanupMultipleWorktrees(
+		identifiers: string[],
+		options: ResourceCleanupOptions = {}
+	): Promise<CleanupResult[]> {
+		const results: CleanupResult[] = []
+
+		for (const identifier of identifiers) {
+			const result = await this.cleanupWorktree(identifier, options)
+			results.push(result)
+		}
+
+		return results
+	}
+
+	/**
+	 * Validate cleanup safety
+	 */
+	async validateCleanupSafety(identifier: string): Promise<SafetyCheck> {
+		const warnings: string[] = []
+		const blockers: string[] = []
+
+		// Find worktree
+		const worktrees = await this.gitWorktree.findWorktreesByIdentifier(identifier)
+
+		if (worktrees.length === 0) {
+			blockers.push(`No worktree found for: ${identifier}`)
+			return { isSafe: false, warnings, blockers }
+		}
+
+		const worktree = worktrees[0]
+		if (!worktree) {
+			blockers.push(`No worktree found for: ${identifier}`)
+			return { isSafe: false, warnings, blockers }
+		}
+
+		// Check if main worktree
+		const isMain = await this.gitWorktree.isMainWorktree(worktree)
+		if (isMain) {
+			blockers.push('Cannot cleanup main worktree')
+		}
+
+		// Check for uncommitted changes
+		const { hasUncommittedChanges } = await import('../utils/git.js')
+		const hasChanges = await hasUncommittedChanges(worktree.path)
+		if (hasChanges) {
+			warnings.push('Worktree has uncommitted changes')
+		}
+
+		return {
+			isSafe: blockers.length === 0,
+			warnings,
+			blockers,
+		}
+	}
+
+	/**
+	 * Parse identifier to determine type and extract number
+	 * Helper method for port calculation
+	 */
+	private parseIdentifier(identifier: string): {
+		type: 'issue' | 'pr' | 'branch'
+		number?: number
+	} {
+		// Check for issue pattern
+		const issueMatch = identifier.match(/issue-(\d+)/)
+		if (issueMatch?.[1]) {
+			return { type: 'issue', number: parseInt(issueMatch[1], 10) }
+		}
+
+		// Check for PR pattern
+		const prMatch = identifier.match(/(?:pr|PR)[/-](\d+)/)
+		if (prMatch?.[1]) {
+			return { type: 'pr', number: parseInt(prMatch[1], 10) }
+		}
+
+		// Check for numeric identifier
+		const numericMatch = identifier.match(/^#?(\d+)$/)
+		if (numericMatch?.[1]) {
+			// Assume issue for numeric identifiers
+			return { type: 'issue', number: parseInt(numericMatch[1], 10) }
+		}
+
+		// Treat as branch name
+		return { type: 'branch' }
+	}
+}

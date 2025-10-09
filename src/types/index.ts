@@ -143,6 +143,12 @@ export * from './environment.js'
 // Hatchbox types
 export * from './hatchbox.js'
 
+// Cleanup types
+export * from './cleanup.js'
+
+// Process types (excluding Platform which is already defined above)
+export type { ProcessInfo } from './process.js'
+
 // Color synchronization types
 export interface RgbColor {
 	r: number
