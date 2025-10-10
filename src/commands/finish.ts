@@ -7,6 +7,8 @@ import { MergeManager } from '../lib/MergeManager.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
 import { ResourceCleanup } from '../lib/ResourceCleanup.js'
 import { ProcessManager } from '../lib/process/ProcessManager.js'
+import { BuildRunner } from '../lib/BuildRunner.js'
+import { findMainWorktreePath } from '../utils/git.js'
 import type { FinishOptions, GitWorktree, CommitOptions, MergeOptions, PullRequest } from '../types/index.js'
 import type { ResourceCleanupOptions, CleanupResult } from '../types/cleanup.js'
 import type { ParsedInput } from './start.js'
@@ -33,6 +35,7 @@ export class FinishCommand {
 	private mergeManager: MergeManager
 	private identifierParser: IdentifierParser
 	private resourceCleanup: ResourceCleanup
+	private buildRunner: BuildRunner
 
 	constructor(
 		gitHubService?: GitHubService,
@@ -41,7 +44,8 @@ export class FinishCommand {
 		commitManager?: CommitManager,
 		mergeManager?: MergeManager,
 		identifierParser?: IdentifierParser,
-		resourceCleanup?: ResourceCleanup
+		resourceCleanup?: ResourceCleanup,
+		buildRunner?: BuildRunner
 	) {
 		// Dependency injection for testing
 		this.gitHubService = gitHubService ?? new GitHubService()
@@ -53,6 +57,7 @@ export class FinishCommand {
 		this.resourceCleanup =
 			resourceCleanup ??
 			new ResourceCleanup(this.gitWorktreeManager, new ProcessManager(), undefined)
+		this.buildRunner = buildRunner ?? new BuildRunner()
 	}
 
 	/**
@@ -463,6 +468,13 @@ export class FinishCommand {
 		await this.mergeManager.performFastForwardMerge(worktree.branch, worktree.path, mergeOptions)
 		logger.success('Fast-forward merge completed successfully')
 
+		// Step 5.5: Run post-merge build verification (CLI projects only)
+		if (!options.skipBuild) {
+			await this.runPostMergeBuild(worktree.path, options)
+		} else {
+			logger.debug('Skipping build verification (--skip-build flag provided)')
+		}
+
 		// Step 6: Post-merge cleanup
 		await this.performPostMergeCleanup(parsed, options, worktree)
 	}
@@ -578,6 +590,36 @@ export class FinishCommand {
 			logger.warn(`Cleanup failed: ${errorMessage}`)
 			this.showManualCleanupInstructions(worktree)
 			throw error // Re-throw to fail the command
+		}
+	}
+
+	/**
+	 * Run post-merge build verification for CLI projects
+	 * Runs in main worktree to verify merged code builds successfully
+	 */
+	private async runPostMergeBuild(
+		worktreePath: string,
+		options: FinishOptions
+	): Promise<void> {
+		// Find main worktree path
+		const mainWorktreePath = await findMainWorktreePath(worktreePath)
+
+		// Check if dry-run
+		if (options.dryRun) {
+			logger.info('[DRY RUN] Would run post-merge build')
+			return
+		}
+
+		logger.info('Running post-merge build...')
+
+		const result = await this.buildRunner.runBuild(mainWorktreePath, {
+			dryRun: options.dryRun ?? false,
+		})
+
+		if (result.skipped) {
+			logger.debug(`Build skipped: ${result.reason}`)
+		} else {
+			logger.success('Post-merge build completed successfully')
 		}
 	}
 

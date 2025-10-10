@@ -110,6 +110,7 @@ export interface FinishOptions {
   force?: boolean      // -f, --force - Skip confirmation prompts
   dryRun?: boolean    // -n, --dry-run - Preview actions without executing
   pr?: number         // --pr <number> - Treat input as PR number
+  skipBuild?: boolean // --skip-build - Skip post-merge build verification
 }
 
 /**

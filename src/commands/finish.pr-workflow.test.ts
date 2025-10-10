@@ -7,14 +7,16 @@ import { CommitManager } from '../../src/lib/CommitManager.js'
 import { MergeManager } from '../../src/lib/MergeManager.js'
 import { IdentifierParser } from '../../src/utils/IdentifierParser.js'
 import { ResourceCleanup } from '../../src/lib/ResourceCleanup.js'
+import { BuildRunner } from '../../src/lib/BuildRunner.js'
 import type { PullRequest, Issue, GitWorktree } from '../../src/types/index.js'
 
-// Mock git utils module for pushBranchToRemote
+// Mock git utils module for pushBranchToRemote and findMainWorktreePath
 vi.mock('../../src/utils/git.js', async () => {
 	const actual = await vi.importActual<typeof import('../../src/utils/git.js')>('../../src/utils/git.js')
 	return {
 		...actual,
 		pushBranchToRemote: vi.fn().mockResolvedValue(undefined),
+		findMainWorktreePath: vi.fn().mockResolvedValue('/test/main'),
 	}
 })
 
@@ -860,6 +862,15 @@ describe('FinishCommand - Issue Workflow (Regression Tests)', () => {
 			}),
 		} as unknown as ResourceCleanup
 
+		const mockBuildRunner = {
+			runBuild: vi.fn().mockResolvedValue({
+				success: true,
+				skipped: true,
+				reason: 'Not a CLI project',
+				duration: 0,
+			}),
+		} as unknown as BuildRunner
+
 		// Create command with mocked dependencies
 		finishCommand = new FinishCommand(
 			mockGitHubService,
@@ -868,7 +879,8 @@ describe('FinishCommand - Issue Workflow (Regression Tests)', () => {
 			mockCommitManager,
 			mockMergeManager,
 			mockIdentifierParser,
-			mockResourceCleanup
+			mockResourceCleanup,
+			mockBuildRunner
 		)
 	})
 

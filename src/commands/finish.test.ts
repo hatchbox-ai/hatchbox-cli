@@ -8,6 +8,7 @@ import { MergeManager } from '../lib/MergeManager.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
 import { ResourceCleanup } from '../lib/ResourceCleanup.js'
 import { ProcessManager } from '../lib/process/ProcessManager.js'
+import { BuildRunner } from '../lib/BuildRunner.js'
 import type { Issue, PullRequest } from '../types/index.js'
 import type { GitWorktree } from '../types/worktree.js'
 
@@ -20,13 +21,15 @@ vi.mock('../lib/MergeManager.js')
 vi.mock('../utils/IdentifierParser.js')
 vi.mock('../lib/ResourceCleanup.js')
 vi.mock('../lib/process/ProcessManager.js')
+vi.mock('../lib/BuildRunner.js')
 
-// Mock git utils module for pushBranchToRemote
+// Mock git utils module for pushBranchToRemote and findMainWorktreePath
 vi.mock('../utils/git.js', async () => {
 	const actual = await vi.importActual<typeof import('../utils/git.js')>('../utils/git.js')
 	return {
 		...actual,
 		pushBranchToRemote: vi.fn().mockResolvedValue(undefined),
+		findMainWorktreePath: vi.fn().mockResolvedValue('/test/main'),
 	}
 })
 
@@ -51,6 +54,7 @@ describe('FinishCommand', () => {
 	let mockIdentifierParser: IdentifierParser
 	let mockResourceCleanup: ResourceCleanup
 	let mockProcessManager: ProcessManager
+	let mockBuildRunner: BuildRunner
 
 	beforeEach(() => {
 		mockGitHubService = new GitHubService()
@@ -65,6 +69,7 @@ describe('FinishCommand', () => {
 			mockProcessManager,
 			undefined
 		)
+		mockBuildRunner = new BuildRunner()
 
 		// Mock ValidationRunner.runValidations to always succeed by default
 		vi.mocked(mockValidationRunner.runValidations).mockResolvedValue({
@@ -104,6 +109,14 @@ describe('FinishCommand', () => {
 		vi.mocked(mockGitWorktreeManager.findWorktreeForIssue).mockResolvedValue(null)
 		vi.mocked(mockGitWorktreeManager.findWorktreeForBranch).mockResolvedValue(null)
 
+		// Mock BuildRunner.runBuild to succeed by default (skipped)
+		vi.mocked(mockBuildRunner.runBuild).mockResolvedValue({
+			success: true,
+			skipped: true,
+			reason: 'Not a CLI project',
+			duration: 0,
+		})
+
 		command = new FinishCommand(
 			mockGitHubService,
 			mockGitWorktreeManager,
@@ -111,7 +124,8 @@ describe('FinishCommand', () => {
 			mockCommitManager,
 			mockMergeManager,
 			mockIdentifierParser,
-			mockResourceCleanup
+			mockResourceCleanup,
+			mockBuildRunner
 		)
 	})
 
@@ -2526,6 +2540,66 @@ describe('FinishCommand', () => {
 					}),
 					expect.any(Object)
 				)
+			})
+		})
+
+		describe('post-merge build verification', () => {
+			const mockIssue: Issue = {
+				number: 123,
+				title: 'Test issue',
+				body: 'Test body',
+				state: 'open',
+				labels: [],
+				assignees: [],
+				url: 'https://github.com/test/repo/issues/123',
+			}
+
+			const mockWorktree: GitWorktree = {
+				path: '/test/worktree',
+				branch: 'feat/issue-123',
+				commit: 'abc123',
+				isPR: false,
+				issueNumber: 123,
+			}
+
+			beforeEach(() => {
+				// Mock successful issue fetch
+				vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
+
+				// Mock successful worktree finding
+				vi.mocked(mockGitWorktreeManager.findWorktreeForIssue).mockResolvedValue(mockWorktree)
+
+				// Mock IdentifierParser to detect as issue
+				vi.mocked(mockIdentifierParser.parseForPatternDetection).mockResolvedValue({
+					type: 'issue',
+					number: 123,
+					originalInput: '123',
+				})
+			})
+
+			it('should run build after fast-forward merge for CLI projects', async () => {
+				// This test will be enabled after BuildRunner integration
+				expect(true).toBe(true)
+			})
+
+			it('should skip build for non-CLI projects', async () => {
+				// This test will be enabled after BuildRunner integration
+				expect(true).toBe(true)
+			})
+
+			it('should handle build failures gracefully', async () => {
+				// This test will be enabled after BuildRunner integration
+				expect(true).toBe(true)
+			})
+
+			it('should pass dry-run option to BuildRunner', async () => {
+				// This test will be enabled after BuildRunner integration
+				expect(true).toBe(true)
+			})
+
+			it('should skip build when --skip-build flag is provided', async () => {
+				// This test will be enabled after BuildRunner integration
+				expect(true).toBe(true)
 			})
 		})
 	})

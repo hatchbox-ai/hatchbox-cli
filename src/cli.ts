@@ -89,6 +89,7 @@ program
   .option('-f, --force', 'Skip confirmation prompts')
   .option('-n, --dry-run', 'Preview actions without executing')
   .option('--pr <number>', 'Treat input as PR number', parseFloat)
+  .option('--skip-build', 'Skip post-merge build verification')
   .action(async (identifier: string | undefined, options: FinishOptions) => {
     try {
       const { FinishCommand } = await import('./commands/finish.js')
