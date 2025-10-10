@@ -220,7 +220,7 @@ describe('CommitManager', () => {
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -233,7 +233,7 @@ describe('CommitManager', () => {
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'WIP: Auto-commit uncommitted changes'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -276,7 +276,7 @@ describe('CommitManager', () => {
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'WIP: Auto-commit for issue #999999999\n\nFixes #999999999'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
   })
@@ -299,7 +299,7 @@ describe('CommitManager', () => {
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'WIP: Auto-commit uncommitted changes'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -366,7 +366,7 @@ describe('CommitManager', () => {
       const commitCall = calls.find(call => call[0][0] === 'commit')
 
       expect(addCall?.[1]).toEqual({ cwd: mockWorktreePath })
-      expect(commitCall?.[1]).toEqual({ cwd: mockWorktreePath, stdio: 'inherit' })
+      expect(commitCall?.[1]).toEqual({ cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 })
     })
   })
 
@@ -503,7 +503,7 @@ describe('CommitManager', () => {
       expect(claude.launchClaude).toHaveBeenCalled()
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'Add user authentication with JWT tokens'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -598,7 +598,7 @@ describe('CommitManager', () => {
       expect(claude.launchClaude).not.toHaveBeenCalled()
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -611,11 +611,11 @@ describe('CommitManager', () => {
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
-    it('should fallback when Claude returns error keyword', async () => {
+    it('should use Claude message even when it contains error keywords', async () => {
       vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
       vi.mocked(claude.launchClaude).mockResolvedValue('Error: API rate limit exceeded')
       vi.mocked(git.executeGitCommand).mockResolvedValue('')
@@ -623,12 +623,12 @@ describe('CommitManager', () => {
       await manager.commitChanges(mockWorktreePath, { issueNumber: 123, dryRun: false })
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
-        ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        ['commit', '-e', '-m', 'Error: API rate limit exceeded\n\nFixes #123'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
-    it('should fallback when Claude output contains "prompt.*too.*long"', async () => {
+    it('should use Claude message even when it contains "prompt too long"', async () => {
       vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
       vi.mocked(claude.launchClaude).mockResolvedValue('Error: prompt is too long for this model')
       vi.mocked(git.executeGitCommand).mockResolvedValue('')
@@ -636,8 +636,8 @@ describe('CommitManager', () => {
       await manager.commitChanges(mockWorktreePath, { issueNumber: 123, dryRun: false })
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
-        ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        ['commit', '-e', '-m', 'Error: prompt is too long for this model\n\nFixes #123'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -650,7 +650,7 @@ describe('CommitManager', () => {
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -665,59 +665,58 @@ describe('CommitManager', () => {
     })
   })
 
-  describe('Claude Output Validation', () => {
+  describe('Claude Output Acceptance', () => {
     beforeEach(() => {
       vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
     })
 
-    it('should reject message containing "error" (case-sensitive)', async () => {
+    it('should accept message containing "error"', async () => {
       vi.mocked(claude.launchClaude).mockResolvedValue('error in processing')
       vi.mocked(git.executeGitCommand).mockResolvedValue('')
 
       await manager.commitChanges(mockWorktreePath, { issueNumber: 123, dryRun: false })
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
-        ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        ['commit', '-e', '-m', 'error in processing\n\nFixes #123'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
-    it('should reject message containing "Error"', async () => {
+    it('should accept message containing "Error"', async () => {
       vi.mocked(claude.launchClaude).mockResolvedValue('Error: something failed')
       vi.mocked(git.executeGitCommand).mockResolvedValue('')
 
       await manager.commitChanges(mockWorktreePath, { issueNumber: 123, dryRun: false })
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
-        ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        ['commit', '-e', '-m', 'Error: something failed\n\nFixes #123'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
-    it('should reject message containing "API"', async () => {
+    it('should accept message containing "API"', async () => {
       vi.mocked(claude.launchClaude).mockResolvedValue('API call failed')
       vi.mocked(git.executeGitCommand).mockResolvedValue('')
 
       await manager.commitChanges(mockWorktreePath, { issueNumber: 123, dryRun: false })
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
-        ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        ['commit', '-e', '-m', 'API call failed\n\nFixes #123'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
     it('should accept valid message with "error" in context (e.g., "Fix error handling")', async () => {
-      // Note: This test documents current limitation - bash script would reject this
-      // The error pattern is case-insensitive, so it rejects "Fix error handling"
+      // This now works correctly since we removed error pattern validation
       vi.mocked(claude.launchClaude).mockResolvedValue('Fix error handling in auth module')
       vi.mocked(git.executeGitCommand).mockResolvedValue('')
 
       await manager.commitChanges(mockWorktreePath, { issueNumber: 123, dryRun: false })
 
-      // Falls back due to error pattern match (this is the limitation)
+      // Should now use Claude's message instead of falling back
       expect(git.executeGitCommand).toHaveBeenCalledWith(
-        ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        ['commit', '-e', '-m', 'Fix error handling in auth module\n\nFixes #123'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
 
@@ -729,7 +728,7 @@ describe('CommitManager', () => {
 
       expect(git.executeGitCommand).toHaveBeenCalledWith(
         ['commit', '-e', '-m', 'Add user authentication with JWT'],
-        { cwd: mockWorktreePath, stdio: 'inherit' }
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
       )
     })
   })

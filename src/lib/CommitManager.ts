@@ -80,7 +80,8 @@ export class CommitManager {
         logger.info('Opening git editor for commit message review...')
         await executeGitCommand(['commit', '-e', '-m', message], {
           cwd: worktreePath,
-          stdio: 'inherit'
+          stdio: 'inherit',
+          timeout: 300000 // 5 minutes for interactive editing
         })
       }
     } catch (error) {
@@ -227,11 +228,6 @@ export class CommitManager {
         preview: result.substring(0, 200) + (result.length > 100 ? '...' : '')
       })
 
-      // Validate output doesn't contain error patterns (check raw output first)
-      if (this.containsErrorPatterns(result)) {
-        logger.warn('Claude output contains error patterns, using fallback', { output: result })
-        return null
-      }
 
       // Sanitize output - remove meta-commentary and clean formatting
       logger.debug('Sanitizing Claude output...')
@@ -349,18 +345,28 @@ Start your response immediately with the commit message text.
       cleaned = cleaned.replace(pattern, '').trim()
     }
 
-    // Extract content after common separators if meta-commentary detected
-    const separators = [':', '\n', '  ']
-    for (const sep of separators) {
-      if (cleaned.includes(sep)) {
-        const parts = cleaned.split(sep)
-        if (parts.length > 1) {
-          // Take the last substantial part (likely the actual commit message)
-          const lastPart = parts[parts.length - 1]?.trim()
-          if (lastPart && lastPart.length > 10 && !lastPart.toLowerCase().includes('commit message')) {
-            cleaned = lastPart
-            break
-          }
+    // Extract content after separators only if it looks like meta-commentary
+    // Only split on colons if there's clear meta-commentary before it
+    if (cleaned.includes(':')) {
+      const colonIndex = cleaned.indexOf(':')
+      const beforeColon = cleaned.substring(0, colonIndex).trim().toLowerCase()
+
+      // Only split if the text before colon looks like meta-commentary
+      const metaIndicators = [
+        'here is the commit message',
+        'commit message',
+        'here is',
+        'the message should be',
+        'i suggest',
+        'my suggestion'
+      ]
+
+      const isMetaCommentary = metaIndicators.some(indicator => beforeColon.includes(indicator))
+
+      if (isMetaCommentary) {
+        const afterColon = cleaned.substring(colonIndex + 1).trim()
+        if (afterColon && afterColon.length > 10) {
+          cleaned = afterColon
         }
       }
     }
@@ -377,18 +383,5 @@ Start your response immediately with the commit message text.
     return cleaned
   }
 
-  /**
-   * Check if Claude output contains error patterns (from bash script)
-   * Pattern: (error|Error|API|prompt.*too.*long)
-   */
-  private containsErrorPatterns(output: string): boolean {
-    const errorPatterns = [
-      /error/i,           // Case-insensitive "error"
-      /\bAPI\b/,          // Word boundary "API"
-      /prompt.*too.*long/i, // Token limit errors
-    ]
-
-    return errorPatterns.some((pattern) => pattern.test(output))
-  }
 
 }
