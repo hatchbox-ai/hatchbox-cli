@@ -414,3 +414,65 @@ export async function findAllBranchesForIssue(
 
   return branches
 }
+
+/**
+ * Push a branch to remote repository
+ * Used for PR workflow to push changes to remote without merging locally
+ *
+ * @param branchName - The branch name to push
+ * @param worktreePath - The worktree path where the branch is checked out
+ * @param options - Push options
+ * @throws Error if push fails
+ */
+export async function pushBranchToRemote(
+  branchName: string,
+  worktreePath: string,
+  options?: { dryRun?: boolean }
+): Promise<void> {
+  if (options?.dryRun) {
+    // In dry-run mode, just log what would be done
+    return
+  }
+
+  try {
+    // Execute: git push origin <branch-name>
+    // This matches the bash script behavior (merge-and-clean.sh line 359)
+    await executeGitCommand(['push', 'origin', branchName], {
+      cwd: worktreePath,
+      timeout: 120000, // 120 second timeout for push operations
+    })
+  } catch (error) {
+    // Provide helpful error message based on common push failures
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    // Check for common error patterns
+    if (errorMessage.includes('failed to push') || errorMessage.includes('rejected')) {
+      throw new Error(
+        `Failed to push changes to origin/${branchName}\n\n` +
+        `   Possible causes:\n` +
+        `   • Remote branch was deleted\n` +
+        `   • Push was rejected (non-fast-forward)\n` +
+        `   • Network connectivity issues\n\n` +
+        `   To retry: hb finish --pr <number>\n` +
+        `   To force push: git push origin ${branchName} --force`
+      )
+    }
+
+    if (errorMessage.includes('Could not resolve host') || errorMessage.includes('network')) {
+      throw new Error(
+        `Failed to push changes to origin/${branchName}: Network connectivity issues\n\n` +
+        `   Check your internet connection and try again.`
+      )
+    }
+
+    if (errorMessage.includes('No such remote')) {
+      throw new Error(
+        `Failed to push changes: Remote 'origin' not found\n\n` +
+        `   Configure remote: git remote add origin <url>`
+      )
+    }
+
+    // For other errors, re-throw with original message
+    throw new Error(`Failed to push to remote: ${errorMessage}`)
+  }
+}

@@ -21,6 +21,15 @@ vi.mock('../utils/IdentifierParser.js')
 vi.mock('../lib/ResourceCleanup.js')
 vi.mock('../lib/process/ProcessManager.js')
 
+// Mock git utils module for pushBranchToRemote
+vi.mock('../utils/git.js', async () => {
+	const actual = await vi.importActual<typeof import('../utils/git.js')>('../utils/git.js')
+	return {
+		...actual,
+		pushBranchToRemote: vi.fn().mockResolvedValue(undefined),
+	}
+})
+
 // Mock the logger to prevent console output during tests
 vi.mock('../utils/logger.js', () => ({
 	logger: {
@@ -1444,7 +1453,9 @@ describe('FinishCommand', () => {
 					})
 
 					expect(mockGitHubService.fetchPR).toHaveBeenCalledWith(456)
-					expect(mockValidationRunner.runValidations).toHaveBeenCalled()
+					// Closed PRs skip validation and go straight to cleanup
+					expect(mockValidationRunner.runValidations).not.toHaveBeenCalled()
+					expect(mockResourceCleanup.cleanupWorktree).toHaveBeenCalled()
 				})
 
 				it('should allow merged PR (cleanup-only mode)', async () => {
@@ -1469,7 +1480,9 @@ describe('FinishCommand', () => {
 					})
 
 					expect(mockGitHubService.fetchPR).toHaveBeenCalledWith(456)
-					expect(mockValidationRunner.runValidations).toHaveBeenCalled()
+					// Merged PRs skip validation and go straight to cleanup
+					expect(mockValidationRunner.runValidations).not.toHaveBeenCalled()
+					expect(mockResourceCleanup.cleanupWorktree).toHaveBeenCalled()
 				})
 
 				it('should throw error if PR not found on GitHub', async () => {
@@ -1951,9 +1964,16 @@ describe('FinishCommand', () => {
 					})
 
 					expect(mockGitHubService.fetchPR).toHaveBeenCalledWith(500)
-					expect(mockMergeManager.rebaseOnMain).toHaveBeenCalledWith(
+					// Open PRs use push workflow, not rebase/merge workflow
+					expect(mockMergeManager.rebaseOnMain).not.toHaveBeenCalled()
+					expect(mockMergeManager.performFastForwardMerge).not.toHaveBeenCalled()
+
+					// Should push to remote
+					const { pushBranchToRemote } = await import('../utils/git.js')
+					expect(pushBranchToRemote).toHaveBeenCalledWith(
+						'feat/test',
 						'/test/worktree',
-						expect.objectContaining({ force: true })
+						expect.objectContaining({ dryRun: false })
 					)
 				})
 
@@ -1985,10 +2005,13 @@ describe('FinishCommand', () => {
 					})
 
 					expect(mockGitHubService.fetchPR).toHaveBeenCalledWith(600)
-					expect(mockMergeManager.rebaseOnMain).toHaveBeenCalledWith(
-						'/test/worktree',
-						expect.objectContaining({ dryRun: true })
-					)
+					// Open PRs use push workflow, not rebase/merge workflow
+					expect(mockMergeManager.rebaseOnMain).not.toHaveBeenCalled()
+					expect(mockMergeManager.performFastForwardMerge).not.toHaveBeenCalled()
+
+					// In dry run, push should not be called
+					const { pushBranchToRemote } = await import('../utils/git.js')
+					expect(pushBranchToRemote).not.toHaveBeenCalled()
 				})
 
 				it('should handle all three flags together', async () => {
@@ -2019,15 +2042,13 @@ describe('FinishCommand', () => {
 					})
 
 					expect(mockGitHubService.fetchPR).toHaveBeenCalledWith(700)
-					expect(mockMergeManager.rebaseOnMain).toHaveBeenCalledWith(
-						'/test/worktree',
-						expect.objectContaining({ dryRun: true, force: true })
-					)
-					expect(mockMergeManager.performFastForwardMerge).toHaveBeenCalledWith(
-						'feat/test',
-						'/test/worktree',
-						expect.objectContaining({ dryRun: true, force: true })
-					)
+					// Open PRs use push workflow, not rebase/merge workflow
+					expect(mockMergeManager.rebaseOnMain).not.toHaveBeenCalled()
+					expect(mockMergeManager.performFastForwardMerge).not.toHaveBeenCalled()
+
+					// In dry run, push should not be called
+					const { pushBranchToRemote } = await import('../utils/git.js')
+					expect(pushBranchToRemote).not.toHaveBeenCalled()
 				})
 			})
 		})
@@ -2472,14 +2493,8 @@ describe('FinishCommand', () => {
 					options: {},
 				})
 
-				// Verify cleanup was called with PR type
-				expect(mockResourceCleanup.cleanupWorktree).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: 'pr',
-						number: 456,
-					}),
-					expect.any(Object)
-				)
+				// Verify cleanup was NOT called for open PR (should only push and keep active)
+				expect(mockResourceCleanup.cleanupWorktree).not.toHaveBeenCalled()
 			})
 
 			it('should work with branch identifiers', async () => {

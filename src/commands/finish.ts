@@ -7,7 +7,7 @@ import { MergeManager } from '../lib/MergeManager.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
 import { ResourceCleanup } from '../lib/ResourceCleanup.js'
 import { ProcessManager } from '../lib/process/ProcessManager.js'
-import type { FinishOptions, GitWorktree, CommitOptions, MergeOptions } from '../types/index.js'
+import type { FinishOptions, GitWorktree, CommitOptions, MergeOptions, PullRequest } from '../types/index.js'
 import type { ResourceCleanupOptions, CleanupResult } from '../types/cleanup.js'
 import type { ParsedInput } from './start.js'
 import path from 'path'
@@ -69,69 +69,24 @@ export class FinishCommand {
 			// Step 3: Log success
 			logger.info(`Validated input: ${this.formatParsedInput(parsed)}`)
 
-			// Get worktree for steps 4 and 5
+			// Get worktree for workflow execution
 			const worktree = worktrees[0]
 			if (!worktree) {
 				throw new Error('No worktree found')
 			}
 
-			// Step 4: Run pre-merge validations FIRST (Sub-Issue #47)
-			if (!input.options.dryRun) {
-				logger.info('Running pre-merge validations...')
-
-				await this.validationRunner.runValidations(worktree.path, {
-					dryRun: input.options.dryRun ?? false,
-				})
-				logger.success('All validations passed')
-			} else {
-				logger.info('[DRY RUN] Would run pre-merge validations')
-			}
-
-			// Step 5: Detect uncommitted changes AFTER validation passes
-			const gitStatus = await this.commitManager.detectUncommittedChanges(worktree.path)
-
-			// Step 6: Commit changes only if validation passed AND changes exist
-			if (gitStatus.hasUncommittedChanges) {
-				if (input.options.dryRun) {
-					logger.info('[DRY RUN] Would auto-commit uncommitted changes (validation passed)')
-				} else {
-					logger.info('Validation passed, auto-committing uncommitted changes...')
-
-					const commitOptions: CommitOptions = {
-						dryRun: input.options.dryRun ?? false,
-					}
-
-					// Only add issueNumber if it's an issue
-					if (parsed.type === 'issue' && parsed.number) {
-						commitOptions.issueNumber = parsed.number
-					}
-
-					await this.commitManager.commitChanges(worktree.path, commitOptions)
-
-					logger.success('Changes committed successfully')
+			// Step 4: Branch based on input type
+			if (parsed.type === 'pr') {
+				// Fetch PR to get current state
+				if (!parsed.number) {
+					throw new Error('Invalid PR number')
 				}
+				const pr = await this.gitHubService.fetchPR(parsed.number)
+				await this.executePRWorkflow(parsed, input.options, worktree, pr)
 			} else {
-				logger.debug('No uncommitted changes found')
+				// Execute traditional issue/branch workflow
+				await this.executeIssueWorkflow(parsed, input.options, worktree)
 			}
-
-			// Step 7: Rebase branch on main
-			logger.info('Rebasing branch on main...')
-
-			const mergeOptions: MergeOptions = {
-				dryRun: input.options.dryRun ?? false,
-				force: input.options.force ?? false,
-			}
-
-			await this.mergeManager.rebaseOnMain(worktree.path, mergeOptions)
-			logger.success('Branch rebased successfully')
-
-			// Step 8: Perform fast-forward merge
-			logger.info('Performing fast-forward merge...')
-			await this.mergeManager.performFastForwardMerge(worktree.branch, worktree.path, mergeOptions)
-			logger.success('Fast-forward merge completed successfully')
-
-			// Step 9: Post-merge cleanup
-			await this.performPostMergeCleanup(parsed, input.options, worktree)
 		} catch (error) {
 			if (error instanceof Error) {
 				logger.error(`${error.message}`)
@@ -441,6 +396,188 @@ export class FinishCommand {
 				return `Branch '${parsed.branchName}'${autoLabel}`
 			default:
 				return 'Unknown input'
+		}
+	}
+
+	/**
+	 * Execute workflow for issues and branches (merge into main)
+	 * This is the traditional workflow: validate → commit → rebase → merge → cleanup
+	 */
+	private async executeIssueWorkflow(
+		parsed: ParsedFinishInput,
+		options: FinishOptions,
+		worktree: GitWorktree
+	): Promise<void> {
+		// Step 1: Run pre-merge validations FIRST (Sub-Issue #47)
+		if (!options.dryRun) {
+			logger.info('Running pre-merge validations...')
+
+			await this.validationRunner.runValidations(worktree.path, {
+				dryRun: options.dryRun ?? false,
+			})
+			logger.success('All validations passed')
+		} else {
+			logger.info('[DRY RUN] Would run pre-merge validations')
+		}
+
+		// Step 2: Detect uncommitted changes AFTER validation passes
+		const gitStatus = await this.commitManager.detectUncommittedChanges(worktree.path)
+
+		// Step 3: Commit changes only if validation passed AND changes exist
+		if (gitStatus.hasUncommittedChanges) {
+			if (options.dryRun) {
+				logger.info('[DRY RUN] Would auto-commit uncommitted changes (validation passed)')
+			} else {
+				logger.info('Validation passed, auto-committing uncommitted changes...')
+
+				const commitOptions: CommitOptions = {
+					dryRun: options.dryRun ?? false,
+				}
+
+				// Only add issueNumber if it's an issue
+				if (parsed.type === 'issue' && parsed.number) {
+					commitOptions.issueNumber = parsed.number
+				}
+
+				await this.commitManager.commitChanges(worktree.path, commitOptions)
+
+				logger.success('Changes committed successfully')
+			}
+		} else {
+			logger.debug('No uncommitted changes found')
+		}
+
+		// Step 4: Rebase branch on main
+		logger.info('Rebasing branch on main...')
+
+		const mergeOptions: MergeOptions = {
+			dryRun: options.dryRun ?? false,
+			force: options.force ?? false,
+		}
+
+		await this.mergeManager.rebaseOnMain(worktree.path, mergeOptions)
+		logger.success('Branch rebased successfully')
+
+		// Step 5: Perform fast-forward merge
+		logger.info('Performing fast-forward merge...')
+		await this.mergeManager.performFastForwardMerge(worktree.branch, worktree.path, mergeOptions)
+		logger.success('Fast-forward merge completed successfully')
+
+		// Step 6: Post-merge cleanup
+		await this.performPostMergeCleanup(parsed, options, worktree)
+	}
+
+	/**
+	 * Execute workflow for Pull Requests
+	 * Behavior depends on PR state:
+	 * - OPEN: Commit changes, push to remote, keep worktree active
+	 * - CLOSED/MERGED: Skip to cleanup
+	 */
+	private async executePRWorkflow(
+		parsed: ParsedFinishInput,
+		options: FinishOptions,
+		worktree: GitWorktree,
+		pr: PullRequest
+	): Promise<void> {
+		// Branch based on PR state
+		if (pr.state === 'closed' || pr.state === 'merged') {
+			// Closed/Merged PR workflow
+			logger.info(`PR #${parsed.number} is ${pr.state.toUpperCase()} - skipping to cleanup`)
+
+			// Check for uncommitted changes and warn (unless --force)
+			const gitStatus = await this.commitManager.detectUncommittedChanges(worktree.path)
+			if (gitStatus.hasUncommittedChanges && !options.force) {
+				logger.warn('PR has uncommitted changes')
+				throw new Error(
+					'Cannot cleanup PR with uncommitted changes. ' +
+					'Commit or stash changes, then run again with --force to cleanup anyway.'
+				)
+			}
+
+			// Call cleanup directly with deleteBranch: true
+			await this.performPRCleanup(parsed, options, worktree)
+
+			logger.success(`PR #${parsed.number} cleanup completed`)
+		} else {
+			// Open PR workflow
+			logger.info(`PR #${parsed.number} is OPEN - will push changes and keep worktree active`)
+
+			// Step 1: Detect uncommitted changes
+			const gitStatus = await this.commitManager.detectUncommittedChanges(worktree.path)
+
+			// Step 2: Commit changes if any exist
+			if (gitStatus.hasUncommittedChanges) {
+				if (options.dryRun) {
+					logger.info('[DRY RUN] Would commit uncommitted changes')
+				} else {
+					logger.info('Committing uncommitted changes...')
+					await this.commitManager.commitChanges(worktree.path, {
+						dryRun: false,
+						// Do NOT pass issueNumber for PRs - no "Fixes #" trailer needed
+					})
+					logger.success('Changes committed')
+				}
+			} else {
+				logger.debug('No uncommitted changes found')
+			}
+
+			// Step 3: Push to remote
+			if (options.dryRun) {
+				logger.info(`[DRY RUN] Would push changes to origin/${pr.branch}`)
+			} else {
+				logger.info('Pushing changes to remote...')
+				const { pushBranchToRemote } = await import('../utils/git.js')
+				await pushBranchToRemote(pr.branch, worktree.path, {
+					dryRun: false
+				})
+				logger.success(`Changes pushed to PR #${parsed.number}`)
+			}
+
+			// Step 4: Log success and guidance
+			logger.success(`PR #${parsed.number} updated successfully`)
+			logger.info('Worktree remains active for continued work')
+			logger.info(`To cleanup when done: hb cleanup ${parsed.number}`)
+		}
+	}
+
+	/**
+	 * Perform cleanup for closed/merged PRs
+	 * Similar to performPostMergeCleanup but with different messaging
+	 */
+	private async performPRCleanup(
+		parsed: ParsedFinishInput,
+		options: FinishOptions,
+		worktree: GitWorktree
+	): Promise<void> {
+		// Convert to ParsedInput format
+		const cleanupInput: ParsedInput = {
+			type: parsed.type,
+			originalInput: parsed.originalInput,
+			...(parsed.number !== undefined && { number: parsed.number }),
+			...(parsed.branchName !== undefined && { branchName: parsed.branchName }),
+		}
+
+		const cleanupOptions: ResourceCleanupOptions = {
+			dryRun: options.dryRun ?? false,
+			deleteBranch: true, // Delete branch for closed/merged PRs
+			keepDatabase: false,
+			force: options.force ?? false,
+		}
+
+		try {
+			const result = await this.resourceCleanup.cleanupWorktree(cleanupInput, cleanupOptions)
+
+			this.reportCleanupResults(result)
+
+			if (!result.success) {
+				logger.warn('Some cleanup operations failed - manual cleanup may be required')
+				this.showManualCleanupInstructions(worktree)
+			}
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+			logger.warn(`Cleanup failed: ${errorMessage}`)
+			this.showManualCleanupInstructions(worktree)
+			throw error // Re-throw to fail the command
 		}
 	}
 
