@@ -72,6 +72,7 @@ export async function launchClaude(
 
 	if (addDir) {
 		args.push('--add-dir', addDir)
+		args.push('--add-dir', '/tmp') //TODO: Won't work on Windows
 	}
 
 	try {

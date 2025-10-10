@@ -197,7 +197,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--add-dir', workspacePath],
+					['-p', '--add-dir', workspacePath, '--add-dir', '/tmp'],
 					expect.any(Object)
 				)
 			})
@@ -217,7 +217,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--add-dir', workspacePath],
+					['-p', '--add-dir', workspacePath, '--add-dir', '/tmp'],
 					expect.objectContaining({
 						input: prompt,
 						timeout: 1200000,
