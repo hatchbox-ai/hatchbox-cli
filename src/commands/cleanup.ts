@@ -2,6 +2,9 @@ import { logger } from '../utils/logger.js'
 import { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
 import { ResourceCleanup } from '../lib/ResourceCleanup.js'
 import { ProcessManager } from '../lib/process/ProcessManager.js'
+import { DatabaseManager } from '../lib/DatabaseManager.js'
+import { NeonProvider } from '../lib/providers/NeonProvider.js'
+import { EnvironmentManager } from '../lib/EnvironmentManager.js'
 import { promptConfirmation } from '../utils/prompt.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
 import type { CleanupOptions } from '../types/index.js'
@@ -47,12 +50,23 @@ export class CleanupCommand {
   ) {
     this.gitWorktreeManager = gitWorktreeManager ?? new GitWorktreeManager()
 
-    // Initialize ResourceCleanup if not provided
-    this.resourceCleanup = resourceCleanup ?? new ResourceCleanup(
-      this.gitWorktreeManager,
-      new ProcessManager(),
-      undefined // DatabaseManager optional
-    )
+    // Initialize ResourceCleanup with DatabaseManager
+    if (!resourceCleanup) {
+      const environmentManager = new EnvironmentManager()
+      const neonProvider = new NeonProvider({
+        projectId: process.env.NEON_PROJECT_ID ?? '',
+        parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
+      })
+      const databaseManager = new DatabaseManager(neonProvider, environmentManager)
+
+      this.resourceCleanup = new ResourceCleanup(
+        this.gitWorktreeManager,
+        new ProcessManager(),
+        databaseManager  // Add database manager
+      )
+    } else {
+      this.resourceCleanup = resourceCleanup
+    }
 
     // Initialize IdentifierParser for pattern-based detection
     this.identifierParser = new IdentifierParser(this.gitWorktreeManager)

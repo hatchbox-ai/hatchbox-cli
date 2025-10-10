@@ -9,7 +9,7 @@ import { VSCodeIntegration } from './VSCodeIntegration.js'
 import { branchExists } from '../utils/git.js'
 import { installDependencies } from '../utils/package-manager.js'
 import { generateColorFromBranchName } from '../utils/color.js'
-// import { DatabaseManager } from './DatabaseManager.js'
+import { DatabaseManager } from './DatabaseManager.js'
 import type { Hatchbox, CreateHatchboxInput } from '../types/hatchbox.js'
 import type { GitWorktree } from '../types/worktree.js'
 import type { Issue, PullRequest } from '../types/index.js'
@@ -26,8 +26,8 @@ export class HatchboxManager {
     private environment: EnvironmentManager,
     _claude: ClaudeContextManager, // Not stored - kept for DI compatibility, HatchboxLauncher creates its own
     private capabilityDetector: ProjectCapabilityDetector,
-    private cliIsolation: CLIIsolationManager
-    // private database?: DatabaseManager  // Will be used in future for database branching
+    private cliIsolation: CLIIsolationManager,
+    private database?: DatabaseManager
   ) {}
 
   /**
@@ -68,7 +68,33 @@ export class HatchboxManager {
       port = await this.setupEnvironment(worktreePath, input)
     }
 
-    // 6. Setup CLI isolation if project has CLI capability
+    // 6. Setup database branch if configured
+    let databaseBranch: string | undefined = undefined
+    if (this.database && !input.options?.skipDatabase) {
+      try {
+        const connectionString = await this.database.createBranchIfConfigured(
+          branchName,
+          path.join(worktreePath, '.env')
+        )
+
+        if (connectionString) {
+          await this.environment.setEnvVar(
+            path.join(worktreePath, '.env'),
+            'DATABASE_URL',
+            connectionString
+          )
+          logger.success('Database branch configured')
+          databaseBranch = branchName
+        }
+      } catch (error) {
+        logger.error(
+          `Failed to setup database branch: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+        throw error  // Database creation failures are fatal
+      }
+    }
+
+    // 7. Setup CLI isolation if project has CLI capability
     let cliSymlinks: string[] | undefined = undefined
     if (capabilities.includes('cli')) {
       try {
@@ -86,7 +112,7 @@ export class HatchboxManager {
       }
     }
 
-    // 7. Apply color synchronization (terminal and VSCode)
+    // 8. Apply color synchronization (terminal and VSCode)
     if (!input.options?.skipColorSync) {
       try {
         await this.applyColorSynchronization(worktreePath, branchName)
@@ -136,13 +162,6 @@ export class HatchboxManager {
         ...(githubData?.title && { title: githubData.title }),
       })
     }
-
-    // 8. SKIP - DO NOT IMPLEMENT YET: Setup database branch
-    let databaseBranch: string | undefined = undefined
-    // Database branch creation will be implemented when needed
-    // if (this.database && !input.options?.skipDatabase) {
-    //   databaseBranch = await this.database.createBranch(branchName)
-    // }
 
     // 9. Create and return hatchbox metadata
     const hatchbox: Hatchbox = {

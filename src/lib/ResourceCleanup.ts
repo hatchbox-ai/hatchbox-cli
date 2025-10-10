@@ -1,3 +1,4 @@
+import path from 'path'
 import { GitWorktreeManager } from './GitWorktreeManager.js'
 import { DatabaseManager } from './DatabaseManager.js'
 import { ProcessManager } from './process/ProcessManager.js'
@@ -187,7 +188,7 @@ export class ResourceCleanup {
 				})
 			} else {
 				try {
-					const cleaned = await this.cleanupDatabase(worktree.branch)
+					const cleaned = await this.cleanupDatabase(worktree.branch, worktree.path)
 
 					operations.push({
 						type: 'database',
@@ -310,26 +311,24 @@ export class ResourceCleanup {
 	 * Cleanup database branch
 	 * Gracefully handles missing DatabaseManager
 	 */
-	async cleanupDatabase(_branchName: string): Promise<boolean> {
+	async cleanupDatabase(branchName: string, worktreePath: string): Promise<boolean> {
 		if (!this.database) {
-			logger.warn('Database manager not available, skipping database cleanup')
+			logger.debug('Database manager not available, skipping database cleanup')
 			return false
 		}
 
-		// TODO: Implement when DatabaseManager is complete (Issue #5)
-		// For now, just log a warning
-		logger.warn('Database cleanup not yet implemented (pending Issue #5)')
-		return false
-
-		// Future implementation:
-		// try {
-		//   await this.database.deleteBranch(branchName)
-		//   logger.info(`Database branch deleted: ${branchName}`)
-		//   return true
-		// } catch (error) {
-		//   logger.warn(`Database cleanup failed: ${error.message}`)
-		//   return false
-		// }
+		try {
+			const envFilePath = path.join(worktreePath, '.env')
+			await this.database.deleteBranchIfConfigured(branchName, envFilePath)
+			logger.info(`Database branch cleaned up: ${branchName}`)
+			return true
+		} catch (error) {
+			// Log warning but don't throw - matches bash script behavior
+			logger.warn(
+				`Database cleanup failed: ${error instanceof Error ? error.message : String(error)}`
+			)
+			return false
+		}
 	}
 
 	/**

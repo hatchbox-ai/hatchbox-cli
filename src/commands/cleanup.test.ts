@@ -17,7 +17,14 @@ vi.mock('../../src/utils/logger.js', () => ({
     error: vi.fn(),
     warn: vi.fn(),
     debug: vi.fn(),
-  }
+  },
+  createLogger: vi.fn(() => ({
+    info: vi.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  })),
 }))
 
 describe('CleanupCommand', () => {

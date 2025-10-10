@@ -6,6 +6,8 @@ import { EnvironmentManager } from '../lib/EnvironmentManager.js'
 import { ClaudeContextManager } from '../lib/ClaudeContextManager.js'
 import { ProjectCapabilityDetector } from '../lib/ProjectCapabilityDetector.js'
 import { CLIIsolationManager } from '../lib/CLIIsolationManager.js'
+import { DatabaseManager } from '../lib/DatabaseManager.js'
+import { NeonProvider } from '../lib/providers/NeonProvider.js'
 import { branchExists } from '../utils/git.js'
 import type { StartOptions } from '../types/index.js'
 
@@ -27,15 +29,25 @@ export class StartCommand {
 
 	constructor(gitHubService?: GitHubService, hatchboxManager?: HatchboxManager) {
 		this.gitHubService = gitHubService ?? new GitHubService()
+
+		// Create DatabaseManager with NeonProvider and EnvironmentManager
+		const environmentManager = new EnvironmentManager()
+		const neonProvider = new NeonProvider({
+			projectId: process.env.NEON_PROJECT_ID ?? '',
+			parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
+		})
+		const databaseManager = new DatabaseManager(neonProvider, environmentManager)
+
 		this.hatchboxManager =
 			hatchboxManager ??
 			new HatchboxManager(
 				new GitWorktreeManager(),
 				this.gitHubService,
-				new EnvironmentManager(),
+				environmentManager,  // Reuse same instance
 				new ClaudeContextManager(),
 				new ProjectCapabilityDetector(),
-				new CLIIsolationManager()
+				new CLIIsolationManager(),
+				databaseManager  // Add database manager
 			)
 	}
 

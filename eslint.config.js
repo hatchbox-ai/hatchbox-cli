@@ -7,7 +7,7 @@ export default [
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
-    ignores: ['**/*.test.ts', '**/*.spec.ts'], // Exclude test files from main TypeScript config
+    ignores: ['**/*.test.ts', '**/*.spec.ts', 'tests/**/*.ts'], // Exclude test files from main TypeScript config
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
@@ -77,7 +77,7 @@ export default [
     },
   },
   {
-    files: ['**/*.test.ts', '**/*.spec.ts'],
+    files: ['**/*.test.ts', '**/*.spec.ts', 'tests/**/*.ts'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
