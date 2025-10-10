@@ -117,7 +117,7 @@ describe('claude utils', () => {
 				expect(result).toBe(output)
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--print'],
+					['-p'],
 					expect.objectContaining({
 						input: prompt,
 						timeout: 1200000, // 20 minutes
@@ -134,12 +134,12 @@ describe('claude utils', () => {
 
 				await launchClaude(prompt, {
 					headless: true,
-					model: 'claude-3-5-haiku-20241022',
+					model: 'opus',
 				})
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--print', '--model', 'claude-3-5-haiku-20241022'],
+					['-p', '--model', 'opus'],
 					expect.any(Object)
 				)
 			})
@@ -158,7 +158,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--print', '--permission-mode', 'plan'],
+					['-p', '--permission-mode', 'plan'],
 					expect.any(Object)
 				)
 			})
@@ -177,7 +177,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--print'],
+					['-p'],
 					expect.any(Object)
 				)
 			})
@@ -197,7 +197,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--print', '--add-dir', workspacePath],
+					['-p', '--add-dir', workspacePath],
 					expect.any(Object)
 				)
 			})
@@ -217,7 +217,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--print', '--add-dir', workspacePath],
+					['-p', '--add-dir', workspacePath],
 					expect.objectContaining({
 						input: prompt,
 						timeout: 1200000,
@@ -239,7 +239,7 @@ describe('claude utils', () => {
 
 				expect(execa).toHaveBeenCalledWith(
 					'claude',
-					['-p', '--print'],
+					['-p'],
 					expect.objectContaining({
 						input: prompt,
 						timeout: 1200000,
@@ -524,7 +524,7 @@ describe('claude utils', () => {
 			expect(result).toBe('feat/issue-123-user-authentication')
 			expect(execa).toHaveBeenCalledWith(
 				'claude',
-				['-p', '--print', '--model', 'claude-3-5-haiku-20241022'],
+				['-p', '--model', 'sonnet'],
 				expect.objectContaining({
 					input: expect.stringContaining(issueTitle),
 				})

@@ -59,7 +59,7 @@ export async function launchClaude(
 	const args: string[] = []
 
 	if (headless) {
-		args.push('-p', '--print')
+		args.push('-p')
 	}
 
 	if (model) {
@@ -81,6 +81,7 @@ export async function launchClaude(
 				input: prompt,
 				timeout,
 				...(addDir && { cwd: addDir }), // Run Claude in the worktree directory
+				verbose: true,
 			})
 			return result.stdout.trim()
 		} else {
@@ -143,7 +144,7 @@ export async function launchClaude(
 export async function generateBranchName(
 	issueTitle: string,
 	issueNumber: number,
-	model: string = 'claude-3-5-haiku-20241022'
+	model: string = 'sonnet'
 ): Promise<string> {
 	try {
 		// Check if Claude CLI is available

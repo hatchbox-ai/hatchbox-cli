@@ -164,7 +164,7 @@ export class SimpleBranchNameStrategy implements BranchNameStrategy {
 }
 
 export class ClaudeBranchNameStrategy implements BranchNameStrategy {
-	constructor(private claudeModel = 'claude-3-5-haiku-20241022') {}
+	constructor(private claudeModel = 'sonnet') {}
 
 	async generate(issueNumber: number, title: string): Promise<string> {
 		// Import dynamically to avoid circular dependency

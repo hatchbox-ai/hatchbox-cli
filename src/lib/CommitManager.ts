@@ -202,7 +202,7 @@ export class CommitManager {
       const claudeOptions = {
         headless: true,
         addDir: worktreePath,
-        model: 'claude-3-5-haiku-20241022', // Fast, cost-effective model
+        model: 'sonnet', // Fast, cost-effective model
         timeout: 120000, // 120 second timeout
       }
       logger.debug('Claude API call parameters:', {
