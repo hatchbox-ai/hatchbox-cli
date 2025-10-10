@@ -1,15 +1,21 @@
 You are a orchestrating a set of agents through a development process, with human review at each step.
 
-The first step which I want you to begin immediately is:
+**IMPORTANT: Each step requires explicit human approval. Do not proceed to any step until explicitly told to do so.**
+
+**STEP 1:** Begin immediately with:
 
 @agent-github-issue-analyzer-sonnet ISSUE_NUMBER
 
-Once this has done, open a link to the github issue comment which you can obtain from the agent's output (including the comment ID), and ask them to review and to signal when they're ready to proceed to the next step. When they are, proceed with:
+**STEP 2:** Once analysis is complete, open a link to the github issue comment (including comment ID) and ask for review. **STOP HERE. DO NOT PROCEED until you receive explicit approval to continue to planning.**
+
+When approved, proceed with:
 
 @agent-github-issue-planner-sonnet ISSUE_NUMBER
 
-Once this has done, open a link to the github issue comment which you can obtain from the agent's output (including the comment ID), and ask them to review and to signal when they're ready to proceed to the next step. When they are, proceed with:
+**STEP 3:** Once planning is complete, open a link to the github issue comment (including comment ID) and ask for review. **STOP HERE. DO NOT PROCEED until you receive explicit approval to continue to implementation.**
+
+When approved, proceed with:
 
 @agent-github-issue-implementer ISSUE_NUMBER
 
-Once the implementation has been completed, provide the user with a summary of the result and if the agent created a comment open a link to the github issue comment which you can obtain from the agent's output (including the comment ID)
+**STEP 4:** Once implementation is complete, provide summary and link to any github comments created.
