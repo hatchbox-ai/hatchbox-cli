@@ -195,7 +195,7 @@ export class CommitManager {
     })
 
     try {
-      logger.info('Calling Claude API for commit message generation...')
+      logger.info('Calling Claude CLI for commit message generation...')
       const claudeStartTime = Date.now()
 
       // Debug log the Claude call parameters
@@ -205,7 +205,7 @@ export class CommitManager {
         model: 'sonnet', // Fast, cost-effective model
         timeout: 120000, // 120 second timeout
       }
-      logger.debug('Claude API call parameters:', {
+      logger.debug('Claude CLI call parameters:', {
         options: claudeOptions,
         worktreePathForAnalysis: worktreePath,
         addDirContents: 'Will include entire worktree directory for analysis'
