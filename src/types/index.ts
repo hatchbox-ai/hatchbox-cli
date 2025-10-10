@@ -73,11 +73,19 @@ export interface PullRequest {
 
 // Database types
 export interface DatabaseProvider {
+  // Core operations
   createBranch(name: string, fromBranch?: string): Promise<string>
-  deleteBranch(name: string): Promise<void>
+  deleteBranch(name: string, isPreview?: boolean): Promise<void>
   getConnectionString(branch: string): Promise<string>
   listBranches(): Promise<string[]>
   branchExists(name: string): Promise<boolean>
+
+  // Additional operations for Vercel integration and validation
+  findPreviewBranch(branchName: string): Promise<string | null>
+  getBranchNameFromEndpoint(endpointId: string): Promise<string | null>
+  sanitizeBranchName(branchName: string): string
+  isAuthenticated(): Promise<boolean>
+  isCliAvailable(): Promise<boolean>
 }
 
 // Configuration types
