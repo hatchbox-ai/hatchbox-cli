@@ -442,6 +442,26 @@ program
     }
   })
 
+// Test command for webserver detection
+program
+  .command('test-webserver')
+  .description('Test if a web server is running on a workspace port')
+  .argument('<issue-number>', 'Issue number (port will be calculated as 3000 + issue number)', parseInt)
+  .option('--kill', 'Kill the web server if detected')
+  .action(async (issueNumber: number, options: { kill?: boolean }) => {
+    try {
+      const { TestWebserverCommand } = await import('./commands/test-webserver.js')
+      const command = new TestWebserverCommand()
+      await command.execute({ issueNumber, options })
+    } catch (error) {
+      logger.error(`Test webserver failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      if (error instanceof Error && error.stack) {
+        logger.debug(error.stack)
+      }
+      process.exit(1)
+    }
+  })
+
 // Test command for Neon integration
 program
   .command('test-neon')

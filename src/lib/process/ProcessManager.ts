@@ -177,13 +177,13 @@ export class ProcessManager {
 		if (devServerNames.test(processName)) {
 			// Additional validation via command line
 			const devServerCommands =
-				/(next dev|npm.*dev|pnpm.*dev|yarn.*dev|vite|webpack.*serve|turbo.*dev|dev.*server)/i
+				/(next dev|next-server|npm.*dev|pnpm.*dev|yarn.*dev|vite|webpack.*serve|turbo.*dev|dev.*server)/i
 			return devServerCommands.test(command)
 		}
 
 		// Check command line alone
 		const devServerCommands =
-			/(next dev|npm.*dev|pnpm.*dev|yarn.*dev|vite|webpack.*serve|turbo.*dev|dev.*server)/i
+			/(next dev|next-server|npm.*dev|pnpm.*dev|yarn.*dev|vite|webpack.*serve|turbo.*dev|dev.*server)/i
 		return devServerCommands.test(command)
 	}
 
