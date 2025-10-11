@@ -42,7 +42,7 @@ export async function checkGhAuth(): Promise<GitHubAuthStatus> {
 
 		return {
 			hasAuth: true,
-			scopes: scopeMatch?.[1]?.split(', ') ?? [],
+			scopes: scopeMatch?.[1]?.split(', ').map(scope => scope.replace(/^'|'$/g, '')) ?? [],
 			...(username && { username }),
 		}
 	} catch (error) {

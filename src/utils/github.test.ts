@@ -188,6 +188,50 @@ describe('github utils', () => {
 
 			expect(hasScope).toBe(false)
 		})
+
+		// Tests for real-world GitHub CLI output with quoted scopes
+		it('should return true when project scope exists in quoted format (real GitHub CLI output)', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: `github.com
+  ✓ Logged in to github.com account acreeger (keyring)
+  - Active account: true
+  - Git operations protocol: ssh
+  - Token: gho_************************************
+  - Token scopes: 'admin:public_key', 'gist', 'project', 'read:org', 'repo'`,
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const hasScope = await hasProjectScope()
+
+			expect(hasScope).toBe(true)
+		})
+
+		it('should return false when project scope missing in quoted format', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: `github.com
+  ✓ Logged in to github.com account testuser (keyring)
+  - Token scopes: 'admin:public_key', 'gist', 'read:org', 'repo'`,
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const hasScope = await hasProjectScope()
+
+			expect(hasScope).toBe(false)
+		})
+
+		it('should handle mixed quoted and unquoted scopes', async () => {
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: `Token scopes: 'admin:public_key', gist, 'project', repo`,
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const hasScope = await hasProjectScope()
+
+			expect(hasScope).toBe(true)
+		})
 	})
 
 	describe('fetchGhIssue', () => {
