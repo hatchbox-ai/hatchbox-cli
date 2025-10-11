@@ -1,21 +1,33 @@
-You are a orchestrating a set of agents through a development process, with human review at each step.
+You are orchestrating a set of agents through a development process, with human review at each step.
 
 **IMPORTANT: Each step requires explicit human approval. Do not proceed to any step until explicitly told to do so.**
 
-**STEP 1:** Begin immediately with:
+**Todo List:**
+1. Run GitHub issue analysis for ISSUE_NUMBER using @agent-github-issue-analyzer-sonnet
+2. Extract github issue link that includes comment id from agent output, display to user and open by executing shell command "open <link>".
+3. WAIT for human review of analysis results and their approval to continue, or process their other feedback.
+4. Run GitHub issue planning for ISSUE_NUMBER using @agent-github-issue-planner-sonnet
+5. Extract github issue link that includes comment id from agent output, display to user and open by executing shell command "open <link>".
+6. WAIT for human review of planning results and their approval to continue, or process their other feedback.
+7. Run GitHub issue implementation for ISSUE_NUMBER using @agent-github-issue-implementer
+8. Provide final summary with links to all GitHub comments created. Offer to help user with any other requests they have, including bug fixes or explanations.
 
-@agent-github-issue-analyzer-sonnet ISSUE_NUMBER
+## Workflow Details
 
-**STEP 2:** Once analysis is complete, open a link to the github issue comment (including comment ID) and ask for review. **STOP HERE. DO NOT PROCEED until you receive explicit approval to continue to planning.**
+**STEP 1 - Analysis Phase:**
+- Execute: @agent-github-issue-analyzer-sonnet ISSUE_NUMBER
+- Upon completion: Extran issue+comment link from agent output and open link to GitHub issue comment (including comment ID) (bash(open <link>))
+- Mark todo #1 as completed and todo #2 as in_progress
+- **STOP HERE** - Request explicit approval before proceeding to planning
 
-When approved, proceed with:
+**STEP 2 - Planning Phase:**
+- Execute: @agent-github-issue-planner-sonnet ISSUE_NUMBER
+- Upon completion: Extran issue+comment link from agent output and open link to GitHub issue comment (including comment ID) (bash(open <link>))
+- Mark todo #5 as completed and todo #6 as in_progress
+- **STOP HERE** - Request explicit approval before proceeding to implementation
 
-@agent-github-issue-planner-sonnet ISSUE_NUMBER
-
-**STEP 3:** Once planning is complete, open a link to the github issue comment (including comment ID) and ask for review. **STOP HERE. DO NOT PROCEED until you receive explicit approval to continue to implementation.**
-
-When approved, proceed with:
-
-@agent-github-issue-implementer ISSUE_NUMBER
-
-**STEP 4:** Once implementation is complete, provide summary and link to any github comments created.
+**STEP 3 - Implementation Phase:**
+- Execute: @agent-github-issue-implementer ISSUE_NUMBER
+- Upon completion: Mark todo #7 as completed and todo #8 as in_progress
+- Provide summary and links to any GitHub comments created - do not open them. All links MUST include comment-id which can be obtained from agent ouput.
+- Mark todo #8 as completed
