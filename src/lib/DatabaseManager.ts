@@ -88,12 +88,22 @@ export class DatabaseManager {
    */
   async deleteBranchIfConfigured(
     branchName: string,
-    envFilePath: string,
+    envFilePath?: string,
     isPreview: boolean = false
   ): Promise<void> {
     // Guard condition: check if database branching should be used
-    if (!(await this.shouldUseDatabaseBranching(envFilePath))) {
+    // If no envFilePath provided, skip the env file check (pre-determined config)
+    if (envFilePath && !(await this.shouldUseDatabaseBranching(envFilePath))) {
       return
+    }
+
+    // If no envFilePath, check NEON env vars directly
+    if (!envFilePath) {
+      const neonConfig = this.getNeonConfig()
+      if (!neonConfig) {
+        logger.debug('Skipping database branch deletion: NEON environment variables not configured')
+        return
+      }
     }
 
     // Check CLI availability and authentication

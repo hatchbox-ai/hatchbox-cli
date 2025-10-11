@@ -13,6 +13,8 @@ export default defineConfig([
     banner: {
       js: '#!/usr/bin/env node',
     },
+    // Copy templates directory to dist
+    publicDir: 'templates',
     outExtension() {
       return {
         js: '.js',

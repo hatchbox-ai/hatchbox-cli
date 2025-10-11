@@ -10,6 +10,7 @@ import { branchExists } from '../utils/git.js'
 import { installDependencies } from '../utils/package-manager.js'
 import { generateColorFromBranchName } from '../utils/color.js'
 import { DatabaseManager } from './DatabaseManager.js'
+import { loadEnvIntoProcess } from '../utils/env.js'
 import type { Hatchbox, CreateHatchboxInput } from '../types/hatchbox.js'
 import type { GitWorktree } from '../types/worktree.js'
 import type { Issue, PullRequest } from '../types/index.js'
@@ -55,20 +56,31 @@ export class HatchboxManager {
     logger.info('Preparing branch name...')
     const branchName = await this.prepareBranchName(input, githubData)
 
-    // 3. Create git worktree
+    // 3. Create git worktree (WITHOUT dependency installation)
     logger.info('Creating git worktree...')
-    const worktreePath = await this.createWorktree(input, branchName)
+    const worktreePath = await this.createWorktreeOnly(input, branchName)
 
-    // 4. Detect project capabilities
+    // 4. Load main .env variables into process.env (like bash script lines 336-339)
+    this.loadMainEnvFile()
+
+    // 5. Detect project capabilities
     const { capabilities, binEntries } = await this.capabilityDetector.detectCapabilities(worktreePath)
 
-    // 5. Setup environment based on capabilities
+    // 6. Setup environment based on capabilities (copy .env + set PORT)
     let port = 3000 // default
     if (capabilities.includes('web')) {
       port = await this.setupEnvironment(worktreePath, input)
     }
 
-    // 6. Setup database branch if configured
+    // 7. Install dependencies AFTER environment setup (like bash script line 757-769)
+    try {
+      await installDependencies(worktreePath, true)
+    } catch (error) {
+      // Log warning but don't fail - matches bash script behavior
+      logger.warn(`Failed to install dependencies: ${error instanceof Error ? error.message : 'Unknown error'}`, error)
+    }
+
+    // 9. Setup database branch if configured
     let databaseBranch: string | undefined = undefined
     if (this.database && !input.options?.skipDatabase) {
       try {
@@ -94,7 +106,7 @@ export class HatchboxManager {
       }
     }
 
-    // 7. Setup CLI isolation if project has CLI capability
+    // 10. Setup CLI isolation if project has CLI capability
     let cliSymlinks: string[] | undefined = undefined
     if (capabilities.includes('cli')) {
       try {
@@ -112,7 +124,7 @@ export class HatchboxManager {
       }
     }
 
-    // 8. Apply color synchronization (terminal and VSCode)
+    // 11. Apply color synchronization (terminal and VSCode)
     if (!input.options?.skipColorSync) {
       try {
         await this.applyColorSynchronization(worktreePath, branchName)
@@ -270,9 +282,9 @@ export class HatchboxManager {
   }
 
   /**
-   * Create worktree for the hatchbox
+   * Create worktree for the hatchbox (without dependency installation)
    */
-  private async createWorktree(
+  private async createWorktreeOnly(
     input: CreateHatchboxInput,
     branchName: string
   ): Promise<string> {
@@ -302,19 +314,12 @@ export class HatchboxManager {
       ...(input.baseBranch && { baseBranch: input.baseBranch }),
     })
 
-    // Install dependencies in the new worktree
-    try {
-      await installDependencies(worktreePath, true)
-    } catch (error) {
-      // Log warning but don't fail - matches bash script behavior (lines 764-765)
-      logger.warn(`Failed to install dependencies: ${error instanceof Error ? error.message : 'Unknown error'}`, error)
-    }
-
     return worktreePath
   }
 
   /**
    * Setup environment for the hatchbox
+   * Copies main .env file to worktree first, then sets/updates PORT variable
    */
   private async setupEnvironment(
     worktreePath: string,
@@ -322,10 +327,39 @@ export class HatchboxManager {
   ): Promise<number> {
     const envFilePath = path.join(worktreePath, '.env')
 
+    // First, copy main .env file to worktree (like bash script lines 715-725)
+    try {
+      const mainEnvPath = path.join(process.cwd(), '.env')
+      await this.environment.copyEnvFile(mainEnvPath, envFilePath)
+      logger.info('Copied main .env file to worktree')
+    } catch (error) {
+      // Handle gracefully if main .env doesn't exist
+      logger.warn(`Warning: Failed to copy main .env file: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+
+    // Then set/update the PORT variable in the copied file
     const issueNumber = input.type === 'issue' ? (input.identifier as number) : undefined
     const prNumber = input.type === 'pr' ? (input.identifier as number) : undefined
 
     return await this.environment.setPortForWorkspace(envFilePath, issueNumber, prNumber)
+  }
+
+  /**
+   * Load environment variables from main .env file into process.env
+   * Uses dotenv-flow to handle various .env file patterns
+   */
+  private loadMainEnvFile(): void {
+    const result = loadEnvIntoProcess({ path: process.cwd() })
+
+    if (result.error) {
+      // Handle gracefully if .env files don't exist
+      logger.warn(`Warning: Could not load .env files: ${result.error.message}`)
+    } else {
+      logger.info('Loaded environment variables using dotenv-flow')
+      if (result.parsed && Object.keys(result.parsed).length > 0) {
+        logger.debug(`Loaded ${Object.keys(result.parsed).length} environment variables`)
+      }
+    }
   }
 
   /**
@@ -425,7 +459,7 @@ export class HatchboxManager {
 
   /**
    * NEW: Reuse an existing hatchbox
-   * Skips worktree/dependency setup, but still launches components
+   * Includes environment setup and database branching for existing worktrees
    * Ports: handle_existing_worktree() from bash script lines 168-215
    */
   private async reuseHatchbox(
@@ -436,14 +470,23 @@ export class HatchboxManager {
     const worktreePath = worktree.path
     const branchName = worktree.branch
 
-    // 1. Detect capabilities (quick, no installation)
+    // 1. Load main .env variables into process.env
+    this.loadMainEnvFile()
+
+    // 2. Detect capabilities (quick, no installation)
     const { capabilities, binEntries } = await this.capabilityDetector.detectCapabilities(worktreePath)
 
-    // 2. Get port from environment or calculate
+    // 3. Setup environment for existing worktrees too (copy .env + set PORT)
     let port = 3000
     if (capabilities.includes('web')) {
-      port = this.calculatePort(input)
+      port = await this.setupEnvironment(worktreePath, input)
     }
+
+    // 4. Skip database branch creation for existing worktrees
+    // The database branch should have been created when the worktree was first created
+    // Matches bash script behavior: handle_existing_worktree() skips all setup
+    logger.info('Database branch assumed to be already configured for existing worktree')
+    const databaseBranch: string | undefined = undefined
 
     // NEW: Move issue to In Progress (for reused worktrees too)
     if (input.type === 'issue') {
@@ -458,7 +501,7 @@ export class HatchboxManager {
       }
     }
 
-    // 3. Launch components (same as new worktree)
+    // 5. Launch components (same as new worktree)
     const enableClaude = input.options?.enableClaude !== false
     const enableCode = input.options?.enableCode !== false
     const enableDevServer = input.options?.enableDevServer !== false
@@ -482,7 +525,7 @@ export class HatchboxManager {
       })
     }
 
-    // 4. Return hatchbox metadata
+    // 6. Return hatchbox metadata
     const hatchbox: Hatchbox = {
       id: this.generateHatchboxId(input),
       path: worktreePath,
@@ -492,6 +535,7 @@ export class HatchboxManager {
       port,
       createdAt: new Date(), // We don't have actual creation date, use now
       lastAccessed: new Date(),
+      ...(databaseBranch !== undefined && { databaseBranch }),
       ...(capabilities.length > 0 && { capabilities }),
       ...(Object.keys(binEntries).length > 0 && { binEntries }),
       ...(githubData !== null && {

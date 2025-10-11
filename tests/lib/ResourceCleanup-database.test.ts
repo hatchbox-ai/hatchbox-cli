@@ -127,10 +127,9 @@ describe('ResourceCleanup - Database Integration', () => {
       // WHEN: cleanupWorktree is called
       const result = await resourceCleanup.cleanupWorktree(parsedIssue, { keepDatabase: false })
 
-      // THEN: cleanupDatabase is called
+      // THEN: cleanupDatabase is called (without envFilePath since it's pre-read)
       expect(mockDatabase.deleteBranchIfConfigured).toHaveBeenCalledWith(
-        'issue-123-test',
-        '/test/worktree-issue-123/.env'
+        'issue-123-test'
       )
 
       // THEN: Operation result includes database cleanup success
@@ -236,10 +235,9 @@ describe('ResourceCleanup - Database Integration', () => {
       // WHEN: cleanupWorktree is called for PR
       const result = await resourceCleanup.cleanupWorktree(parsedPR, { keepDatabase: false })
 
-      // THEN: Database cleanup is called with PR branch name
+      // THEN: Database cleanup is called with PR branch name (without envFilePath since it's pre-read)
       expect(mockDatabase.deleteBranchIfConfigured).toHaveBeenCalledWith(
-        'feature-branch',
-        '/test/worktree-feature-branch_pr_42/.env'
+        'feature-branch'
       )
 
       // THEN: Database operation succeeds
@@ -271,10 +269,9 @@ describe('ResourceCleanup - Database Integration', () => {
       // WHEN: cleanupWorktree is called for branch
       const result = await resourceCleanup.cleanupWorktree(parsedBranch, { keepDatabase: false })
 
-      // THEN: Database cleanup is called with branch name
+      // THEN: Database cleanup is called with branch name (without envFilePath since it's pre-read)
       expect(mockDatabase.deleteBranchIfConfigured).toHaveBeenCalledWith(
-        'feature-xyz',
-        '/test/worktree-feature-xyz/.env'
+        'feature-xyz'
       )
 
       // THEN: Database operation succeeds
@@ -315,15 +312,13 @@ describe('ResourceCleanup - Database Integration', () => {
         keepDatabase: false,
       })
 
-      // THEN: Database cleanup is called for both worktrees
+      // THEN: Database cleanup is called for both worktrees (without envFilePath since it's pre-read)
       expect(mockDatabase.deleteBranchIfConfigured).toHaveBeenCalledTimes(2)
       expect(mockDatabase.deleteBranchIfConfigured).toHaveBeenCalledWith(
-        'issue-123-test',
-        '/test/worktree-issue-123/.env'
+        'issue-123-test'
       )
       expect(mockDatabase.deleteBranchIfConfigured).toHaveBeenCalledWith(
-        'issue-456-test',
-        '/test/worktree-issue-456/.env'
+        'issue-456-test'
       )
 
       // THEN: Both results include database cleanup operations

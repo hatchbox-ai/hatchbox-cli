@@ -26,7 +26,12 @@
       "Bash(npm test:*)",
       "Bash(cat:*)",
       "Bash(npm run typecheck:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(npm run test)",
+      "Bash(pnpm test:coverage:*)",
+      "Bash(pnpm validate:commit:*)",
+      "Bash(npm run validate:commit)"      
     ],
     "deny": [],
     "ask": []

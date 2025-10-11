@@ -1,3 +1,6 @@
+import dotenvFlow, { type DotenvFlowConfigOptions } from 'dotenv-flow'
+import { logger } from './logger.js'
+
 /**
  * Parse .env file content into key-value map
  * Handles comments, empty lines, quoted/unquoted values, multiline values
@@ -122,4 +125,93 @@ export function isValidEnvKey(key: string): boolean {
   // Must start with letter or underscore, followed by letters, numbers, or underscores
   const validKeyRegex = /^[A-Za-z_][A-Za-z0-9_]*$/
   return validKeyRegex.test(key)
+}
+
+/**
+ * Load environment variables using dotenv-flow
+ * Supports environment-specific files (.env.development, .env.production, etc.)
+ * and local overrides (.env.local, .env.development.local)
+ */
+export function loadEnvIntoProcess(options?: {
+  path?: string
+  nodeEnv?: string
+  defaultNodeEnv?: string
+}): { parsed?: Record<string, string>; error?: Error } {
+  logger.debug('Loading environment variables with dotenv-flow', {
+    options: {
+      path: options?.path ?? 'current working directory',
+      nodeEnv: options?.nodeEnv ?? 'not specified',
+      defaultNodeEnv: options?.defaultNodeEnv ?? 'development (default)'
+    }
+  })
+
+  const configOptions: Partial<DotenvFlowConfigOptions> = {
+    silent: true, // Don't throw errors if .env files are missing
+  }
+
+  // Only add defined values to avoid TypeScript strict type issues
+  if (options?.path !== undefined) {
+    configOptions.path = options.path
+    logger.debug(`Using custom path: ${options.path}`)
+  }
+  if (options?.nodeEnv !== undefined) {
+    configOptions.node_env = options.nodeEnv
+    logger.debug(`Using NODE_ENV: ${options.nodeEnv}`)
+  }
+  if (options?.defaultNodeEnv !== undefined) {
+    configOptions.default_node_env = options.defaultNodeEnv
+    logger.debug(`Using default NODE_ENV: ${options.defaultNodeEnv}`)
+  } else {
+    configOptions.default_node_env = 'development'
+    logger.debug('Using default NODE_ENV: development')
+  }
+
+  logger.debug('dotenv-flow config options:', configOptions)
+
+  const result = dotenvFlow.config(configOptions)
+
+  const returnValue: { parsed?: Record<string, string>; error?: Error } = {}
+
+  if (result.parsed) {
+    returnValue.parsed = result.parsed as Record<string, string>
+    const variableCount = Object.keys(result.parsed).length
+    logger.debug(`Successfully loaded ${variableCount} environment variables`)
+  } else {
+    logger.debug('No environment variables were parsed')
+  }
+
+  if (result.error) {
+    returnValue.error = result.error
+    logger.debug('dotenv-flow returned an error', {
+      error: result.error.message,
+      name: result.error.name
+    })
+  } else {
+    logger.debug('dotenv-flow completed without errors')
+  }
+
+  return returnValue
+}
+
+/**
+ * Load environment variables for a specific workspace
+ * Automatically determines environment based on NODE_ENV or defaults to development
+ */
+export function loadWorkspaceEnv(workspacePath: string): {
+  parsed?: Record<string, string>
+  error?: Error
+} {
+  const nodeEnv = process.env.NODE_ENV ?? 'development'
+
+  logger.debug('Loading workspace environment variables', {
+    workspacePath,
+    detectedNodeEnv: nodeEnv,
+    processNodeEnv: process.env.NODE_ENV ?? 'not set'
+  })
+
+  return loadEnvIntoProcess({
+    path: workspacePath,
+    nodeEnv: nodeEnv,
+    defaultNodeEnv: 'development'
+  })
 }

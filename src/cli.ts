@@ -441,6 +441,104 @@ program
     }
   })
 
+// Test command for Neon integration
+program
+  .command('test-neon')
+  .description('Test Neon integration and debug configuration')
+  .action(async () => {
+    try {
+      const { NeonProvider } = await import('./lib/providers/NeonProvider.js')
+      const { loadEnvIntoProcess } = await import('./utils/env.js')
+
+      logger.info('Testing Neon Integration\n')
+
+      // Load environment variables
+      logger.info('0. Loading environment variables...')
+      const envResult = loadEnvIntoProcess()
+      if (envResult.error) {
+        logger.warn(`   Warning: ${envResult.error.message}`)
+      }
+      if (envResult.parsed) {
+        logger.success(`   Loaded ${Object.keys(envResult.parsed).length} environment variables`)
+      } else {
+        logger.info('   No .env files found or parsed')
+      }
+
+      // Test 1: Environment variables
+      logger.info('\n1. Environment Variables:')
+      logger.info(`   NEON_PROJECT_ID: ${process.env.NEON_PROJECT_ID ?? '(not set)'}`)
+      logger.info(`   NEON_PARENT_BRANCH: ${process.env.NEON_PARENT_BRANCH ?? '(not set)'}`)
+
+      // Test 2: Create provider and test initialization
+      logger.info('\n2. Creating NeonProvider...')
+      try {
+        const neonProvider = new NeonProvider({
+          projectId: process.env.NEON_PROJECT_ID ?? '',
+          parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
+        })
+        logger.success('   NeonProvider created successfully')
+
+        // Test 3: CLI availability
+        logger.info('\n3. Testing Neon CLI availability...')
+        const isAvailable = await neonProvider.isCliAvailable()
+        if (isAvailable) {
+          logger.success('   Neon CLI is available')
+        } else {
+          logger.error('   Neon CLI not found')
+          logger.info('   Install with: npm install -g @neon/cli')
+          return
+        }
+
+        // Test 4: Authentication
+        logger.info('\n4. Testing Neon CLI authentication...')
+        const isAuthenticated = await neonProvider.isAuthenticated()
+        if (isAuthenticated) {
+          logger.success('   Neon CLI is authenticated')
+        } else {
+          logger.error('   Neon CLI not authenticated')
+          logger.info('   Run: neon auth')
+          return
+        }
+
+        // Test 5: List branches (if config is valid)
+        if (process.env.NEON_PROJECT_ID) {
+          logger.info('\n5. Testing branch listing...')
+          try {
+            const branches = await neonProvider.listBranches()
+            logger.success(`   Found ${branches.length} branches:`)
+            for (const branch of branches.slice(0, 5)) { // Show first 5
+              logger.info(`     - ${branch}`)
+            }
+            if (branches.length > 5) {
+              logger.info(`     ... and ${branches.length - 5} more`)
+            }
+          } catch (error) {
+            logger.error(`   Failed to list branches: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          }
+        } else {
+          logger.warn('\n5. Skipping branch listing (NEON_PROJECT_ID not set)')
+        }
+
+      } catch (error) {
+        logger.error(`   Failed to create NeonProvider: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        if (error instanceof Error && error.message.includes('NEON_PROJECT_ID')) {
+          logger.info('\n   This is expected if NEON_PROJECT_ID is not set.')
+          logger.info('   Set NEON_PROJECT_ID and NEON_PARENT_BRANCH environment variables to test fully.')
+        }
+      }
+
+      logger.info('\n' + '='.repeat(50))
+      logger.success('Neon integration test complete!')
+
+    } catch (error) {
+      logger.error(`Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      if (error instanceof Error && error.stack) {
+        logger.debug(error.stack)
+      }
+      process.exit(1)
+    }
+  })
+
 // Parse CLI arguments
 try {
   await program.parseAsync()

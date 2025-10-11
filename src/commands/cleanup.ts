@@ -7,6 +7,7 @@ import { NeonProvider } from '../lib/providers/NeonProvider.js'
 import { EnvironmentManager } from '../lib/EnvironmentManager.js'
 import { promptConfirmation } from '../utils/prompt.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
+import { loadEnvIntoProcess } from '../utils/env.js'
 import type { CleanupOptions } from '../types/index.js'
 import type { CleanupResult } from '../types/cleanup.js'
 import type { ParsedInput } from './start.js'
@@ -48,6 +49,15 @@ export class CleanupCommand {
     gitWorktreeManager?: GitWorktreeManager,
     resourceCleanup?: ResourceCleanup
   ) {
+    // Load environment variables first
+    const envResult = loadEnvIntoProcess()
+    if (envResult.error) {
+      logger.debug(`Environment loading warning: ${envResult.error.message}`)
+    }
+    if (envResult.parsed) {
+      logger.debug(`Loaded ${Object.keys(envResult.parsed).length} environment variables`)
+    }
+
     this.gitWorktreeManager = gitWorktreeManager ?? new GitWorktreeManager()
 
     // Initialize ResourceCleanup with DatabaseManager
@@ -437,6 +447,7 @@ export class CleanupCommand {
     // Step 5: Process each target sequentially
     let worktreesRemoved = 0
     let branchesDeleted = 0
+    let databaseBranchesDeleted = 0
     let failed = 0
 
     for (const target of targets) {
@@ -458,6 +469,12 @@ export class CleanupCommand {
           if (result.success) {
             worktreesRemoved++
             logger.success(`  Worktree removed: ${target.branchName}`)
+
+            // Check if database cleanup occurred
+            const dbOperation = result.operations.find(op => op.type === 'database')
+            if (dbOperation?.success && dbOperation.message.includes('cleaned up')) {
+              databaseBranchesDeleted++
+            }
           } else {
             failed++
             logger.error(`  Failed to remove worktree: ${target.branchName}`)
@@ -495,6 +512,9 @@ export class CleanupCommand {
     logger.success(`Completed cleanup for issue #${issueNumber}:`)
     logger.info(`   📁 Worktrees removed: ${worktreesRemoved}`)
     logger.info(`   🌿 Branches deleted: ${branchesDeleted}`)
+    if (databaseBranchesDeleted > 0) {
+      logger.info(`   🗂️ Database branches deleted: ${databaseBranchesDeleted}`)
+    }
     if (failed > 0) {
       logger.warn(`   ❌ Failed operations: ${failed}`)
     }

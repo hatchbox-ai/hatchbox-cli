@@ -108,7 +108,28 @@ export class ResourceCleanup {
 			}
 		}
 
-		// Step 3: Remove worktree
+		// Step 3: Pre-read database configuration before worktree removal
+		let databaseConfig: { shouldCleanup: boolean; envFilePath: string } | null = null
+		if (!options.keepDatabase && worktree) {
+			const envFilePath = path.join(worktree.path, '.env')
+			try {
+				// Pre-check if database cleanup should happen by reading .env file now
+				const shouldCleanup = this.database
+					? await this.database.shouldUseDatabaseBranching(envFilePath)
+					: false
+				databaseConfig = { shouldCleanup, envFilePath }
+			} catch (error) {
+				// If we can't read the config, we'll skip database cleanup
+				logger.warn(
+					`Failed to read database config from ${envFilePath}, skipping database cleanup: ${
+						error instanceof Error ? error.message : String(error)
+					}`
+				)	
+				databaseConfig = { shouldCleanup: false, envFilePath }
+			}
+		}
+
+		// Step 4: Remove worktree
 		if (options.dryRun) {
 			operations.push({
 				type: 'worktree',
@@ -144,7 +165,7 @@ export class ResourceCleanup {
 			}
 		}
 
-		// Step 4: Delete branch if requested
+		// Step 5: Delete branch if requested
 		if (options.deleteBranch && worktree) {
 			if (options.dryRun) {
 				operations.push({
@@ -178,8 +199,8 @@ export class ResourceCleanup {
 			}
 		}
 
-		// Step 5: Cleanup database if not explicitly kept
-		if (!options.keepDatabase && worktree) {
+		// Step 6: Cleanup database after worktree and branch removal (using pre-read config)
+		if (databaseConfig && worktree) {
 			if (options.dryRun) {
 				operations.push({
 					type: 'database',
@@ -188,7 +209,21 @@ export class ResourceCleanup {
 				})
 			} else {
 				try {
-					const cleaned = await this.cleanupDatabase(worktree.branch, worktree.path)
+					let cleaned = false
+					if (databaseConfig.shouldCleanup && this.database) {
+						try {
+							// Use the amended method without envFilePath to bypass env file reading
+							await this.database.deleteBranchIfConfigured(worktree.branch)
+							cleaned = true
+							logger.info(`Database branch cleaned up: ${worktree.branch}`)
+						} catch (error) {
+							// Log warning but don't throw - matches bash script behavior (non-fatal)
+							logger.warn(
+								`Database cleanup failed: ${error instanceof Error ? error.message : String(error)}`
+							)
+							cleaned = false
+						}
+					}
 
 					operations.push({
 						type: 'database',
@@ -198,6 +233,7 @@ export class ResourceCleanup {
 							: `Database cleanup skipped (not available)`,
 					})
 				} catch (error) {
+					// This catch block is for any unexpected errors in the outer logic
 					const err = error instanceof Error ? error : new Error('Unknown error')
 					errors.push(err)
 					operations.push({

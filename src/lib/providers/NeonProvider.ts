@@ -54,13 +54,36 @@ export function validateNeonConfig(config: {
  * Ports functionality from bash/utils/neon-utils.sh
  */
 export class NeonProvider implements DatabaseProvider {
-  constructor(private config: NeonConfig) {}
+  constructor(private config: NeonConfig) {
+    logger.debug('NeonProvider initialized with config:', {
+      projectId: config.projectId,
+      parentBranch: config.parentBranch,
+      hasProjectId: !!config.projectId,
+      hasParentBranch: !!config.parentBranch,
+    })
+
+    // Validate config early to catch empty values
+    const validation = validateNeonConfig(config)
+    if (!validation.valid) {
+      throw new Error(`NeonProvider validation failed: ${validation.error}`)
+    }
+  }
 
   /**
    * Execute a Neon CLI command and return stdout
    * Throws an error if the command fails
    */
   private async executeNeonCommand(args: string[]): Promise<string> {
+    // Log the exact command being executed for debugging
+    const command = `neon ${args.join(' ')}`
+    logger.debug(`Executing Neon CLI command: ${command}`)
+    logger.debug(`Project ID being used: ${this.config.projectId}`)
+
+    // Validate project ID if the command requires it
+    if (args.includes('--project-id') && !this.config.projectId) {
+      throw new Error('NEON_PROJECT_ID is required but not set or empty')
+    }
+
     try {
       const result = await execa('neon', args, {
         timeout: 30000,
@@ -71,6 +94,11 @@ export class NeonProvider implements DatabaseProvider {
     } catch (error) {
       const execaError = error as ExecaError
       const stderr = execaError.stderr ?? execaError.message ?? 'Unknown Neon CLI error'
+      logger.error(`Neon CLI command failed: ${command}`)
+      logger.error(`Error: ${stderr}`)
+      if (execaError.stdout) {
+        logger.error(`Stdout: ${execaError.stdout}`)
+      }
       throw new Error(`Neon CLI command failed: ${stderr}`)
     }
   }
