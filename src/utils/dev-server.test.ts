@@ -67,7 +67,6 @@ describe('getDevServerLaunchCommand', () => {
 
 		const command = await getDevServerLaunchCommand('/Users/test/workspace', 3042, ['web'])
 
-		expect(command).toContain('code .')
 		expect(command).toContain('PORT=3042')
 		expect(command).toContain('pnpm dev')
 		expect(command).toContain('&&')
@@ -78,19 +77,9 @@ describe('getDevServerLaunchCommand', () => {
 
 		const command = await getDevServerLaunchCommand('/Users/test/workspace', undefined, ['web'])
 
-		expect(command).toContain('code .')
 		expect(command).toContain('Starting dev server...')
 		expect(command).toContain('pnpm dev')
 		expect(command).not.toContain('PORT=')
-	})
-
-	it('should include VSCode launch in command', async () => {
-		vi.mocked(packageManager.detectPackageManager).mockResolvedValue('npm')
-
-		const command = await getDevServerLaunchCommand('/Users/test/workspace', 3042, ['web'])
-
-		expect(command).toContain('code .')
-		expect(command).toMatch(/code \. && .+ && npm run dev/)
 	})
 
 	it('should sequence commands with && properly for web projects', async () => {
@@ -100,10 +89,9 @@ describe('getDevServerLaunchCommand', () => {
 
 		// Should have three parts joined by &&
 		const parts = command.split(' && ')
-		expect(parts).toHaveLength(3)
-		expect(parts[0]).toBe('code .')
-		expect(parts[1]).toContain('echo')
-		expect(parts[2]).toBe('yarn dev')
+		expect(parts).toHaveLength(2)
+		expect(parts[0]).toContain('echo')
+		expect(parts[1]).toBe('yarn dev')
 	})
 
 	it('should use correct package manager command', async () => {
@@ -119,15 +107,13 @@ describe('getDevServerLaunchCommand', () => {
 
 		const command = await getDevServerLaunchCommand('/Users/test/workspace', 3042, ['cli'])
 
-		expect(command).toContain('code .')
 		expect(command).toContain('pnpm dev')
 		expect(command).not.toContain('Starting dev server')
 
-		// Should only have two parts for non-web projects
+		// Should only have one part for non-web projects
 		const parts = command.split(' && ')
-		expect(parts).toHaveLength(2)
-		expect(parts[0]).toBe('code .')
-		expect(parts[1]).toBe('pnpm dev')
+		expect(parts).toHaveLength(1)
+		expect(parts[0]).toBe('pnpm dev')
 	})
 
 	it('should omit dev server message when no capabilities provided', async () => {
@@ -135,14 +121,12 @@ describe('getDevServerLaunchCommand', () => {
 
 		const command = await getDevServerLaunchCommand('/Users/test/workspace', 3000)
 
-		expect(command).toContain('code .')
 		expect(command).toContain('npm run dev')
 		expect(command).not.toContain('Starting dev server')
 
-		// Should only have two parts when no capabilities
+		// Should only have one part when no capabilities
 		const parts = command.split(' && ')
-		expect(parts).toHaveLength(2)
-		expect(parts[0]).toBe('code .')
-		expect(parts[1]).toBe('npm run dev')
+		expect(parts).toHaveLength(1)
+		expect(parts[0]).toBe('npm run dev')
 	})
 })

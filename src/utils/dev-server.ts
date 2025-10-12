@@ -46,8 +46,8 @@ export async function getDevServerLaunchCommand(
 
 	const commands: string[] = []
 
-	// Open VSCode
-	commands.push('code .')
+	// // Open VSCode
+	// commands.push('code .')
 
 	// Echo message (only for web projects)
 	if (capabilities.includes('web')) {
