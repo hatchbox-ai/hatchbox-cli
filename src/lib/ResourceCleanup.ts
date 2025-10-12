@@ -124,8 +124,21 @@ export class ResourceCleanup {
 					`Failed to read database config from ${envFilePath}, skipping database cleanup: ${
 						error instanceof Error ? error.message : String(error)
 					}`
-				)	
+				)
 				databaseConfig = { shouldCleanup: false, envFilePath }
+			}
+		}
+
+		// Step 3.5: Find main worktree path before deletion (needed for branch deletion later)
+		let mainWorktreePath: string | null = null
+		if (options.deleteBranch && !options.dryRun) {
+			try {
+				const { findMainWorktreePath } = await import('../utils/git.js')
+				mainWorktreePath = await findMainWorktreePath(worktree.path)
+			} catch (error) {
+				logger.warn(
+					`Failed to find main worktree path: ${error instanceof Error ? error.message : String(error)}`
+				)
 			}
 		}
 
@@ -179,7 +192,8 @@ export class ResourceCleanup {
 					if (options.force !== undefined) {
 						branchOptions.force = options.force
 					}
-					await this.deleteBranch(worktree.branch, branchOptions)
+					// Pass main worktree path to ensure we can execute git commands
+					await this.deleteBranch(worktree.branch, branchOptions, mainWorktreePath ?? undefined)
 
 					operations.push({
 						type: 'branch',
@@ -294,10 +308,15 @@ export class ResourceCleanup {
 
 	/**
 	 * Delete a Git branch with safety checks
+	 *
+	 * @param branchName - Name of the branch to delete
+	 * @param options - Delete options (force, dryRun)
+	 * @param cwd - Working directory to execute git command from (defaults to finding main worktree)
 	 */
 	async deleteBranch(
 		branchName: string,
-		options: BranchDeleteOptions = {}
+		options: BranchDeleteOptions = {},
+		cwd?: string
 	): Promise<boolean> {
 		// Check for protected branches
 		//TODO [CONFIG]: Make this configurable
@@ -313,12 +332,18 @@ export class ResourceCleanup {
 
 		// Use GitWorktreeManager's removeWorktree with removeBranch option
 		// Or execute git branch -D directly via executeGitCommand
-		const { executeGitCommand } = await import('../utils/git.js')
+		const { executeGitCommand, findMainWorktreePath } = await import('../utils/git.js')
 
 		try {
+			// Use provided cwd, or find main worktree path as fallback
+			// This ensures we're not running git commands from a deleted directory
+			const workingDir = cwd ?? await findMainWorktreePath()
+
 			// Use safe delete (-d) unless force is specified
 			const deleteFlag = options.force ? '-D' : '-d'
-			await executeGitCommand(['branch', deleteFlag, branchName])
+			await executeGitCommand(['branch', deleteFlag, branchName], {
+				cwd: workingDir
+			})
 
 			logger.info(`Branch deleted: ${branchName}`)
 			return true

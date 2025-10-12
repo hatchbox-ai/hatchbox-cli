@@ -69,7 +69,8 @@ describe('ResourceCleanup', () => {
 			vi.mocked(mockGitWorktree.removeWorktree).mockResolvedValueOnce(undefined)
 
 			// Mock branch deletion
-			const { executeGitCommand } = await import('../utils/git.js')
+			const { executeGitCommand, findMainWorktreePath } = await import('../utils/git.js')
+			vi.mocked(findMainWorktreePath).mockResolvedValueOnce('/path/to/main')
 			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
 
 			// Mock database cleanup (not implemented yet, should skip)
@@ -343,7 +344,8 @@ describe('ResourceCleanup', () => {
 
 	describe('deleteBranch', () => {
 		it('should delete local branch using git command', async () => {
-			const { executeGitCommand } = await import('../utils/git.js')
+			const { executeGitCommand, findMainWorktreePath } = await import('../utils/git.js')
+			vi.mocked(findMainWorktreePath).mockResolvedValueOnce('/path/to/main')
 			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
 
 			const result = await resourceCleanup.deleteBranch('feat/test-branch', {
@@ -351,7 +353,10 @@ describe('ResourceCleanup', () => {
 			})
 
 			expect(result).toBe(true)
-			expect(executeGitCommand).toHaveBeenCalledWith(['branch', '-d', 'feat/test-branch'])
+			expect(executeGitCommand).toHaveBeenCalledWith(
+				['branch', '-d', 'feat/test-branch'],
+				{ cwd: '/path/to/main' }
+			)
 		})
 
 		it('should protect main/master/develop branches from deletion', async () => {
@@ -365,25 +370,34 @@ describe('ResourceCleanup', () => {
 		})
 
 		it('should use safe delete (-d) by default', async () => {
-			const { executeGitCommand } = await import('../utils/git.js')
+			const { executeGitCommand, findMainWorktreePath } = await import('../utils/git.js')
+			vi.mocked(findMainWorktreePath).mockResolvedValueOnce('/path/to/main')
 			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
 
 			await resourceCleanup.deleteBranch('feat/test-branch')
 
-			expect(executeGitCommand).toHaveBeenCalledWith(['branch', '-d', 'feat/test-branch'])
+			expect(executeGitCommand).toHaveBeenCalledWith(
+				['branch', '-d', 'feat/test-branch'],
+				{ cwd: '/path/to/main' }
+			)
 		})
 
 		it('should use force delete (-D) when force option enabled', async () => {
-			const { executeGitCommand } = await import('../utils/git.js')
+			const { executeGitCommand, findMainWorktreePath } = await import('../utils/git.js')
+			vi.mocked(findMainWorktreePath).mockResolvedValueOnce('/path/to/main')
 			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
 
 			await resourceCleanup.deleteBranch('feat/test-branch', { force: true })
 
-			expect(executeGitCommand).toHaveBeenCalledWith(['branch', '-D', 'feat/test-branch'])
+			expect(executeGitCommand).toHaveBeenCalledWith(
+				['branch', '-D', 'feat/test-branch'],
+				{ cwd: '/path/to/main' }
+			)
 		})
 
 		it('should provide helpful error message for unmerged branches', async () => {
-			const { executeGitCommand } = await import('../utils/git.js')
+			const { executeGitCommand, findMainWorktreePath } = await import('../utils/git.js')
+			vi.mocked(findMainWorktreePath).mockResolvedValueOnce('/path/to/main')
 			vi.mocked(executeGitCommand).mockRejectedValueOnce(new Error('branch not fully merged'))
 
 			await expect(resourceCleanup.deleteBranch('feat/unmerged-branch')).rejects.toThrow(
