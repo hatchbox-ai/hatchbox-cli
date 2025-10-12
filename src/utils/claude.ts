@@ -86,16 +86,16 @@ export async function launchClaude(
 			})
 			return result.stdout.trim()
 		} else {
-			// Interactive mode: let user interact with Claude
-			args.push("--")
+			// Interactive mode: let user interact with Claude via AppleScript
 
 			// Import terminal launcher for new terminal window creation
 			const { openTerminalWindow } = await import('./terminal.js')
 
-			// Build Claude command for terminal execution with properly quoted prompt
+			// Build Claude command using --append-system-prompt flag
+			// This is semantically correct for system instructions
 			const baseCommand = ['claude', ...args].join(' ')
-			const quotedPrompt = `'${prompt.replace(/'/g, "'\\''")}'`
-			const claudeCommand = `${baseCommand} ${quotedPrompt}`
+			const quotedSystemPrompt = `'${prompt.replace(/'/g, "'\\''")}'`
+			const claudeCommand = `${baseCommand} --append-system-prompt ${quotedSystemPrompt} -- 'Go!'`
 
 			// Apply terminal background color if branch name available
 			let backgroundColor: { r: number; g: number; b: number } | undefined
