@@ -6,7 +6,7 @@ import { ClaudeContextManager } from './ClaudeContextManager.js'
 import { ProjectCapabilityDetector } from './ProjectCapabilityDetector.js'
 import { CLIIsolationManager } from './CLIIsolationManager.js'
 import { VSCodeIntegration } from './VSCodeIntegration.js'
-import { branchExists } from '../utils/git.js'
+import { branchExists, executeGitCommand } from '../utils/git.js'
 import { installDependencies } from '../utils/package-manager.js'
 import { generateColorFromBranchName } from '../utils/color.js'
 import { DatabaseManager } from './DatabaseManager.js'
@@ -296,15 +296,31 @@ export class HatchboxManager {
         : undefined
     )
 
-    // Check if branch already exists before attempting to create worktree
-    if (input.type !== 'pr') {
-      const exists = await branchExists(branchName)
-      if (exists) {
+    // Fetch all remote branches to ensure we have latest refs (especially for PRs)
+    // Ports: bash script lines 667-674
+    if (input.type === 'pr') {
+      logger.info('Fetching all remote branches...')
+      try {
+        await executeGitCommand(['fetch', 'origin'])
+        logger.success('Successfully fetched from remote')
+      } catch (error) {
         throw new Error(
-          `Cannot create worktree: branch '${branchName}' already exists. ` +
-          `Use 'git branch -D ${branchName}' to delete it first if needed.`
+          `Failed to fetch from remote: ${error instanceof Error ? error.message : 'Unknown error'}. ` +
+          `Make sure you have access to the repository.`
         )
       }
+    }
+
+    // Check if branch exists locally (used for different purposes depending on type)
+    const branchExistedLocally = await branchExists(branchName)
+
+    // For non-PRs, throw error if branch exists
+    // For PRs, we'll use this to determine if we need to reset later
+    if (input.type !== 'pr' && branchExistedLocally) {
+      throw new Error(
+        `Cannot create worktree: branch '${branchName}' already exists. ` +
+        `Use 'git branch -D ${branchName}' to delete it first if needed.`
+      )
     }
 
     await this.gitWorktree.createWorktree({
@@ -313,6 +329,19 @@ export class HatchboxManager {
       createBranch: input.type !== 'pr', // PRs use existing branches
       ...(input.baseBranch && { baseBranch: input.baseBranch }),
     })
+
+    // Reset PR branch to match remote exactly (if we created a new local branch)
+    // Ports: bash script lines 689-713
+    if (input.type === 'pr' && !branchExistedLocally) {
+      logger.info('Resetting new PR branch to match remote exactly...')
+      try {
+        await executeGitCommand(['reset', '--hard', `origin/${branchName}`], { cwd: worktreePath })
+        await executeGitCommand(['branch', '--set-upstream-to', `origin/${branchName}`], { cwd: worktreePath })
+        logger.success('Successfully reset to match remote')
+      } catch (error) {
+        logger.warn(`Failed to reset to match remote: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    }
 
     return worktreePath
   }

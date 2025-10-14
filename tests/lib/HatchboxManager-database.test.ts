@@ -21,6 +21,7 @@ vi.mock('../../src/lib/CLIIsolationManager.js')
 // Mock branchExists utility
 vi.mock('../../src/utils/git.js', () => ({
   branchExists: vi.fn().mockResolvedValue(false),
+  executeGitCommand: vi.fn().mockResolvedValue(''),
 }))
 
 // Mock package-manager utilities

@@ -20,6 +20,7 @@ vi.mock('./CLIIsolationManager.js')
 // Mock branchExists utility
 vi.mock('../utils/git.js', () => ({
   branchExists: vi.fn().mockResolvedValue(false),
+  executeGitCommand: vi.fn().mockResolvedValue(''),
 }))
 
 // Mock package-manager utilities
@@ -564,8 +565,8 @@ describe('HatchboxManager', () => {
 
       await manager.createHatchbox(input)
 
-      // branchExists should not be called for PRs
-      expect(branchExists).not.toHaveBeenCalled()
+      // branchExists IS called for PRs to determine if we need to reset to match remote
+      expect(branchExists).toHaveBeenCalledWith('pr-branch')
     })
 
     it('should create worktree when branch does not exist', async () => {

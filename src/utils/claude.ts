@@ -83,7 +83,7 @@ export async function launchClaude(
 				input: prompt,
 				timeout,
 				...(addDir && { cwd: addDir }), // Run Claude in the worktree directory
-				verbose: true,
+				// verbose: true,
 			})
 			return result.stdout.trim()
 		} else {
