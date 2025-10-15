@@ -365,82 +365,62 @@ export class CleanupCommand {
   }
 
   /**
-   * Execute cleanup for all worktrees associated with an issue number
+   * Execute cleanup for all worktrees associated with an issue or PR number
+   * Searches for worktrees by their path patterns (e.g., issue-25, pr-25, 25-feature, _pr_25)
    * Implements bash cleanup-worktree.sh remove_worktrees_by_issue() (lines 157-242)
    */
   private async executeIssueCleanup(parsed: ParsedCleanupInput): Promise<void> {
     const issueNumber = parsed.issueNumber
     if (issueNumber === undefined) {
-      throw new Error('No issue number provided for issue cleanup')
+      throw new Error('No issue/PR number provided for cleanup')
     }
 
     const { force, dryRun } = parsed.options
 
-    logger.info(`Finding branches related to GitHub issue #${issueNumber}...`)
+    logger.info(`Finding worktrees related to GitHub issue/PR #${issueNumber}...`)
 
-    // Step 1: Find all branches matching the issue number
-    const { findAllBranchesForIssue } = await import('../utils/git.js')
-    const branchNames = await findAllBranchesForIssue(issueNumber)
+    // Step 1: Get all worktrees and filter by path pattern
+    const worktrees = await this.gitWorktreeManager.listWorktrees()
+    const matchingWorktrees = worktrees.filter(wt => {
+      const path = wt.path.toLowerCase()
+      const numStr = String(issueNumber)
 
-    if (branchNames.length === 0) {
-      logger.warn(`No branches found for GitHub issue #${issueNumber}`)
-      logger.info(`Searched for patterns like: issue-${issueNumber}, ${issueNumber}-*, feat-${issueNumber}, etc.`)
+      // Check if path contains the number with proper word boundaries
+      // Matches: issue-25, pr-25, 25-feature, _pr_25, etc.
+      // Does NOT match: issue-250, 125-feature (where 25 is part of a larger number)
+      const pattern = new RegExp(`(?<!\\d)${numStr}(?!\\d)`)
+      return pattern.test(path)
+    })
+
+    if (matchingWorktrees.length === 0) {
+      logger.warn(`No worktrees found for GitHub issue/PR #${issueNumber}`)
+      logger.info(`Searched for worktree paths containing: ${issueNumber}, _pr_${issueNumber}, issue-${issueNumber}, etc.`)
       return
     }
 
-    // Step 2: Check worktree status for each branch
-    const worktrees = await this.gitWorktreeManager.listWorktrees()
-    const targets: Array<{ branchName: string; hasWorktree: boolean; worktreePath?: string }> = []
-
-    for (const branchName of branchNames) {
-      const worktree = worktrees.find(wt => wt.branch === branchName)
-      const target: { branchName: string; hasWorktree: boolean; worktreePath?: string } = {
-        branchName,
-        hasWorktree: !!worktree
-      }
-      if (worktree?.path) {
-        target.worktreePath = worktree.path
-      }
-      targets.push(target)
-    }
+    // Step 2: Build targets list from matching worktrees
+    const targets: Array<{ branchName: string; hasWorktree: boolean; worktreePath?: string }> =
+      matchingWorktrees.map(wt => ({
+        branchName: wt.branch,
+        hasWorktree: true,
+        worktreePath: wt.path
+      }))
 
     // Step 3: Display preview
-    logger.info(`Found ${targets.length} branch(es) related to issue #${issueNumber}:`)
+    logger.info(`Found ${targets.length} worktree(s) related to issue/PR #${issueNumber}:`)
     for (const target of targets) {
-      if (target.hasWorktree) {
-        logger.info(`  🌿 ${target.branchName} (has worktree)`)
-      } else {
-        logger.warn(`  🌿 ${target.branchName} (branch only)`)
-      }
+      logger.info(`  🌿 ${target.branchName} (${target.worktreePath})`)
     }
 
-    const worktreeCount = targets.filter(t => t.hasWorktree).length
-
-    if (worktreeCount === 0) {
-      logger.warn('No worktrees to remove (all branches are branch-only)')
-
-      // Still offer to delete branches
-      if (!force) {
-        const confirmBranches = await promptConfirmation(
-          `Delete ${targets.length} branch(es)?`,
-          false
-        )
-        if (!confirmBranches) {
-          logger.info('Cleanup cancelled')
-          return
-        }
-      }
-    } else {
-      // Step 4: Batch confirmation (unless --force)
-      if (!force) {
-        const confirmCleanup = await promptConfirmation(
-          `Remove ${worktreeCount} worktree(s)?`,
-          true
-        )
-        if (!confirmCleanup) {
-          logger.info('Cleanup cancelled')
-          return
-        }
+    // Step 4: Batch confirmation (unless --force)
+    if (!force) {
+      const confirmCleanup = await promptConfirmation(
+        `Remove ${targets.length} worktree(s)?`,
+        true
+      )
+      if (!confirmCleanup) {
+        logger.info('Cleanup cancelled')
+        return
       }
     }
 
@@ -451,43 +431,41 @@ export class CleanupCommand {
     let failed = 0
 
     for (const target of targets) {
-      logger.info(`Processing branch: ${target.branchName}`)
+      logger.info(`Processing worktree: ${target.branchName}`)
 
-      if (target.hasWorktree) {
-        // Cleanup worktree using ResourceCleanup with ParsedInput
-        try {
-          // Parse the branch name using IdentifierParser
-          const parsedInput: ParsedInput = await this.identifierParser.parseForPatternDetection(target.branchName)
+      // Cleanup worktree using ResourceCleanup with ParsedInput
+      try {
+        // Parse the branch name using IdentifierParser
+        const parsedInput: ParsedInput = await this.identifierParser.parseForPatternDetection(target.branchName)
 
-          const result = await this.resourceCleanup.cleanupWorktree(parsedInput, {
-            dryRun: dryRun ?? false,
-            force: force ?? false,
-            deleteBranch: false, // Handle branch deletion separately
-            keepDatabase: false
-          })
+        const result = await this.resourceCleanup.cleanupWorktree(parsedInput, {
+          dryRun: dryRun ?? false,
+          force: force ?? false,
+          deleteBranch: false, // Handle branch deletion separately
+          keepDatabase: false
+        })
 
-          if (result.success) {
-            worktreesRemoved++
-            logger.success(`  Worktree removed: ${target.branchName}`)
+        if (result.success) {
+          worktreesRemoved++
+          logger.success(`  Worktree removed: ${target.branchName}`)
 
-            // Check if database cleanup occurred
-            const dbOperation = result.operations.find(op => op.type === 'database')
-            if (dbOperation?.success && dbOperation.message.includes('cleaned up')) {
-              databaseBranchesDeleted++
-            }
-          } else {
-            failed++
-            logger.error(`  Failed to remove worktree: ${target.branchName}`)
+          // Check if database cleanup occurred
+          const dbOperation = result.operations.find(op => op.type === 'database')
+          if (dbOperation?.success && dbOperation.message.includes('cleaned up')) {
+            databaseBranchesDeleted++
           }
-        } catch (error) {
+        } else {
           failed++
-          const errMsg = error instanceof Error ? error.message : 'Unknown error'
-          logger.error(`  Failed to remove worktree: ${errMsg}`)
-          continue // Continue with next branch even if this one failed
+          logger.error(`  Failed to remove worktree: ${target.branchName}`)
         }
+      } catch (error) {
+        failed++
+        const errMsg = error instanceof Error ? error.message : 'Unknown error'
+        logger.error(`  Failed to remove worktree: ${errMsg}`)
+        continue // Continue with next worktree even if this one failed
       }
 
-      // Step 6: Delete branch (both worktree and branch-only)
+      // Step 6: Delete branch
       try {
         await this.resourceCleanup.deleteBranch(target.branchName, {
           force: force ?? false,
@@ -509,7 +487,7 @@ export class CleanupCommand {
     }
 
     // Step 7: Report statistics
-    logger.success(`Completed cleanup for issue #${issueNumber}:`)
+    logger.success(`Completed cleanup for issue/PR #${issueNumber}:`)
     logger.info(`   📁 Worktrees removed: ${worktreesRemoved}`)
     logger.info(`   🌿 Branches deleted: ${branchesDeleted}`)
     if (databaseBranchesDeleted > 0) {

@@ -111,7 +111,7 @@ describe('CleanupCommand', () => {
       })
 
       expect(logger.info).toHaveBeenCalledWith('Cleanup mode: issue')
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #42...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #42...')
     })
 
     it('should handle issue mode with number 1', async () => {
@@ -119,7 +119,7 @@ describe('CleanupCommand', () => {
         options: { issue: 1 }
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #1...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #1...')
     })
 
     it('should handle issue mode with large number', async () => {
@@ -127,7 +127,7 @@ describe('CleanupCommand', () => {
         options: { issue: 999 }
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #999...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #999...')
     })
   })
 
@@ -139,7 +139,7 @@ describe('CleanupCommand', () => {
       })
 
       expect(logger.info).toHaveBeenCalledWith('Cleanup mode: issue')
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #42...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #42...')
     })
 
     it('should detect "123" as issue number', async () => {
@@ -148,7 +148,7 @@ describe('CleanupCommand', () => {
         options: {}
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #123...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #123...')
     })
 
     it('should detect "1" as issue number', async () => {
@@ -157,7 +157,7 @@ describe('CleanupCommand', () => {
         options: {}
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #1...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #1...')
     })
 
     it('should detect "0" as issue number (edge case)', async () => {
@@ -166,7 +166,7 @@ describe('CleanupCommand', () => {
         options: {}
       })
 
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #0...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #0...')
     })
 
     it('should parse numeric string to integer correctly', async () => {
@@ -176,7 +176,7 @@ describe('CleanupCommand', () => {
       })
 
       // Should parse as integer 7, not string "007"
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #7...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #7...')
     })
   })
 
@@ -205,7 +205,7 @@ describe('CleanupCommand', () => {
       })
 
       // Should use explicit issue flag (99), not auto-detected (42)
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #99...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #99...')
     })
   })
 
@@ -397,7 +397,7 @@ describe('CleanupCommand', () => {
       })
 
       // Should parse to integer 7
-      expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #7...')
+      expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #7...')
     })
 
 
@@ -922,19 +922,50 @@ describe('CleanupCommand', () => {
       command = new CleanupCommand(mockGitWorktreeManager, mockResourceCleanup)
     })
 
-    describe('Branch Discovery and Preview', () => {
-      it('should find and display all branches matching issue number', async () => {
-        // Mock listWorktrees to return empty array
-        mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([])
+    describe('Worktree Path Discovery and Preview', () => {
+      it('should find worktrees by path containing issue number', async () => {
+        // Mock listWorktrees to return worktrees with issue number in path
+        mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([
+          { path: '/repo/issue-25', branch: 'issue-25', commit: 'abc', bare: false, detached: false, locked: false },
+          { path: '/repo/feat-25', branch: 'feat-25', commit: 'def', bare: false, detached: false, locked: false }
+        ])
 
         await command.execute({
           options: { issue: 25 }
         })
 
-        expect(logger.info).toHaveBeenCalledWith('Finding branches related to GitHub issue #25...')
+        expect(logger.info).toHaveBeenCalledWith('Finding worktrees related to GitHub issue/PR #25...')
+        expect(logger.info).toHaveBeenCalledWith('Found 2 worktree(s) related to issue/PR #25:')
       })
 
-      it('should handle no matching branches found', async () => {
+      it('should find worktrees with PR suffix in path', async () => {
+        // Mock listWorktrees to return worktree with _pr_25 suffix
+        mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([
+          { path: '/repo/feature-name_pr_25', branch: 'feature-name', commit: 'abc', bare: false, detached: false, locked: false }
+        ])
+
+        await command.execute({
+          options: { issue: 25 }
+        })
+
+        expect(logger.info).toHaveBeenCalledWith('Found 1 worktree(s) related to issue/PR #25:')
+      })
+
+      it('should NOT match worktrees where number is part of larger number', async () => {
+        // Mock listWorktrees with paths containing 25 as part of larger numbers
+        mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([
+          { path: '/repo/issue-250', branch: 'issue-250', commit: 'abc', bare: false, detached: false, locked: false },
+          { path: '/repo/125-feature', branch: '125-feature', commit: 'def', bare: false, detached: false, locked: false }
+        ])
+
+        await command.execute({
+          options: { issue: 25 }
+        })
+
+        expect(logger.warn).toHaveBeenCalledWith('No worktrees found for GitHub issue/PR #25')
+      })
+
+      it('should handle no matching worktrees found', async () => {
         // Mock listWorktrees to return empty array
         mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([])
 
@@ -942,8 +973,22 @@ describe('CleanupCommand', () => {
           options: { issue: 99999 }
         })
 
-        expect(logger.warn).toHaveBeenCalledWith('No branches found for GitHub issue #99999')
-        expect(logger.info).toHaveBeenCalledWith('Searched for patterns like: issue-99999, 99999-*, feat-99999, etc.')
+        expect(logger.warn).toHaveBeenCalledWith('No worktrees found for GitHub issue/PR #99999')
+        expect(logger.info).toHaveBeenCalledWith('Searched for worktree paths containing: 99999, _pr_99999, issue-99999, etc.')
+      })
+
+      it('should match case-insensitively', async () => {
+        // Mock listWorktrees with mixed case paths
+        mockGitWorktreeManager.listWorktrees = vi.fn().mockResolvedValue([
+          { path: '/repo/ISSUE-25', branch: 'ISSUE-25', commit: 'abc', bare: false, detached: false, locked: false },
+          { path: '/repo/PR-25', branch: 'PR-25', commit: 'def', bare: false, detached: false, locked: false }
+        ])
+
+        await command.execute({
+          options: { issue: 25 }
+        })
+
+        expect(logger.info).toHaveBeenCalledWith('Found 2 worktree(s) related to issue/PR #25:')
       })
     })
   })

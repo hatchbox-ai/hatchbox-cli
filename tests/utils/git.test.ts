@@ -66,6 +66,55 @@ describe('findAllBranchesForIssue', () => {
 
       expect(result).toEqual(['feature/issue-25-add-auth'])
     })
+
+    // PR branch patterns
+    it('should find branch with pattern: pr/25', async () => {
+      vi.mocked(execa).mockResolvedValue({ stdout: '  pr/25\n' } as ExecaReturnValue<string>)
+
+      const result = await findAllBranchesForIssue(25)
+
+      expect(result).toEqual(['pr/25'])
+    })
+
+    it('should find branch with pattern: pr-25', async () => {
+      vi.mocked(execa).mockResolvedValue({ stdout: '  pr-25\n' } as ExecaReturnValue<string>)
+
+      const result = await findAllBranchesForIssue(25)
+
+      expect(result).toEqual(['pr-25'])
+    })
+
+    it('should find branch with pattern: pull/25', async () => {
+      vi.mocked(execa).mockResolvedValue({ stdout: '  pull/25\n' } as ExecaReturnValue<string>)
+
+      const result = await findAllBranchesForIssue(25)
+
+      expect(result).toEqual(['pull/25'])
+    })
+
+    it('should find branch with pattern: feature/pr-25', async () => {
+      vi.mocked(execa).mockResolvedValue({ stdout: '  feature/pr-25\n' } as ExecaReturnValue<string>)
+
+      const result = await findAllBranchesForIssue(25)
+
+      expect(result).toEqual(['feature/pr-25'])
+    })
+
+    it('should find branch with pattern: hotfix/pr-25', async () => {
+      vi.mocked(execa).mockResolvedValue({ stdout: '  hotfix/pr-25\n' } as ExecaReturnValue<string>)
+
+      const result = await findAllBranchesForIssue(25)
+
+      expect(result).toEqual(['hotfix/pr-25'])
+    })
+
+    it('should find both issue and PR branches together', async () => {
+      vi.mocked(execa).mockResolvedValue({ stdout: '  issue-25\n  pr/25\n  feat-25\n  pull/25\n' } as ExecaReturnValue<string>)
+
+      const result = await findAllBranchesForIssue(25)
+
+      expect(result).toEqual(['issue-25', 'pr/25', 'feat-25', 'pull/25'])
+    })
   })
 
   describe('False Positive Prevention', () => {

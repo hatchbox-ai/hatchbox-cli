@@ -316,8 +316,10 @@ export async function getDefaultBranch(path: string = process.cwd()): Promise<st
 }
 
 /**
- * Find all branches related to a GitHub issue number
- * Matches patterns like: issue-25, issue/25, 25-feature, feat-25, feat/issue-25
+ * Find all branches related to a GitHub issue or PR number
+ * Matches patterns like:
+ * - Issue patterns: issue-25, issue/25, 25-feature, feat-25, feat/issue-25
+ * - PR patterns: pr/25, pull/25, pr-25, feature/pr-25
  *
  * Based on bash cleanup-worktree.sh find_issue_branches() (lines 133-154)
  */
