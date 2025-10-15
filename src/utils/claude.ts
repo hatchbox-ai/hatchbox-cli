@@ -120,40 +120,22 @@ export async function launchClaude(
  * Ports the terminal window opening, coloring, and .env sourcing behavior
  */
 export async function launchClaudeInNewTerminalWindow(
-	prompt: string,
+	_prompt: string,
 	options: ClaudeCliOptions & {
 		workspacePath: string // Required for terminal window launch
 	}
 ): Promise<void> {
-	const { model, permissionMode, workspacePath, branchName } = options
+	const { workspacePath, branchName } = options
 
 	// Verify required parameter
 	if (!workspacePath) {
 		throw new Error('workspacePath is required for terminal window launch')
 	}
 
-	// Build command arguments (same as launchClaude)
-	const args: string[] = []
-
-	if (model) {
-		args.push('--model', model)
-	}
-
-	if (permissionMode && permissionMode !== 'default') {
-		args.push('--permission-mode', permissionMode)
-	}
-
-	args.push('--add-dir', workspacePath)
-	args.push('--add-dir', '/tmp') //TODO: Won't work on Windows
-
 	// Import terminal launcher for new terminal window creation
 	const { openTerminalWindow } = await import('./terminal.js')
 
-	// Build Claude command using --append-system-prompt flag
-	// This is semantically correct for system instructions in terminal window mode
-	const baseCommand = ['claude', ...args].join(' ')
-	const quotedSystemPrompt = `'${prompt.replace(/'/g, "'\\''")}'`
-	const claudeCommand = `${baseCommand} --append-system-prompt ${quotedSystemPrompt} -- 'Go!'`
+	const launchCommand = "hb ignite"
 
 	// Apply terminal background color if branch name available
 	let backgroundColor: { r: number; g: number; b: number } | undefined
@@ -175,7 +157,7 @@ export async function launchClaudeInNewTerminalWindow(
 	// Open new terminal window with Claude
 	await openTerminalWindow({
 		workspacePath,
-		command: claudeCommand,
+		command: launchCommand,
 		...(backgroundColor && { backgroundColor }),
 		includeEnvSetup: hasEnvFile, // source .env only if it exists
 	})
