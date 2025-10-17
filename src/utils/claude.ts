@@ -10,6 +10,7 @@ export interface ClaudeCliOptions {
 	headless?: boolean
 	branchName?: string // Optional branch name for terminal coloring
 	timeout?: number // Timeout in milliseconds
+	appendSystemPrompt?: string // System instructions to append to system prompt
 }
 
 /**
@@ -53,7 +54,7 @@ export async function launchClaude(
 	prompt: string,
 	options: ClaudeCliOptions = {}
 ): Promise<string | void> {
-	const { model, permissionMode, addDir, headless = false } = options
+	const { model, permissionMode, addDir, headless = false, appendSystemPrompt } = options
 
 	// Build command arguments
 	const args: string[] = []
@@ -75,6 +76,11 @@ export async function launchClaude(
 	}
 
 	args.push('--add-dir', '/tmp') //TODO: Won't work on Windows
+
+	// Add --append-system-prompt flag if provided
+	if (appendSystemPrompt) {
+		args.push('--append-system-prompt', appendSystemPrompt)
+	}
 
 	try {
 		if (headless) {

@@ -48,7 +48,10 @@ export class IgniteCommand {
 
 			// Step 2: Get prompt template with variable substitution
 			const variables = this.buildTemplateVariables(context)
-			const prompt = await this.templateManager.getPrompt(context.type, variables)
+			const systemInstructions = await this.templateManager.getPrompt(context.type, variables)
+
+			// User prompt to trigger the workflow (system instructions set behavior via appendSystemPrompt)
+			const userPrompt = 'Go!'
 
 			// Step 3: Determine model and permission mode based on workflow type
 			const model = this.getModelForWorkflow(context.type)
@@ -84,8 +87,11 @@ export class IgniteCommand {
 
 			logger.info('✨ Launching Claude in current terminal...')
 
-			// Step 5: Launch Claude directly in current terminal
-			await launchClaude(prompt, claudeOptions)
+			// Step 5: Launch Claude with system instructions appended and user prompt
+			await launchClaude(userPrompt, {
+				...claudeOptions,
+				appendSystemPrompt: systemInstructions,
+			})
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 			logger.error(`Failed to launch Claude: ${errorMessage}`)

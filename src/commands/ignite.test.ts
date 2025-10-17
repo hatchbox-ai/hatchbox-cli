@@ -517,4 +517,86 @@ describe('IgniteCommand', () => {
 			}
 		})
 	})
+
+	describe('appendSystemPrompt usage in hb ignite', () => {
+		it('should pass template content as appendSystemPrompt for issue workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feat/issue-82-test')
+
+			// Mock template manager to return known content
+			mockTemplateManager.getPrompt = vi.fn().mockResolvedValue('System instructions for issue workflow')
+
+			try {
+				await command.execute()
+
+				// Verify launchClaude was called with appendSystemPrompt
+				expect(launchClaudeSpy).toHaveBeenCalledWith(
+					'Go!', // User prompt should be "Go!"
+					expect.objectContaining({
+						headless: false,
+						model: 'claude-sonnet-4-20250514',
+						permissionMode: 'acceptEdits',
+						appendSystemPrompt: 'System instructions for issue workflow',
+					})
+				)
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+			}
+		})
+
+		it('should pass template content as appendSystemPrompt for PR workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feature_pr_123')
+
+			mockTemplateManager.getPrompt = vi.fn().mockResolvedValue('System instructions for PR workflow')
+
+			try {
+				await command.execute()
+
+				expect(launchClaudeSpy).toHaveBeenCalledWith(
+					'Go!',
+					expect.objectContaining({
+						headless: false,
+						appendSystemPrompt: 'System instructions for PR workflow',
+					})
+				)
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+			}
+		})
+
+		it('should pass template content as appendSystemPrompt for regular workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/main')
+
+			mockGitWorktreeManager.getRepoInfo = vi.fn().mockResolvedValue({
+				currentBranch: 'main',
+			})
+
+			mockTemplateManager.getPrompt = vi.fn().mockResolvedValue('System instructions for regular workflow')
+
+			try {
+				await command.execute()
+
+				expect(launchClaudeSpy).toHaveBeenCalledWith(
+					'Go!',
+					expect.objectContaining({
+						headless: false,
+						appendSystemPrompt: 'System instructions for regular workflow',
+					})
+				)
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+			}
+		})
+	})
 })

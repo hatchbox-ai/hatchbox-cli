@@ -363,7 +363,7 @@ describe('claude utils', () => {
 				expect(execaCall[2]).not.toHaveProperty('cwd')
 			})
 
-			it('should use simple -- prompt format for interactive mode', async () => {
+			it('should use simple -- prompt format for interactive mode when appendSystemPrompt not provided', async () => {
 				const prompt = 'Resolve the merge conflicts'
 
 				vi.mocked(execa).mockResolvedValueOnce({
@@ -405,6 +405,142 @@ describe('claude utils', () => {
 					['--add-dir', '/tmp', '--', prompt],
 					expect.objectContaining({
 						stdio: 'inherit'
+					})
+				)
+			})
+		})
+
+		describe('appendSystemPrompt parameter', () => {
+			it('should use --append-system-prompt flag when provided in interactive mode', async () => {
+				const systemPrompt = 'You are a helpful assistant. Follow these steps...'
+				const userPrompt = 'Go!'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: '',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(userPrompt, {
+					headless: false,
+					appendSystemPrompt: systemPrompt,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					['--add-dir', '/tmp', '--append-system-prompt', systemPrompt, '--', userPrompt],
+					expect.objectContaining({
+						stdio: 'inherit',
+						timeout: 0,
+					})
+				)
+			})
+
+			it('should include all flags with --append-system-prompt in correct order', async () => {
+				const systemPrompt = 'System instructions'
+				const userPrompt = 'Go!'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: '',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(userPrompt, {
+					headless: false,
+					model: 'claude-sonnet-4-20250514',
+					permissionMode: 'acceptEdits',
+					addDir: '/workspace',
+					appendSystemPrompt: systemPrompt,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'--model', 'claude-sonnet-4-20250514',
+						'--permission-mode', 'acceptEdits',
+						'--add-dir', '/workspace',
+						'--add-dir', '/tmp',
+						'--append-system-prompt', systemPrompt,
+						'--', userPrompt
+					],
+					expect.objectContaining({
+						stdio: 'inherit',
+						timeout: 0,
+						cwd: '/workspace',
+					})
+				)
+			})
+
+			it('should handle special characters in appendSystemPrompt via execa', async () => {
+				const systemPrompt = 'Instructions with "quotes" and \'apostrophes\' and $variables'
+				const userPrompt = 'Go!'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: '',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(userPrompt, {
+					headless: false,
+					appendSystemPrompt: systemPrompt,
+				})
+
+				// execa handles escaping automatically, so we just pass the raw string
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					['--add-dir', '/tmp', '--append-system-prompt', systemPrompt, '--', userPrompt],
+					expect.any(Object)
+				)
+			})
+
+			it('should work with appendSystemPrompt in headless mode', async () => {
+				const systemPrompt = 'You are a branch name generator'
+				const userPrompt = 'Generate branch name'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'feat/issue-123-test',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				const result = await launchClaude(userPrompt, {
+					headless: true,
+					model: 'sonnet',
+					appendSystemPrompt: systemPrompt,
+				})
+
+				expect(result).toBe('feat/issue-123-test')
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--model', 'sonnet',
+						'--add-dir', '/tmp',
+						'--append-system-prompt', systemPrompt
+					],
+					expect.objectContaining({
+						input: userPrompt,
+						timeout: 0,
+					})
+				)
+			})
+
+			it('should still use simple format when appendSystemPrompt not provided', async () => {
+				const prompt = 'Resolve conflicts'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: '',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: false,
+				})
+
+				// Should use simple -- format without --append-system-prompt
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					['--add-dir', '/tmp', '--', prompt],
+					expect.objectContaining({
+						stdio: 'inherit',
 					})
 				)
 			})
