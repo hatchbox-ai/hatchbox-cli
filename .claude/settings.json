@@ -31,7 +31,8 @@
       "Bash(npm run test)",
       "Bash(pnpm test:coverage:*)",
       "Bash(pnpm validate:commit:*)",
-      "Bash(npm run validate:commit)"      
+      "Bash(npm run validate:commit)",
+      "Bash(node dist/cli.js:*)"
     ],
     "deny": [],
     "ask": []

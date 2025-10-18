@@ -37,7 +37,6 @@ hb start                 # Interactive prompt for identifier
 ```
 
 **Options**:
-- `--urgent` - Mark as urgent workspace (future feature)
 - `--claude` - Enable Claude integration (default: true)
 - `--no-claude` - Disable Claude integration
 - `--code` - Enable VSCode (default: true)

@@ -279,7 +279,7 @@ cd ~/workspace-26
 
 # Urgent bug comes in
 
-hb start 99 --urgent
+hb start 99
 
 > "Claude, hot-fix the payment bug in issue #99"
 

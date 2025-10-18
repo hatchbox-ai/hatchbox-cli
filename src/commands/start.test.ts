@@ -284,35 +284,11 @@ describe('StartCommand', () => {
 		})
 
 		describe('options handling', () => {
-			it('should pass urgent option through', async () => {
-				vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
-					type: 'issue',
-					number: 123,
-					rawInput: '123',
-				})
-
-				await expect(
-					command.execute({
-						identifier: '123',
-						options: { urgent: true },
-					})
-				).resolves.not.toThrow()
-			})
-
 			it('should handle no-claude option', async () => {
 				await expect(
 					command.execute({
 						identifier: 'fix/bug',
 						options: { claude: false },
-					})
-				).resolves.not.toThrow()
-			})
-
-			it('should handle both options together', async () => {
-				await expect(
-					command.execute({
-						identifier: 'feature/test',
-						options: { urgent: true, claude: false },
 					})
 				).resolves.not.toThrow()
 			})
@@ -351,15 +327,6 @@ describe('StartCommand', () => {
 					command.execute({
 						identifier: 'feature/test',
 						options: { devServer: false },
-					})
-				).resolves.not.toThrow()
-			})
-
-			it('should handle component flags with urgent flag', async () => {
-				await expect(
-					command.execute({
-						identifier: 'feature/test',
-						options: { devServer: true, urgent: true },
 					})
 				).resolves.not.toThrow()
 			})

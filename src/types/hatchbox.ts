@@ -28,7 +28,6 @@ export interface CreateHatchboxInput {
   originalInput: string
   baseBranch?: string
   options?: {
-    urgent?: boolean
     skipDatabase?: boolean
     skipColorSync?: boolean
     // Individual component flags

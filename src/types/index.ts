@@ -14,7 +14,6 @@ export interface Workspace {
 export interface WorkspaceInput {
   identifier: string
   type: 'issue' | 'pr' | 'branch'
-  urgent?: boolean
   skipClaude?: boolean
 }
 
@@ -122,7 +121,6 @@ export interface Config {
 
 // Command option types
 export interface StartOptions {
-  urgent?: boolean
   // Individual component flags (can be combined)
   claude?: boolean
   code?: boolean
