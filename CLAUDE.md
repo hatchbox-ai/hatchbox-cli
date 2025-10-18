@@ -10,6 +10,7 @@ Hatchbox AI is a TypeScript CLI tool that converts existing bash workflow script
 * DO NOT SWALLOW ERRORS
 * Use Exception throwing, do not use "CommandResult" objects that return "success: true | false" - it either returns successfully or not at all.
 * When catching exceptions and returning objects or throwing new exceptions, you must be very specific about the circumstances in which you are doing that. You must explicitly check for the expected error class, message (or substring) or code before returning an object or throwing a new error. Failure to do this effectively swallows the error.
+* Use pnpm as your package manager. Don't use npm.
 
 **Core Commands**:
 
