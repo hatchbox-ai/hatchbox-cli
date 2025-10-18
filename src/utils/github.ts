@@ -21,9 +21,10 @@ export async function executeGhCommand<T = unknown>(
 		encoding: 'utf8',
 	})
 
-	// Parse JSON output if --json flag or --format json was used
+	// Parse JSON output if --json flag, --format json, or --jq was used
 	const isJson =
 		args.includes('--json') ||
+		args.includes('--jq') ||
 		(args.includes('--format') && args[args.indexOf('--format') + 1] === 'json')
 	const data = isJson ? JSON.parse(result.stdout) : result.stdout
 
@@ -221,5 +222,109 @@ export class TemplateBranchNameStrategy implements BranchNameStrategy {
 		if (lowerTitle.includes('test')) return 'test'
 		if (lowerTitle.includes('refactor')) return 'refactor'
 		return 'feat'
+	}
+}
+
+// GitHub Comment Operations
+
+interface CommentResponse {
+	id: number
+	url: string
+	created_at?: string
+	updated_at?: string
+}
+
+interface RepoInfo {
+	owner: string
+	name: string
+}
+
+/**
+ * Create a comment on a GitHub issue
+ * @param issueNumber - The issue number
+ * @param body - The comment body (markdown supported)
+ * @returns Comment metadata including ID and URL
+ */
+export async function createIssueComment(
+	issueNumber: number,
+	body: string
+): Promise<CommentResponse> {
+	logger.debug('Creating issue comment', { issueNumber })
+
+	return executeGhCommand<CommentResponse>([
+		'api',
+		`repos/:owner/:repo/issues/${issueNumber}/comments`,
+		'-f',
+		`body=${body}`,
+		'--jq',
+		'{id: .id, url: .html_url, created_at: .created_at}',
+	])
+}
+
+/**
+ * Update an existing GitHub comment
+ * @param commentId - The comment ID
+ * @param body - The updated comment body (markdown supported)
+ * @returns Updated comment metadata
+ */
+export async function updateIssueComment(
+	commentId: number,
+	body: string
+): Promise<CommentResponse> {
+	logger.debug('Updating issue comment', { commentId })
+
+	return executeGhCommand<CommentResponse>([
+		'api',
+		`repos/:owner/:repo/issues/comments/${commentId}`,
+		'-X',
+		'PATCH',
+		'-f',
+		`body=${body}`,
+		'--jq',
+		'{id: .id, url: .html_url, updated_at: .updated_at}',
+	])
+}
+
+/**
+ * Create a comment on a GitHub pull request
+ * Note: PR comments use the same endpoint as issue comments
+ * @param prNumber - The PR number
+ * @param body - The comment body (markdown supported)
+ * @returns Comment metadata including ID and URL
+ */
+export async function createPRComment(
+	prNumber: number,
+	body: string
+): Promise<CommentResponse> {
+	logger.debug('Creating PR comment', { prNumber })
+
+	// PR comments use the issues endpoint
+	return executeGhCommand<CommentResponse>([
+		'api',
+		`repos/:owner/:repo/issues/${prNumber}/comments`,
+		'-f',
+		`body=${body}`,
+		'--jq',
+		'{id: .id, url: .html_url, created_at: .created_at}',
+	])
+}
+
+/**
+ * Get repository owner and name from current directory
+ * @returns Repository owner and name
+ */
+export async function getRepoInfo(): Promise<RepoInfo> {
+	logger.debug('Fetching repository info')
+
+	const result = await executeGhCommand<{ owner: { login: string }; name: string }>([
+		'repo',
+		'view',
+		'--json',
+		'owner,name',
+	])
+
+	return {
+		owner: result.owner.login,
+		name: result.name,
 	}
 }

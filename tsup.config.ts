@@ -21,6 +21,24 @@ export default defineConfig([
       }
     },
   },
+  // MCP Server build configuration
+  {
+    entry: ['src/mcp/github-comment-server.ts'],
+    format: ['esm'],
+    target: 'node16',
+    outDir: 'dist/mcp',
+    clean: false,
+    sourcemap: true,
+    dts: false,
+    banner: {
+      js: '#!/usr/bin/env node',
+    },
+    outExtension() {
+      return {
+        js: '.js',
+      }
+    },
+  },
   // Library build configuration
   {
     entry: ['src/index.ts'],

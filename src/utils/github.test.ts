@@ -13,6 +13,10 @@ import {
 	SimpleBranchNameStrategy,
 	ClaudeBranchNameStrategy,
 	TemplateBranchNameStrategy,
+	createIssueComment,
+	updateIssueComment,
+	createPRComment,
+	getRepoInfo,
 } from './github.js'
 
 vi.mock('execa')
@@ -584,6 +588,151 @@ describe('github utils', () => {
 			})
 
 			await expect(executeGhCommand(['issue', 'list'])).rejects.toThrow('Unknown error')
+		})
+	})
+
+	describe('GitHub Comment Operations', () => {
+		it('should create issue comment via gh api', async () => {
+			const commentData = {
+				id: 12345,
+				url: 'https://github.com/owner/repo/issues/123#issuecomment-12345',
+				created_at: '2025-10-17T12:00:00Z'
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(commentData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await createIssueComment(123, 'Test comment body')
+
+			expect(result).toEqual(commentData)
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'api',
+					'repos/:owner/:repo/issues/123/comments',
+					'-f',
+					'body=Test comment body',
+					'--jq',
+					'{id: .id, url: .html_url, created_at: .created_at}'
+				],
+				expect.any(Object)
+			)
+		})
+
+		it('should update issue comment via gh api', async () => {
+			const commentData = {
+				id: 12345,
+				url: 'https://github.com/owner/repo/issues/123#issuecomment-12345',
+				updated_at: '2025-10-17T13:00:00Z'
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(commentData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await updateIssueComment(12345, 'Updated comment body')
+
+			expect(result).toEqual(commentData)
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'api',
+					'repos/:owner/:repo/issues/comments/12345',
+					'-X',
+					'PATCH',
+					'-f',
+					'body=Updated comment body',
+					'--jq',
+					'{id: .id, url: .html_url, updated_at: .updated_at}'
+				],
+				expect.any(Object)
+			)
+		})
+
+		it('should create PR comment via gh api (uses issues endpoint)', async () => {
+			const commentData = {
+				id: 67890,
+				url: 'https://github.com/owner/repo/pull/456#issuecomment-67890',
+				created_at: '2025-10-17T14:00:00Z'
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(commentData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await createPRComment(456, 'PR comment body')
+
+			expect(result).toEqual(commentData)
+			// Verify it uses the issues endpoint, not a separate PR endpoint
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'api',
+					'repos/:owner/:repo/issues/456/comments',
+					'-f',
+					'body=PR comment body',
+					'--jq',
+					'{id: .id, url: .html_url, created_at: .created_at}'
+				],
+				expect.any(Object)
+			)
+		})
+
+		it('should get repository owner and name', async () => {
+			const repoData = {
+				owner: { login: 'testowner' },
+				name: 'testrepo'
+			}
+
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: JSON.stringify(repoData),
+				stderr: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			const result = await getRepoInfo()
+
+			expect(result).toEqual({
+				owner: 'testowner',
+				name: 'testrepo'
+			})
+			expect(execa).toHaveBeenCalledWith(
+				'gh',
+				[
+					'repo',
+					'view',
+					'--json',
+					'owner,name'
+				],
+				expect.any(Object)
+			)
+		})
+
+		it('should handle comment creation errors', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'API rate limit exceeded',
+				message: 'Failed to create comment',
+				exitCode: 1,
+			})
+
+			await expect(createIssueComment(123, 'Test')).rejects.toThrow('Failed to create comment')
+		})
+
+		it('should handle comment update errors', async () => {
+			vi.mocked(execa).mockRejectedValueOnce({
+				stderr: 'Comment not found',
+				message: 'Failed to update comment',
+				exitCode: 1,
+			})
+
+			await expect(updateIssueComment(99999, 'Test')).rejects.toThrow('Failed to update comment')
 		})
 	})
 })

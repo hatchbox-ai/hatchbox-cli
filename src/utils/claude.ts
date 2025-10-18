@@ -11,6 +11,7 @@ export interface ClaudeCliOptions {
 	branchName?: string // Optional branch name for terminal coloring
 	timeout?: number // Timeout in milliseconds
 	appendSystemPrompt?: string // System instructions to append to system prompt
+	mcpConfig?: Record<string, unknown>[] // Array of MCP server configurations
 }
 
 /**
@@ -54,7 +55,7 @@ export async function launchClaude(
 	prompt: string,
 	options: ClaudeCliOptions = {}
 ): Promise<string | void> {
-	const { model, permissionMode, addDir, headless = false, appendSystemPrompt } = options
+	const { model, permissionMode, addDir, headless = false, appendSystemPrompt, mcpConfig } = options
 
 	// Build command arguments
 	const args: string[] = []
@@ -80,6 +81,13 @@ export async function launchClaude(
 	// Add --append-system-prompt flag if provided
 	if (appendSystemPrompt) {
 		args.push('--append-system-prompt', appendSystemPrompt)
+	}
+
+	// Add --mcp-config flags for each MCP server configuration
+	if (mcpConfig && mcpConfig.length > 0) {
+		for (const config of mcpConfig) {
+			args.push('--mcp-config', JSON.stringify(config))
+		}
 	}
 
 	try {

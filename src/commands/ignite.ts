@@ -4,6 +4,7 @@ import { ClaudeWorkflowOptions } from '../lib/ClaudeService.js'
 import { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
 import { launchClaude, ClaudeCliOptions } from '../utils/claude.js'
 import { PromptTemplateManager, TemplateVariables } from '../lib/PromptTemplateManager.js'
+import { getRepoInfo } from '../utils/github.js'
 
 /**
  * IgniteCommand: Auto-detect workspace context and launch Claude
@@ -78,11 +79,24 @@ export class IgniteCommand {
 				claudeOptions.branchName = context.branchName
 			}
 
+			// Step 4.5: Generate MCP config for issue/PR workflows
+			let mcpConfig: Record<string, unknown>[] | undefined
+			if (context.type === 'issue' || context.type === 'pr') {
+				try {
+					mcpConfig = await this.generateMcpConfig(context)
+					logger.debug('Generated MCP configuration for GitHub comment broker')
+				} catch (error) {
+					// Log warning but continue without MCP
+					logger.warn(`Failed to generate MCP config: ${error instanceof Error ? error.message : 'Unknown error'}`)
+				}
+			}
+
 			logger.debug('Launching Claude in current terminal', {
 				type: context.type,
 				model,
 				permissionMode,
 				workspacePath: context.workspacePath,
+				hasMcpConfig: !!mcpConfig,
 			})
 
 			logger.info('✨ Launching Claude in current terminal...')
@@ -91,6 +105,7 @@ export class IgniteCommand {
 			await launchClaude(userPrompt, {
 				...claudeOptions,
 				appendSystemPrompt: systemInstructions,
+				...(mcpConfig && { mcpConfig }),
 			})
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -362,5 +377,41 @@ export class IgniteCommand {
 		}
 
 		return port
+	}
+
+	/**
+	 * Generate MCP configuration for GitHub comment broker
+	 * Returns array of MCP server config objects
+	 */
+	private async generateMcpConfig(context: ClaudeWorkflowOptions): Promise<Record<string, unknown>[]> {
+		// Get repository information
+		const repoInfo = await getRepoInfo()
+
+		// Determine GitHub event name based on context type
+		const githubEventName = context.type === 'issue' ? 'issues' : 'pull_request'
+		// const args = [path.join(path.dirname(new URL(import.meta.url).pathname), '../mcp/github-comment-server.js')]
+
+		// logger.debug('')
+		// Build MCP server configuration wrapped in github_comment key
+		const mcpServerConfig = {
+			mcpServers: {
+				github_comment: {
+					transport: 'stdio',
+					command: 'node',
+					args: [path.join(path.dirname(new globalThis.URL(import.meta.url).pathname), '../dist/mcp/github-comment-server.js')],
+					env: {
+						REPO_OWNER: repoInfo.owner,
+						REPO_NAME: repoInfo.name,
+						GITHUB_EVENT_NAME: githubEventName,
+						GITHUB_API_URL: 'https://api.github.com/',
+					},
+				},
+			},
+		}
+
+		logger.debug('Generated MCP config', { mcpServerConfig })
+
+		// Return as array (user clarification: mcpConfig should be an array)
+		return [mcpServerConfig]
 	}
 }

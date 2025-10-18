@@ -545,6 +545,182 @@ describe('claude utils', () => {
 				)
 			})
 		})
+
+		describe('mcpConfig parameter', () => {
+			it('should add --mcp-config flags for each config in array', async () => {
+				const prompt = 'Test prompt'
+				const mcpConfigs = [
+					{
+						github_comment: {
+							command: 'node',
+							args: ['server.js'],
+							env: { REPO_OWNER: 'test', REPO_NAME: 'repo' }
+						}
+					},
+					{
+						another_server: {
+							command: 'node',
+							args: ['another.js'],
+							env: { KEY: 'value' }
+						}
+					}
+				]
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					mcpConfig: mcpConfigs,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--add-dir', '/tmp',
+						'--mcp-config', JSON.stringify(mcpConfigs[0]),
+						'--mcp-config', JSON.stringify(mcpConfigs[1])
+					],
+					expect.any(Object)
+				)
+			})
+
+			it('should add single --mcp-config when only one config provided', async () => {
+				const prompt = 'Test prompt'
+				const mcpConfigs = [
+					{
+						github_comment: {
+							command: 'node',
+							args: ['server.js'],
+							env: { REPO_OWNER: 'test' }
+						}
+					}
+				]
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					mcpConfig: mcpConfigs,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--add-dir', '/tmp',
+						'--mcp-config', JSON.stringify(mcpConfigs[0])
+					],
+					expect.any(Object)
+				)
+			})
+
+			it('should not add --mcp-config when array is empty', async () => {
+				const prompt = 'Test prompt'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					mcpConfig: [],
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					['-p', '--add-dir', '/tmp'],
+					expect.any(Object)
+				)
+			})
+
+			it('should not add --mcp-config when option not provided', async () => {
+				const prompt = 'Test prompt'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, { headless: true })
+
+				const execaCall = vi.mocked(execa).mock.calls[0]
+				expect(execaCall[1]).not.toContain('--mcp-config')
+			})
+
+			it('should work with mcpConfig in interactive mode', async () => {
+				const prompt = 'Test prompt'
+				const mcpConfigs = [
+					{
+						github_comment: {
+							command: 'node',
+							args: ['server.js'],
+							env: { KEY: 'value' }
+						}
+					}
+				]
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: '',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: false,
+					mcpConfig: mcpConfigs,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'--add-dir', '/tmp',
+						'--mcp-config', JSON.stringify(mcpConfigs[0]),
+						'--', prompt
+					],
+					expect.objectContaining({
+						stdio: 'inherit'
+					})
+				)
+			})
+
+			it('should combine mcpConfig with other options', async () => {
+				const prompt = 'Test prompt'
+				const mcpConfigs = [{ server: { command: 'node', args: ['s.js'] } }]
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					model: 'opus',
+					permissionMode: 'plan',
+					addDir: '/workspace',
+					mcpConfig: mcpConfigs,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--model', 'opus',
+						'--permission-mode', 'plan',
+						'--add-dir', '/workspace',
+						'--add-dir', '/tmp',
+						'--mcp-config', JSON.stringify(mcpConfigs[0])
+					],
+					expect.any(Object)
+				)
+			})
+		})
 	})
 
 	describe('launchClaudeInNewTerminalWindow', () => {

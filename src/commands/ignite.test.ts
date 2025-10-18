@@ -3,6 +3,7 @@ import { IgniteCommand } from './ignite.js'
 import type { PromptTemplateManager } from '../lib/PromptTemplateManager.js'
 import type { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
 import * as claudeUtils from '../utils/claude.js'
+import * as githubUtils from '../utils/github.js'
 
 describe('IgniteCommand', () => {
 	let command: IgniteCommand
@@ -596,6 +597,140 @@ describe('IgniteCommand', () => {
 			} finally {
 				process.cwd = originalCwd
 				launchClaudeSpy.mockRestore()
+			}
+		})
+	})
+
+	describe('MCP Configuration', () => {
+		it('should generate MCP config for issue workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feat/issue-77-mcp-test')
+
+			try {
+				await command.execute()
+
+				// Verify launchClaude was called with mcpConfig
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1]).toHaveProperty('mcpConfig')
+				expect(launchClaudeCall[1].mcpConfig).toBeInstanceOf(Array)
+				expect(launchClaudeCall[1].mcpConfig.length).toBeGreaterThan(0)
+
+				// Verify MCP config structure
+				const mcpConfig = launchClaudeCall[1].mcpConfig[0]
+				expect(mcpConfig).toHaveProperty('mcpServers')
+				expect(mcpConfig.mcpServers).toHaveProperty('github_comment')
+				expect(mcpConfig.mcpServers.github_comment).toHaveProperty('command')
+				expect(mcpConfig.mcpServers.github_comment).toHaveProperty('args')
+				expect(mcpConfig.mcpServers.github_comment).toHaveProperty('env')
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+
+		it('should generate MCP config for PR workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feature_pr_456')
+
+			try {
+				await command.execute()
+
+				// Verify launchClaude was called with mcpConfig
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1]).toHaveProperty('mcpConfig')
+				expect(launchClaudeCall[1].mcpConfig).toBeInstanceOf(Array)
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+
+		it('should NOT generate MCP config for regular workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/main')
+
+			mockGitWorktreeManager.getRepoInfo = vi.fn().mockResolvedValue({
+				currentBranch: 'main',
+			})
+
+			try {
+				await command.execute()
+
+				// Verify launchClaude was NOT called with mcpConfig
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1].mcpConfig).toBeUndefined()
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+			}
+		})
+
+		it('should include correct environment variables in MCP config for issue workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feat/issue-88-env-test')
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				const mcpConfig = launchClaudeCall[1].mcpConfig[0]
+				const env = mcpConfig.mcpServers.github_comment.env
+
+				expect(env).toHaveProperty('REPO_OWNER')
+				expect(env).toHaveProperty('REPO_NAME')
+				expect(env).toHaveProperty('GITHUB_EVENT_NAME', 'issues')
+				expect(env).toHaveProperty('GITHUB_API_URL')
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+
+		it('should include correct environment variables in MCP config for PR workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feature_pr_789')
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				const mcpConfig = launchClaudeCall[1].mcpConfig[0]
+				const env = mcpConfig.mcpServers.github_comment.env
+
+				expect(env).toHaveProperty('GITHUB_EVENT_NAME', 'pull_request')
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
 			}
 		})
 	})
