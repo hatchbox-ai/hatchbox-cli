@@ -721,6 +721,204 @@ describe('claude utils', () => {
 				)
 			})
 		})
+
+		describe('allowedTools and disallowedTools parameters', () => {
+			it('should add --allowed-tools flags when allowedTools provided', async () => {
+				const prompt = 'Test prompt'
+				const allowedTools = ['mcp__github_comment__create_comment', 'mcp__github_comment__update_comment']
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					allowedTools,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--add-dir', '/tmp',
+						'--allowed-tools', ...allowedTools
+					],
+					expect.any(Object)
+				)
+			})
+
+			it('should add --disallowed-tools flags when disallowedTools provided', async () => {
+				const prompt = 'Test prompt'
+				const disallowedTools = ['Bash(gh api:*)']
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					disallowedTools,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--add-dir', '/tmp',
+						'--disallowed-tools', ...disallowedTools
+					],
+					expect.any(Object)
+				)
+			})
+
+			it('should add both --allowed-tools and --disallowed-tools when both provided', async () => {
+				const prompt = 'Test prompt'
+				const allowedTools = ['mcp__github_comment__create_comment', 'mcp__github_comment__update_comment']
+				const disallowedTools = ['Bash(gh api:*)']
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					allowedTools,
+					disallowedTools,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--add-dir', '/tmp',
+						'--allowed-tools', ...allowedTools,
+						'--disallowed-tools', ...disallowedTools
+					],
+					expect.any(Object)
+				)
+			})
+
+			it('should not add --allowed-tools when array is empty', async () => {
+				const prompt = 'Test prompt'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					allowedTools: [],
+				})
+
+				const execaCall = vi.mocked(execa).mock.calls[0]
+				expect(execaCall[1]).not.toContain('--allowed-tools')
+			})
+
+			it('should not add --disallowed-tools when array is empty', async () => {
+				const prompt = 'Test prompt'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					disallowedTools: [],
+				})
+
+				const execaCall = vi.mocked(execa).mock.calls[0]
+				expect(execaCall[1]).not.toContain('--disallowed-tools')
+			})
+
+			it('should not add tool filtering flags when options not provided', async () => {
+				const prompt = 'Test prompt'
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, { headless: true })
+
+				const execaCall = vi.mocked(execa).mock.calls[0]
+				expect(execaCall[1]).not.toContain('--allowed-tools')
+				expect(execaCall[1]).not.toContain('--disallowed-tools')
+			})
+
+			it('should work with tool filtering in interactive mode', async () => {
+				const prompt = 'Test prompt'
+				const allowedTools = ['mcp__github_comment__create_comment']
+				const disallowedTools = ['Bash(gh api:*)']
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: '',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: false,
+					allowedTools,
+					disallowedTools,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'--add-dir', '/tmp',
+						'--allowed-tools', ...allowedTools,
+						'--disallowed-tools', ...disallowedTools,
+						'--', prompt
+					],
+					expect.objectContaining({
+						stdio: 'inherit'
+					})
+				)
+			})
+
+			it('should combine tool filtering with other options in correct order', async () => {
+				const prompt = 'Test prompt'
+				const mcpConfigs = [{ server: { command: 'node', args: ['s.js'] } }]
+				const allowedTools = ['mcp__github_comment__create_comment']
+				const disallowedTools = ['Bash(gh api:*)']
+
+				vi.mocked(execa).mockResolvedValueOnce({
+					stdout: 'output',
+					exitCode: 0,
+				} as MockExecaReturn)
+
+				await launchClaude(prompt, {
+					headless: true,
+					model: 'opus',
+					permissionMode: 'plan',
+					addDir: '/workspace',
+					appendSystemPrompt: 'System instructions',
+					mcpConfig: mcpConfigs,
+					allowedTools,
+					disallowedTools,
+				})
+
+				expect(execa).toHaveBeenCalledWith(
+					'claude',
+					[
+						'-p',
+						'--model', 'opus',
+						'--permission-mode', 'plan',
+						'--add-dir', '/workspace',
+						'--add-dir', '/tmp',
+						'--append-system-prompt', 'System instructions',
+						'--mcp-config', JSON.stringify(mcpConfigs[0]),
+						'--allowed-tools', ...allowedTools,
+						'--disallowed-tools', ...disallowedTools
+					],
+					expect.any(Object)
+				)
+			})
+		})
 	})
 
 	describe('launchClaudeInNewTerminalWindow', () => {

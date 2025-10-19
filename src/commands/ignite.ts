@@ -79,12 +79,24 @@ export class IgniteCommand {
 				claudeOptions.branchName = context.branchName
 			}
 
-			// Step 4.5: Generate MCP config for issue/PR workflows
+			// Step 4.5: Generate MCP config and tool filtering for issue/PR workflows
 			let mcpConfig: Record<string, unknown>[] | undefined
+			let allowedTools: string[] | undefined
+			let disallowedTools: string[] | undefined
+
 			if (context.type === 'issue' || context.type === 'pr') {
 				try {
 					mcpConfig = await this.generateMcpConfig(context)
 					logger.debug('Generated MCP configuration for GitHub comment broker')
+
+					// Configure tool filtering for issue/PR workflows
+					allowedTools = [
+						'mcp__github_comment__create_comment',
+						'mcp__github_comment__update_comment',
+					]
+					disallowedTools = ['Bash(gh api:*)']
+
+					logger.debug('Configured tool filtering for issue/PR workflow', { allowedTools, disallowedTools })
 				} catch (error) {
 					// Log warning but continue without MCP
 					logger.warn(`Failed to generate MCP config: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -106,6 +118,8 @@ export class IgniteCommand {
 				...claudeOptions,
 				appendSystemPrompt: systemInstructions,
 				...(mcpConfig && { mcpConfig }),
+				...(allowedTools && { allowedTools }),
+				...(disallowedTools && { disallowedTools }),
 			})
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error'

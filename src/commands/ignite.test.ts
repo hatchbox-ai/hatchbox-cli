@@ -734,4 +734,157 @@ describe('IgniteCommand', () => {
 			}
 		})
 	})
+
+	describe('Tool Filtering for Issue/PR Workflows', () => {
+		it('should pass allowedTools to launchClaude for issue workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feat/issue-84-test')
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1]).toHaveProperty('allowedTools')
+				expect(launchClaudeCall[1].allowedTools).toEqual([
+					'mcp__github_comment__create_comment',
+					'mcp__github_comment__update_comment',
+				])
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+
+		it('should pass disallowedTools to launchClaude for issue workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feat/issue-84-test')
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1]).toHaveProperty('disallowedTools')
+				expect(launchClaudeCall[1].disallowedTools).toEqual(['Bash(gh api:*)'])
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+
+		it('should pass allowedTools to launchClaude for PR workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feature_pr_456')
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1]).toHaveProperty('allowedTools')
+				expect(launchClaudeCall[1].allowedTools).toEqual([
+					'mcp__github_comment__create_comment',
+					'mcp__github_comment__update_comment',
+				])
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+
+		it('should pass disallowedTools to launchClaude for PR workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feature_pr_456')
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1]).toHaveProperty('disallowedTools')
+				expect(launchClaudeCall[1].disallowedTools).toEqual(['Bash(gh api:*)'])
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+
+		it('should NOT pass tool filtering for regular workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/main')
+
+			mockGitWorktreeManager.getRepoInfo = vi.fn().mockResolvedValue({
+				currentBranch: 'main',
+			})
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				expect(launchClaudeCall[1].allowedTools).toBeUndefined()
+				expect(launchClaudeCall[1].disallowedTools).toBeUndefined()
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+			}
+		})
+
+		it('should combine tool filtering with mcpConfig for issue workflows', async () => {
+			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
+			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
+				owner: 'testowner',
+				name: 'testrepo',
+			})
+
+			const originalCwd = process.cwd
+			process.cwd = vi.fn().mockReturnValue('/path/to/feat/issue-84-combined')
+
+			try {
+				await command.execute()
+
+				const launchClaudeCall = launchClaudeSpy.mock.calls[0]
+				// Verify both mcpConfig and tool filtering are present
+				expect(launchClaudeCall[1]).toHaveProperty('mcpConfig')
+				expect(launchClaudeCall[1]).toHaveProperty('allowedTools')
+				expect(launchClaudeCall[1]).toHaveProperty('disallowedTools')
+				expect(launchClaudeCall[1].mcpConfig).toBeInstanceOf(Array)
+				expect(launchClaudeCall[1].allowedTools).toEqual([
+					'mcp__github_comment__create_comment',
+					'mcp__github_comment__update_comment',
+				])
+				expect(launchClaudeCall[1].disallowedTools).toEqual(['Bash(gh api:*)'])
+			} finally {
+				process.cwd = originalCwd
+				launchClaudeSpy.mockRestore()
+				getRepoInfoSpy.mockRestore()
+			}
+		})
+	})
 })
