@@ -17,6 +17,7 @@ export interface Logger {
   error: (message: string, ...args: unknown[]) => void
   debug: (message: string, ...args: unknown[]) => void
   setDebug: (enabled: boolean) => void
+  isDebugEnabled: () => boolean
 }
 
 // Lines 19-29: Stream-specific chalk instances
@@ -40,8 +41,7 @@ function formatWithEmoji(message: string, emoji: string, colorFn: (str: string) 
   }
 }
 
-// Global debug flag - defaulting to true temporarily for debugging
-let globalDebugEnabled = true
+let globalDebugEnabled = false
 
 // Lines 47-96: Main logger implementation
 /* eslint-disable no-console */
@@ -80,6 +80,10 @@ export const logger: Logger = {
 
   setDebug: (enabled: boolean): void => {
     globalDebugEnabled = enabled
+  },
+
+  isDebugEnabled: (): boolean => {
+    return globalDebugEnabled
   }
 }
 /* eslint-enable no-console */
@@ -110,7 +114,10 @@ export function createLogger(options: LoggerOptions = {}): Logger {
       warn: (): void => {},
       error: (): void => {},
       debug: (): void => {},
-      setDebug: (): void => {}
+      setDebug: (): void => {},
+      isDebugEnabled: (): boolean => {
+        return false
+      }
     }
   }
 
@@ -150,6 +157,9 @@ export function createLogger(options: LoggerOptions = {}): Logger {
     },
     setDebug: (enabled: boolean): void => {
       localDebugEnabled = enabled
+    },
+    isDebugEnabled: (): boolean => {
+      return globalDebugEnabled
     }
   }
   /* eslint-enable no-console */

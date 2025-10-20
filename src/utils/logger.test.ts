@@ -25,6 +25,10 @@ afterEach(() => {
 
 // Lines 27-100: Core logger tests
 describe('Logger', () => {
+  beforeEach(() => {
+    logger.setDebug(false)
+  })
+
   describe('log levels', () => {
     it('info should log to stdout with blue color', () => {
       logger.info('test message')
@@ -59,6 +63,7 @@ describe('Logger', () => {
     })
 
     it('debug should log to stdout without color', () => {
+      logger.setDebug(true)
       logger.debug('debug info')
       expect(stdoutSpy).toHaveBeenCalledOnce()
       expect(stderrSpy).not.toHaveBeenCalled()
@@ -155,6 +160,7 @@ describe('Logger', () => {
   // Lines 207-270: Stream separation tests
   describe('stream separation', () => {
     it('should separate stdout and stderr correctly', () => {
+      logger.setDebug(true)
       logger.info('stdout 1')
       logger.success('stdout 2')
       logger.debug('stdout 3')
@@ -166,6 +172,7 @@ describe('Logger', () => {
     })
 
     it('should maintain order within each stream', () => {
+      logger.setDebug(true)
       logger.info('first')
       logger.success('second')
       logger.warn('warning')
@@ -185,6 +192,7 @@ describe('Logger', () => {
     it('should match expected format for all log levels', () => {
       // Reset mocks to capture raw output
       vi.restoreAllMocks()
+      logger.setDebug(true)
       const outputs: string[] = []
       vi.spyOn(console, 'log').mockImplementation((msg) => outputs.push(msg))
       vi.spyOn(console, 'error').mockImplementation((msg) => outputs.push(msg))

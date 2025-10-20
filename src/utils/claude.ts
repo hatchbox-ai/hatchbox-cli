@@ -115,7 +115,7 @@ export async function launchClaude(
 				input: prompt,
 				timeout: 0, // Disable timeout for long responses
 				...(addDir && { cwd: addDir }), // Run Claude in the worktree directory
-				// verbose: true,
+				verbose: logger.isDebugEnabled(),
 			})
 			return result.stdout.trim()
 		} else {
@@ -128,6 +128,7 @@ export async function launchClaude(
 				...(addDir && { cwd: addDir }),
 				stdio: 'inherit', // Let user interact directly in current terminal
 				timeout: 0, // Disable timeout
+				verbose: logger.isDebugEnabled(),
 			})
 
 			return

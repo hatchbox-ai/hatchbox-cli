@@ -10,6 +10,7 @@ vi.mock('./logger.js', () => ({
 		debug: vi.fn(),
 		warn: vi.fn(),
 		error: vi.fn(),
+		isDebugEnabled: vi.fn().mockReturnValue(false),
 	},
 }))
 
