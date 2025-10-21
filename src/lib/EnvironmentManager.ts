@@ -8,6 +8,7 @@ import {
   formatEnvLine,
   validateEnvVariable,
 } from '../utils/env.js'
+import { calculatePortForBranch } from '../utils/port.js'
 
 const logger = createLogger({ prefix: '📝' })
 
@@ -143,21 +144,43 @@ export class EnvironmentManager {
 
   /**
    * Calculate unique port for workspace
-   * Implements: 3000 + issue/PR number
+   * Implements:
+   * - Issue/PR: 3000 + issue/PR number
+   * - Branch: 3000 + deterministic hash offset (1-999)
    */
   calculatePort(options: PortAssignmentOptions): number {
     const basePort = options.basePort ?? 3000
-    const offset = options.issueNumber ?? options.prNumber ?? 0
-    const port = basePort + offset
 
-    // Ensure port is in valid range (1-65535)
-    if (port > 65535) {
-      throw new Error(
-        `Calculated port ${port} exceeds maximum (65535). Use a lower base port or issue number.`
-      )
+    // Priority: issueNumber > prNumber > branchName > basePort only
+    if (options.issueNumber !== undefined) {
+      const port = basePort + options.issueNumber
+      // Validate port range
+      if (port > 65535) {
+        throw new Error(
+          `Calculated port ${port} exceeds maximum (65535). Use a lower base port or issue number.`
+        )
+      }
+      return port
     }
 
-    return port
+    if (options.prNumber !== undefined) {
+      const port = basePort + options.prNumber
+      // Validate port range
+      if (port > 65535) {
+        throw new Error(
+          `Calculated port ${port} exceeds maximum (65535). Use a lower base port or PR number.`
+        )
+      }
+      return port
+    }
+
+    if (options.branchName !== undefined) {
+      // Use deterministic hash for branch-based workspaces
+      return calculatePortForBranch(options.branchName, basePort)
+    }
+
+    // Fallback: basePort only (no offset)
+    return basePort
   }
 
   /**
@@ -166,7 +189,8 @@ export class EnvironmentManager {
   async setPortForWorkspace(
     envFilePath: string,
     issueNumber?: number,
-    prNumber?: number
+    prNumber?: number,
+    branchName?: string
   ): Promise<number> {
     const options: PortAssignmentOptions = {}
     if (issueNumber !== undefined) {
@@ -174,6 +198,9 @@ export class EnvironmentManager {
     }
     if (prNumber !== undefined) {
       options.prNumber = prNumber
+    }
+    if (branchName !== undefined) {
+      options.branchName = branchName
     }
     const port = this.calculatePort(options)
     await this.setEnvVar(envFilePath, 'PORT', String(port))

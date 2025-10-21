@@ -216,6 +216,7 @@ describe('HatchboxManager', () => {
       expect(mockEnvironment.setPortForWorkspace).toHaveBeenCalledWith(
         expect.stringContaining('.env'),
         42,
+        undefined,
         undefined
       )
     })
@@ -697,6 +698,7 @@ describe('HatchboxManager', () => {
       expect(mockEnvironment.setPortForWorkspace).toHaveBeenCalledWith(
         expectedPath + '/.env',
         42,
+        undefined,
         undefined
       )
       expect(mockCLIIsolation.setupCLIIsolation).not.toHaveBeenCalled()

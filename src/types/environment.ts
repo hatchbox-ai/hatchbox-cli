@@ -22,4 +22,5 @@ export interface PortAssignmentOptions {
   basePort?: number
   issueNumber?: number
   prNumber?: number
+  branchName?: string // For deterministic branch-based port calculation
 }

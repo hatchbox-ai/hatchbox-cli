@@ -1,4 +1,4 @@
-import { program } from 'commander'
+import { program, Command } from 'commander'
 import { logger } from './utils/logger.js'
 import { GitWorktreeManager } from './lib/GitWorktreeManager.js'
 import type { StartOptions, CleanupOptions, FinishOptions } from './types/index.js'
@@ -111,6 +111,46 @@ program
       await command.execute()
     } catch (error) {
       logger.error(`Failed to ignite Claude: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('open')
+  .description('Open workspace in browser or run CLI tool')
+  .argument('[identifier]', 'Issue number, PR number, or branch name (auto-detected if omitted)')
+  .allowUnknownOption()
+  .action(async (identifier?: string, _options?: Record<string, unknown>, command?: Command) => {
+    try {
+      // Extract additional arguments - everything after identifier
+      const args = command?.args ? command.args.slice(identifier ? 1 : 0) : []
+
+      const { OpenCommand } = await import('./commands/open.js')
+      const cmd = new OpenCommand()
+      const input = identifier ? { identifier, args } : { args }
+      await cmd.execute(input)
+    } catch (error) {
+      logger.error(`Failed to open: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('run')
+  .description('Run CLI tool or open workspace in browser')
+  .argument('[identifier]', 'Issue number, PR number, or branch name (auto-detected if omitted)')
+  .allowUnknownOption()
+  .action(async (identifier?: string, _options?: Record<string, unknown>, command?: Command) => {
+    try {
+      // Extract additional arguments - everything after identifier
+      const args = command?.args ? command.args.slice(identifier ? 1 : 0) : []
+
+      const { RunCommand } = await import('./commands/run.js')
+      const cmd = new RunCommand()
+      const input = identifier ? { identifier, args } : { args }
+      await cmd.execute(input)
+    } catch (error) {
+      logger.error(`Failed to run: ${error instanceof Error ? error.message : 'Unknown error'}`)
       process.exit(1)
     }
   })

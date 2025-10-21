@@ -369,8 +369,14 @@ export class HatchboxManager {
     // Then set/update the PORT variable in the copied file
     const issueNumber = input.type === 'issue' ? (input.identifier as number) : undefined
     const prNumber = input.type === 'pr' ? (input.identifier as number) : undefined
+    const branchName = input.type === 'branch' ? (input.identifier as string) : undefined
 
-    return await this.environment.setPortForWorkspace(envFilePath, issueNumber, prNumber)
+    return await this.environment.setPortForWorkspace(
+      envFilePath,
+      issueNumber,
+      prNumber,
+      branchName
+    )
   }
 
   /**
@@ -405,14 +411,22 @@ export class HatchboxManager {
    */
   private calculatePort(input: CreateHatchboxInput): number {
     const basePort = 3000
+
     if (input.type === 'issue' && typeof input.identifier === 'number') {
-      return basePort + input.identifier
+      return this.environment.calculatePort({ basePort, issueNumber: input.identifier })
     }
+
     if (input.type === 'pr' && typeof input.identifier === 'number') {
-      return basePort + input.identifier
+      return this.environment.calculatePort({ basePort, prNumber: input.identifier })
     }
-    // Default for branch-based hatchboxes - random port
-    return basePort + Math.floor(Math.random() * 1000)
+
+    if (input.type === 'branch' && typeof input.identifier === 'string') {
+      // Use deterministic hash for branch-based ports
+      return this.environment.calculatePort({ basePort, branchName: input.identifier })
+    }
+
+    // Fallback: basePort only (shouldn't reach here with valid input)
+    throw new Error(`Unknown input type: ${input.type}`)
   }
 
 
