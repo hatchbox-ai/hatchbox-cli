@@ -2,11 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ValidationRunner } from './ValidationRunner.js'
 import * as packageManager from '../utils/package-manager.js'
 import * as packageJson from '../utils/package-json.js'
+import * as claude from '../utils/claude.js'
 import type { PackageJson } from '../utils/package-json.js'
 
 // Mock dependencies
 vi.mock('../utils/package-manager.js')
 vi.mock('../utils/package-json.js')
+vi.mock('../utils/claude.js')
 vi.mock('../utils/logger.js', () => ({
 	logger: {
 		info: vi.fn(),
@@ -701,6 +703,307 @@ describe('ValidationRunner', () => {
 			await expect(
 				runner.runValidations('/test/worktree')
 			).rejects.toThrow(/package.json/)
+		})
+	})
+
+	describe('Claude Auto-Fix Integration', () => {
+		describe('Typecheck Auto-Fix', () => {
+			it('should attempt Claude fix when typecheck fails', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { typecheck: 'tsc' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+
+				// First call fails (initial typecheck), second succeeds (verification after Claude fix)
+				vi.mocked(packageManager.runScript)
+					.mockRejectedValueOnce(new Error('Type errors'))
+					.mockResolvedValueOnce()
+
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				const result = await runner.runValidations('/test/worktree', {
+					skipLint: true,
+					skipTests: true,
+				})
+
+				expect(result.success).toBe(true)
+				expect(result.steps[0]?.passed).toBe(true)
+				expect(claude.detectClaudeCli).toHaveBeenCalled()
+				expect(claude.launchClaude).toHaveBeenCalledWith(
+					expect.stringContaining('TypeScript errors'),
+					expect.objectContaining({
+						headless: false,
+						permissionMode: 'acceptEdits',
+						model: 'sonnet',
+						addDir: '/test/worktree',
+					})
+				)
+			})
+
+			it('should throw error when Claude cannot fix typecheck errors', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { typecheck: 'tsc' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+
+				// Both calls fail (initial typecheck and verification)
+				vi.mocked(packageManager.runScript).mockRejectedValue(
+					new Error('Type errors')
+				)
+
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				await expect(
+					runner.runValidations('/test/worktree', {
+						skipLint: true,
+						skipTests: true,
+					})
+				).rejects.toThrow(/Typecheck failed/)
+			})
+
+			it('should fallback to error when Claude CLI not available', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { typecheck: 'tsc' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+				vi.mocked(packageManager.runScript).mockRejectedValue(
+					new Error('Type errors')
+				)
+
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(false)
+
+				await expect(
+					runner.runValidations('/test/worktree', {
+						skipLint: true,
+						skipTests: true,
+					})
+				).rejects.toThrow(/Typecheck failed/)
+
+				expect(claude.launchClaude).not.toHaveBeenCalled()
+			})
+		})
+
+		describe('Lint Auto-Fix', () => {
+			it('should attempt Claude fix when lint fails', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { lint: 'eslint .' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+
+				// First call fails (initial lint), second succeeds (verification)
+				vi.mocked(packageManager.runScript)
+					.mockRejectedValueOnce(new Error('Lint errors'))
+					.mockResolvedValueOnce()
+
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				const result = await runner.runValidations('/test/worktree', {
+					skipTypecheck: true,
+					skipTests: true,
+				})
+
+				expect(result.success).toBe(true)
+				expect(result.steps[0]?.passed).toBe(true)
+				expect(claude.launchClaude).toHaveBeenCalledWith(
+					expect.stringContaining('ESLint errors'),
+					expect.objectContaining({
+						headless: false,
+						permissionMode: 'acceptEdits',
+						model: 'sonnet',
+						addDir: '/test/worktree',
+					})
+				)
+			})
+
+			it('should throw error when Claude cannot fix lint errors', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { lint: 'eslint .' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+
+				vi.mocked(packageManager.runScript).mockRejectedValue(
+					new Error('Lint errors')
+				)
+
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				await expect(
+					runner.runValidations('/test/worktree', {
+						skipTypecheck: true,
+						skipTests: true,
+					})
+				).rejects.toThrow(/Linting failed/)
+			})
+		})
+
+		describe('Test Auto-Fix', () => {
+			it('should attempt Claude fix when tests fail', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { test: 'vitest run' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+
+				// First call fails (initial test), second succeeds (verification)
+				vi.mocked(packageManager.runScript)
+					.mockRejectedValueOnce(new Error('Test failures'))
+					.mockResolvedValueOnce()
+
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				const result = await runner.runValidations('/test/worktree', {
+					skipTypecheck: true,
+					skipLint: true,
+				})
+
+				expect(result.success).toBe(true)
+				expect(result.steps[0]?.passed).toBe(true)
+				expect(claude.launchClaude).toHaveBeenCalledWith(
+					expect.stringContaining('unit test failures'),
+					expect.objectContaining({
+						headless: false,
+						permissionMode: 'acceptEdits',
+						model: 'sonnet',
+						addDir: '/test/worktree',
+					})
+				)
+			})
+
+			it('should throw error when Claude cannot fix test failures', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { test: 'vitest run' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+
+				vi.mocked(packageManager.runScript).mockRejectedValue(
+					new Error('Test failures')
+				)
+
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				await expect(
+					runner.runValidations('/test/worktree', {
+						skipTypecheck: true,
+						skipLint: true,
+					})
+				).rejects.toThrow(/Tests failed/)
+			})
+		})
+
+		describe('Claude Integration Details', () => {
+			it('should use correct prompt for typecheck', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { typecheck: 'tsc' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+				vi.mocked(packageManager.runScript)
+					.mockRejectedValueOnce(new Error('Type errors'))
+					.mockResolvedValueOnce()
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				await runner.runValidations('/test/worktree', {
+					skipLint: true,
+					skipTests: true,
+				})
+
+				expect(claude.launchClaude).toHaveBeenCalledWith(
+					expect.stringContaining('pnpm typecheck'),
+					expect.any(Object)
+				)
+			})
+
+			it('should use correct prompt for lint', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { lint: 'eslint .' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('npm')
+				vi.mocked(packageManager.runScript)
+					.mockRejectedValueOnce(new Error('Lint errors'))
+					.mockResolvedValueOnce()
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				await runner.runValidations('/test/worktree', {
+					skipTypecheck: true,
+					skipTests: true,
+				})
+
+				expect(claude.launchClaude).toHaveBeenCalledWith(
+					expect.stringContaining('npm run lint'),
+					expect.any(Object)
+				)
+			})
+
+			it('should use correct prompt for tests', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { test: 'vitest run' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('yarn')
+				vi.mocked(packageManager.runScript)
+					.mockRejectedValueOnce(new Error('Test failures'))
+					.mockResolvedValueOnce()
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockResolvedValue()
+
+				await runner.runValidations('/test/worktree', {
+					skipTypecheck: true,
+					skipLint: true,
+				})
+
+				expect(claude.launchClaude).toHaveBeenCalledWith(
+					expect.stringContaining('yarn test'),
+					expect.any(Object)
+				)
+			})
+
+			it('should handle Claude launch errors gracefully', async () => {
+				vi.mocked(packageJson.readPackageJson).mockResolvedValue({
+					name: 'test',
+					scripts: { typecheck: 'tsc' },
+				})
+				vi.mocked(packageJson.hasScript).mockReturnValue(true)
+				vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
+				vi.mocked(packageManager.runScript).mockRejectedValue(
+					new Error('Type errors')
+				)
+				vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+				vi.mocked(claude.launchClaude).mockRejectedValue(
+					new Error('Claude CLI crashed')
+				)
+
+				await expect(
+					runner.runValidations('/test/worktree', {
+						skipLint: true,
+						skipTests: true,
+					})
+				).rejects.toThrow(/Typecheck failed/)
+			})
 		})
 	})
 })

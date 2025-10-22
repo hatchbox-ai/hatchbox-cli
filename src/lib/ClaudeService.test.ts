@@ -84,7 +84,7 @@ describe('ClaudeService', () => {
 
 				expect(claudeUtils.launchClaudeInNewTerminalWindow).toHaveBeenCalledWith(prompt, {
 					model: 'claude-sonnet-4-20250514',
-					permissionMode: 'bypassPermissions', // Updated to match actual project settings
+					permissionMode: 'acceptEdits', // Default for issue workflow
 					workspacePath: '/workspace/issue-123',
 					addDir: '/workspace/issue-123',
 					headless: false,
