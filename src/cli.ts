@@ -38,14 +38,36 @@ program
   .description(packageJson.description)
   .version(packageJson.version)
   .option('--debug', 'Enable debug output (default: based on HATCHBOX_DEBUG env var)')
-  .hook('preAction', (thisCommand) => {
+  .hook('preAction', async (thisCommand) => {
     // Set debug mode based on flag or environment variable
     const options = thisCommand.opts()
     // Default to environment variable value, then false if not set
     const envDebug = process.env.HATCHBOX_DEBUG === 'true'
     const debugEnabled = options.debug !== undefined ? options.debug : envDebug
     logger.setDebug(debugEnabled)
+
+    // Validate settings for all commands except help
+    const commandName = thisCommand.name()
+    if (commandName !== 'help') {
+      await validateSettingsForCommand()
+    }
   })
+
+// Helper function to validate settings at startup
+async function validateSettingsForCommand(): Promise<void> {
+  try {
+    const { SettingsManager } = await import('./lib/SettingsManager.js')
+    const settingsManager = new SettingsManager()
+
+    // Attempt to load settings - this will throw on validation errors
+    // Missing file is OK (returns {})
+    await settingsManager.loadSettings()
+  } catch (error) {
+    logger.error(`Configuration error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    logger.info('Please fix your .hatchbox/settings.json file and try again.')
+    process.exit(1)
+  }
+}
 
 program
   .command('start')

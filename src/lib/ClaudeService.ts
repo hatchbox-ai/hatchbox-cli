@@ -79,14 +79,8 @@ export class ClaudeService {
 
 		try {
 			// Load settings if not already cached
-			if (!this.settings) {
-				try {
-					this.settings = await this.settingsManager.loadSettings()
-				} catch (error) {
-					logger.warn('Failed to load settings, using defaults', { error })
-					this.settings = {}
-				}
-			}
+			// Settings are pre-validated at CLI startup, so no error handling needed here
+			this.settings ??= await this.settingsManager.loadSettings()
 
 			// Build template variables
 			const variables: TemplateVariables = {

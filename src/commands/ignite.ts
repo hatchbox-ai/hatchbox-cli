@@ -64,14 +64,8 @@ export class IgniteCommand {
 			const userPrompt = 'Go!'
 
 			// Step 2.5: Load settings if not cached
-			if (!this.settings) {
-				try {
-					this.settings = await this.settingsManager.loadSettings()
-				} catch (error) {
-					logger.warn(`Failed to load settings: ${error instanceof Error ? error.message : 'Unknown error'}`)
-					this.settings = {}
-				}
-			}
+			// Settings are pre-validated at CLI startup, so no error handling needed here
+			this.settings ??= await this.settingsManager.loadSettings()
 
 			// Step 3: Determine model and permission mode based on workflow type
 			const model = this.getModelForWorkflow(context.type)

@@ -1217,7 +1217,7 @@ describe('IgniteCommand', () => {
 			}
 		})
 
-		it('should handle settings loading errors without crashing', async () => {
+		it('should throw when settings loading fails', async () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 			const getRepoInfoSpy = vi.spyOn(githubUtils, 'getRepoInfo').mockResolvedValue({
 				owner: 'testowner',
@@ -1251,13 +1251,13 @@ describe('IgniteCommand', () => {
 			)
 
 			try {
-				// Should not throw - execution continues without settings
-				await commandWithSettings.execute()
+				// Settings are pre-validated at CLI startup, so errors should propagate
+				await expect(commandWithSettings.execute()).rejects.toThrow('Failed to load settings')
 
 				expect(mockSettingsManager.loadSettings).toHaveBeenCalled()
-				// loadAgents should be called without settings (undefined)
-				expect(mockAgentManager.loadAgents).toHaveBeenCalled()
-				expect(launchClaudeSpy).toHaveBeenCalled()
+				// loadAgents should not be called since settings loading failed
+				expect(mockAgentManager.loadAgents).not.toHaveBeenCalled()
+				expect(launchClaudeSpy).not.toHaveBeenCalled()
 			} finally {
 				process.cwd = originalCwd
 				launchClaudeSpy.mockRestore()
