@@ -853,4 +853,137 @@ describe('CommitManager', () => {
       ).resolves.not.toThrow()
     })
   })
+
+  describe('commitChanges with skipVerify option', () => {
+    beforeEach(() => {
+      vi.mocked(claude.detectClaudeCli).mockResolvedValue(false)
+    })
+
+    it('should include --no-verify flag when skipVerify is true (no editor review)', async () => {
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: true,
+        noReview: true,
+        dryRun: false,
+      })
+
+      expect(git.executeGitCommand).toHaveBeenCalledWith(
+        ['commit', '-m', 'WIP: Auto-commit uncommitted changes', '--no-verify'],
+        { cwd: mockWorktreePath }
+      )
+    })
+
+    it('should include --no-verify flag when skipVerify is true (with editor review)', async () => {
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: true,
+        dryRun: false,
+      })
+
+      expect(git.executeGitCommand).toHaveBeenCalledWith(
+        ['commit', '-e', '-m', 'WIP: Auto-commit uncommitted changes', '--no-verify'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
+      )
+    })
+
+    it('should NOT include --no-verify flag when skipVerify is false', async () => {
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: false,
+        dryRun: false,
+      })
+
+      expect(git.executeGitCommand).toHaveBeenCalledWith(
+        ['commit', '-e', '-m', 'WIP: Auto-commit uncommitted changes'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
+      )
+    })
+
+    it('should NOT include --no-verify flag when skipVerify is undefined', async () => {
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, { dryRun: false })
+
+      expect(git.executeGitCommand).toHaveBeenCalledWith(
+        ['commit', '-e', '-m', 'WIP: Auto-commit uncommitted changes'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
+      )
+    })
+
+    it('should log warning when --no-verify flag is used', async () => {
+      const { logger } = await import('../utils/logger.js')
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: true,
+        dryRun: false,
+      })
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Skipping pre-commit hooks')
+      )
+    })
+
+    it('should log correct dry-run message when skipVerify is true', async () => {
+      const { logger } = await import('../utils/logger.js')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: true,
+        dryRun: true,
+      })
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('[DRY RUN] Would commit with message --no-verify:')
+      )
+    })
+
+    it('should include --no-verify flag with custom message', async () => {
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: true,
+        message: 'Custom message',
+        dryRun: false,
+      })
+
+      expect(git.executeGitCommand).toHaveBeenCalledWith(
+        ['commit', '-m', 'Custom message', '--no-verify'],
+        { cwd: mockWorktreePath }
+      )
+    })
+
+    it('should include --no-verify flag with issue number', async () => {
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: true,
+        issueNumber: 123,
+        dryRun: false,
+      })
+
+      expect(git.executeGitCommand).toHaveBeenCalledWith(
+        ['commit', '-e', '-m', 'WIP: Auto-commit for issue #123\n\nFixes #123', '--no-verify'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
+      )
+    })
+
+    it('should include --no-verify flag with Claude-generated message', async () => {
+      vi.mocked(claude.detectClaudeCli).mockResolvedValue(true)
+      vi.mocked(claude.launchClaude).mockResolvedValue('Add authentication feature')
+      vi.mocked(git.executeGitCommand).mockResolvedValue('')
+
+      await manager.commitChanges(mockWorktreePath, {
+        skipVerify: true,
+        dryRun: false,
+      })
+
+      expect(git.executeGitCommand).toHaveBeenCalledWith(
+        ['commit', '-e', '-m', 'Add authentication feature', '--no-verify'],
+        { cwd: mockWorktreePath, stdio: 'inherit', timeout: 300000 }
+      )
+    })
+  })
 })

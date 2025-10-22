@@ -2,7 +2,8 @@
   "mainBranch": "main",
   "workflows": {
     "issue": {
-      "permissionMode": "default"
+      "permissionMode": "default",
+      "noVerify": false
     }
   },
   "capabilities": {

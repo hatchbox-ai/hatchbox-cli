@@ -2,6 +2,7 @@ import path from 'path'
 import { execa, type ExecaError } from 'execa'
 import { type GitWorktree } from '../types/worktree.js'
 import type { SettingsManager } from '../lib/SettingsManager.js'
+import { logger } from './logger.js'
 
 /**
  * Execute a Git command and return the stdout result
@@ -17,6 +18,7 @@ export async function executeGitCommand(
       timeout: options?.timeout ?? 30000,
       encoding: 'utf8',
       stdio: options?.stdio ?? 'pipe',
+      verbose: logger.isDebugEnabled(),
     })
 
     return result.stdout

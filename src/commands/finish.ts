@@ -477,8 +477,13 @@ export class FinishCommand {
 			} else {
 				logger.info('Validation passed, auto-committing uncommitted changes...')
 
+				// Load settings to get skipVerify configuration
+				const settings = await this.settingsManager.loadSettings(worktree.path)
+				const skipVerify = settings.workflows?.issue?.noVerify ?? false
+
 				const commitOptions: CommitOptions = {
 					dryRun: options.dryRun ?? false,
+					skipVerify,
 				}
 
 				// Only add issueNumber if it's an issue
@@ -574,8 +579,14 @@ export class FinishCommand {
 					logger.info('[DRY RUN] Would commit uncommitted changes')
 				} else {
 					logger.info('Committing uncommitted changes...')
+
+					// Load settings to get skipVerify configuration
+					const settings = await this.settingsManager.loadSettings(worktree.path)
+					const skipVerify = settings.workflows?.pr?.noVerify ?? false
+
 					await this.commitManager.commitChanges(worktree.path, {
 						dryRun: false,
+						skipVerify,
 						// Do NOT pass issueNumber for PRs - no "Fixes #" trailer needed
 					})
 					logger.success('Changes committed')

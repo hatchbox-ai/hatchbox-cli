@@ -2,7 +2,8 @@
   "mainBranch": "main",
   "workflows": {
     "issue": {
-      "permissionMode": "bypassPermissions"
+      "permissionMode": "bypassPermissions",
+      "noVerify": true
     }
   }
 }

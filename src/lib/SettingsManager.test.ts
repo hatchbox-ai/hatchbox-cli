@@ -430,6 +430,103 @@ describe('SettingsManager', () => {
 		})
 	})
 
+	describe('workflows.{type}.noVerify configuration', () => {
+		it('should accept valid noVerify boolean in workflows.issue', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				workflows: {
+					issue: {
+						permissionMode: 'plan',
+						noVerify: true,
+					},
+				},
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.loadSettings(projectRoot)
+			expect(result.workflows?.issue?.noVerify).toBe(true)
+		})
+
+		it('should accept valid noVerify boolean in workflows.pr', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				workflows: {
+					pr: {
+						permissionMode: 'acceptEdits',
+						noVerify: false,
+					},
+				},
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.loadSettings(projectRoot)
+			expect(result.workflows?.pr?.noVerify).toBe(false)
+		})
+
+		it('should accept missing noVerify field (defaults to undefined)', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				workflows: {
+					issue: {
+						permissionMode: 'plan',
+					},
+				},
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.loadSettings(projectRoot)
+			expect(result.workflows?.issue?.noVerify).toBeUndefined()
+		})
+
+		it('should reject invalid noVerify types (non-boolean)', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				workflows: {
+					issue: {
+						permissionMode: 'plan',
+						noVerify: 'true', // String instead of boolean
+					},
+				},
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			await expect(settingsManager.loadSettings(projectRoot)).rejects.toThrow(
+				/Settings validation failed[\s\S]*workflows\.issue\.noVerify[\s\S]*Expected boolean, received string/,
+			)
+		})
+
+		it('should handle multiple workflow types with different noVerify settings', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				workflows: {
+					issue: {
+						permissionMode: 'plan',
+						noVerify: true,
+					},
+					pr: {
+						permissionMode: 'acceptEdits',
+						noVerify: false,
+					},
+					regular: {
+						permissionMode: 'bypassPermissions',
+						noVerify: true,
+					},
+				},
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.loadSettings(projectRoot)
+			expect(result.workflows?.issue?.noVerify).toBe(true)
+			expect(result.workflows?.pr?.noVerify).toBe(false)
+			expect(result.workflows?.regular?.noVerify).toBe(true)
+		})
+	})
+
 	describe('loadSettings with workflows', () => {
 		it('should load settings with workflows configuration correctly', async () => {
 			const projectRoot = '/test/project'

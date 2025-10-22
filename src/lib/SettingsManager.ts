@@ -22,6 +22,10 @@ export const WorkflowPermissionSchema = z.object({
 		.enum(['plan', 'acceptEdits', 'bypassPermissions', 'default'])
 		.optional()
 		.describe('Permission mode for Claude CLI in this workflow type'),
+	noVerify: z
+		.boolean()
+		.optional()
+		.describe('Skip pre-commit hooks (--no-verify) when committing during finish workflow'),
 })
 
 /**

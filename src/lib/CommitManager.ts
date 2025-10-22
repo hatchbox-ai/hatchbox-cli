@@ -48,7 +48,8 @@ export class CommitManager {
       logger.info('[DRY RUN] Would run: git add -A')
       logger.info('[DRY RUN] Would generate commit message with Claude (if available)')
       const fallbackMessage = this.generateFallbackMessage(options)
-      logger.info(`[DRY RUN] Would commit with message: ${fallbackMessage}`)
+      const verifyFlag = options.skipVerify ? ' --no-verify' : ''
+      logger.info(`[DRY RUN] Would commit with message${verifyFlag}: ${fallbackMessage}`)
       return
     }
 
@@ -70,15 +71,28 @@ export class CommitManager {
     // Fallback to simple message if Claude failed or unavailable
     message ??= this.generateFallbackMessage(options)
 
-    // Step 4: Commit with user review via git editor (unless noReview specified)
+    // Step 4: Log warning if --no-verify is configured
+    if (options.skipVerify) {
+      logger.warn('⚠️  Skipping pre-commit hooks (--no-verify configured in settings)')
+    }
+
+    // Step 5: Commit with user review via git editor (unless noReview specified)
     try {
       if (options.noReview || options.message) {
         // Direct commit without editor review
-        await executeGitCommand(['commit', '-m', message], { cwd: worktreePath })
+        const commitArgs = ['commit', '-m', message]
+        if (options.skipVerify) {
+          commitArgs.push('--no-verify')
+        }
+        await executeGitCommand(commitArgs, { cwd: worktreePath })
       } else {
         // Use git editor for user review - pre-populate message and open editor
         logger.info('Opening git editor for commit message review...')
-        await executeGitCommand(['commit', '-e', '-m', message], {
+        const commitArgs = ['commit', '-e', '-m', message]
+        if (options.skipVerify) {
+          commitArgs.push('--no-verify')
+        }
+        await executeGitCommand(commitArgs, {
           cwd: worktreePath,
           stdio: 'inherit',
           timeout: 300000 // 5 minutes for interactive editing

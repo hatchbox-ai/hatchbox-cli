@@ -223,6 +223,7 @@ export interface CommitOptions {
 	issueNumber?: number  // For "Fixes #N" trailer
 	message?: string      // Custom message override
 	noReview?: boolean    // Skip user review of commit message
+	skipVerify?: boolean  // Skip pre-commit hooks (--no-verify flag)
 }
 
 // Merge management types
