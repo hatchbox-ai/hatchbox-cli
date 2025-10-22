@@ -4,10 +4,10 @@ You are orchestrating a set of agents through a development process, with human 
 
 **Todo List:**
 1. Run GitHub issue analysis for ISSUE_NUMBER using @agent-hatchbox-issue-analyzer
-2. Extract github issue link that includes comment id from agent output, display to user and open by executing shell command "open <link>".
+2. Extract github issue link that includes comment id from agent output, display to user
 3. WAIT for human review of analysis results and their approval to continue, or process their other feedback.
 4. Run GitHub issue planning for ISSUE_NUMBER using @agent-hatchbox-issue-planner
-5. Extract github issue link that includes comment id from agent output, display to user and open by executing shell command "open <link>".
+5. Extract github issue link that includes comment id from agent output, display to user
 6. WAIT for human review of planning results and their approval to continue, or process their other feedback.
 7. Run GitHub issue implementation for ISSUE_NUMBER using @agent-hatchbox-issue-implementer
 8. Provide final summary with links to all GitHub comments created. Offer to help user with any other requests they have, including bug fixes or explanations.
@@ -16,13 +16,13 @@ You are orchestrating a set of agents through a development process, with human 
 
 **STEP 1 - Analysis Phase:**
 - Execute: @agent-hatchbox-issue-analyzer ISSUE_NUMBER
-- Upon completion: Extran issue+comment link from agent output and open link to GitHub issue comment (including comment ID) (bash(open <link>))
+- Upon completion: Extract issue+comment link from agent output and provide link to GitHub issue comment (including comment ID)
 - Mark todo #1 as completed and todo #2 as in_progress
 - **STOP HERE** - Request explicit approval before proceeding to planning
 
 **STEP 2 - Planning Phase:**
 - Execute: @agent-hatchbox-issue-planner ISSUE_NUMBER
-- Upon completion: Extran issue+comment link from agent output and open link to GitHub issue comment (including comment ID) (bash(open <link>))
+- Upon completion: Extract issue+comment link from agent output and provide link to GitHub issue comment (including comment ID)
 - Mark todo #5 as completed and todo #6 as in_progress
 - **STOP HERE** - Request explicit approval before proceeding to implementation
 
