@@ -179,6 +179,16 @@ describe('AddIssueCommand', () => {
 				})
 			})
 
+			it('should call waitForReviewAndOpen with confirm=false (single keypress)', async () => {
+				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
+
+				await command.execute({ description: validDescription, options: {} })
+
+				// add-issue should use single keypress method (confirm=false is default)
+				expect(mockEnhancementService.waitForReviewAndOpen).toHaveBeenCalledWith(123)
+				expect(mockEnhancementService.waitForReviewAndOpen).toHaveBeenCalledTimes(1)
+			})
+
 			it('should wait for review and open browser', async () => {
 				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
 

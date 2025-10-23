@@ -238,63 +238,170 @@ describe('IssueEnhancementService', () => {
 	})
 
 	describe('waitForReviewAndOpen', () => {
-		it('should fetch issue URL using GitHubService', async () => {
-			const issueNumber = 123
-			vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+		describe('with confirm=false (default, single keypress)', () => {
+			it('should fetch issue URL using GitHubService', async () => {
+				const issueNumber = 123
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
 
-			await service.waitForReviewAndOpen(issueNumber)
+				await service.waitForReviewAndOpen(issueNumber)
 
-			expect(mockGitHubService.getIssueUrl).toHaveBeenCalledWith(issueNumber)
-		})
-
-		it('should wait for keypress before opening browser', async () => {
-			const { waitForKeypress } = await import('../utils/prompt.js')
-			const { openBrowser } = await import('../utils/browser.js')
-
-			vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
-
-			// Track call order
-			const calls: string[] = []
-			vi.mocked(waitForKeypress).mockImplementation(async () => {
-				calls.push('keypress')
-			})
-			vi.mocked(openBrowser).mockImplementation(async () => {
-				calls.push('browser')
+				expect(mockGitHubService.getIssueUrl).toHaveBeenCalledWith(issueNumber)
 			})
 
-			await service.waitForReviewAndOpen(123)
+			it('should wait for keypress before opening browser', async () => {
+				const { waitForKeypress } = await import('../utils/prompt.js')
+				const { openBrowser } = await import('../utils/browser.js')
 
-			// First keypress should happen before browser opens
-			expect(calls[0]).toBe('keypress')
-			expect(calls[1]).toBe('browser')
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+				// Track call order
+				const calls: string[] = []
+				vi.mocked(waitForKeypress).mockImplementation(async () => {
+					calls.push('keypress')
+				})
+				vi.mocked(openBrowser).mockImplementation(async () => {
+					calls.push('browser')
+				})
+
+				await service.waitForReviewAndOpen(123)
+
+				// First keypress should happen before browser opens
+				expect(calls[0]).toBe('keypress')
+				expect(calls[1]).toBe('browser')
+			})
+
+			it('should open browser with correct URL', async () => {
+				const { openBrowser } = await import('../utils/browser.js')
+				const issueUrl = 'https://github.com/owner/repo/issues/123'
+
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue(issueUrl)
+
+				await service.waitForReviewAndOpen(123)
+
+				expect(openBrowser).toHaveBeenCalledWith(issueUrl)
+			})
+
+			it('should wait for keypress only once when confirm=false', async () => {
+				const { waitForKeypress } = await import('../utils/prompt.js')
+
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+				await service.waitForReviewAndOpen(123, false)
+
+				// Should be called once - before opening browser
+				expect(waitForKeypress).toHaveBeenCalledTimes(1)
+			})
+
+			it('should handle errors gracefully', async () => {
+				vi.mocked(mockGitHubService.getIssueUrl).mockRejectedValue(new Error('Network error'))
+
+				await expect(service.waitForReviewAndOpen(123)).rejects.toThrow('Network error')
+			})
 		})
 
-		it('should open browser with correct URL', async () => {
-			const { openBrowser } = await import('../utils/browser.js')
-			const issueUrl = 'https://github.com/owner/repo/issues/123'
+		describe('with confirm=true (double keypress)', () => {
+			it('should wait for first keypress before opening browser', async () => {
+				const { waitForKeypress } = await import('../utils/prompt.js')
+				const { openBrowser } = await import('../utils/browser.js')
 
-			vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue(issueUrl)
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
 
-			await service.waitForReviewAndOpen(123)
+				// Track call order
+				const calls: string[] = []
+				vi.mocked(waitForKeypress).mockImplementation(async () => {
+					calls.push('keypress')
+				})
+				vi.mocked(openBrowser).mockImplementation(async () => {
+					calls.push('browser')
+				})
 
-			expect(openBrowser).toHaveBeenCalledWith(issueUrl)
-		})
+				await service.waitForReviewAndOpen(123, true)
 
-		it('should wait for keypress before opening browser', async () => {
-			const { waitForKeypress } = await import('../utils/prompt.js')
+				// First keypress should happen before browser opens
+				expect(calls[0]).toBe('keypress')
+				expect(calls[1]).toBe('browser')
+			})
 
-			vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+			it('should open browser with correct issue URL', async () => {
+				const { openBrowser } = await import('../utils/browser.js')
+				const issueUrl = 'https://github.com/owner/repo/issues/456'
 
-			await service.waitForReviewAndOpen(123)
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue(issueUrl)
 
-			// Should be called once - before opening browser
-			expect(waitForKeypress).toHaveBeenCalledTimes(1)
-		})
+				await service.waitForReviewAndOpen(456, true)
 
-		it('should handle errors gracefully', async () => {
-			vi.mocked(mockGitHubService.getIssueUrl).mockRejectedValue(new Error('Network error'))
+				expect(openBrowser).toHaveBeenCalledWith(issueUrl)
+			})
 
-			await expect(service.waitForReviewAndOpen(123)).rejects.toThrow('Network error')
+			it('should wait for second keypress after opening browser', async () => {
+				const { waitForKeypress } = await import('../utils/prompt.js')
+				const { openBrowser } = await import('../utils/browser.js')
+
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+				// Track call order
+				const calls: string[] = []
+				vi.mocked(waitForKeypress).mockImplementation(async () => {
+					calls.push('keypress')
+				})
+				vi.mocked(openBrowser).mockImplementation(async () => {
+					calls.push('browser')
+				})
+
+				await service.waitForReviewAndOpen(123, true)
+
+				// Second keypress should happen after browser opens
+				expect(calls[2]).toBe('keypress')
+			})
+
+			it('should call waitForKeypress exactly twice in correct order', async () => {
+				const { waitForKeypress } = await import('../utils/prompt.js')
+				const { openBrowser } = await import('../utils/browser.js')
+
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+				// Track call order
+				const calls: string[] = []
+				vi.mocked(mockGitHubService.getIssueUrl).mockImplementation(async () => {
+					calls.push('getIssueUrl')
+					return 'https://github.com/owner/repo/issues/123'
+				})
+				vi.mocked(waitForKeypress).mockImplementation(async () => {
+					calls.push('waitForKeypress')
+				})
+				vi.mocked(openBrowser).mockImplementation(async () => {
+					calls.push('openBrowser')
+				})
+
+				await service.waitForReviewAndOpen(123, true)
+
+				// Verify call order: getIssueUrl -> waitForKeypress (1st) -> openBrowser -> waitForKeypress (2nd)
+				expect(calls).toEqual(['getIssueUrl', 'waitForKeypress', 'openBrowser', 'waitForKeypress'])
+				expect(waitForKeypress).toHaveBeenCalledTimes(2)
+			})
+
+			it('should pass appropriate messages to waitForKeypress', async () => {
+				const { waitForKeypress } = await import('../utils/prompt.js')
+
+				vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+				await service.waitForReviewAndOpen(123, true)
+
+				// Check that first waitForKeypress is called with multi-line message
+				const firstCall = vi.mocked(waitForKeypress).mock.calls[0][0]
+				expect(firstCall).toContain('Created issue #123.')
+				expect(firstCall).toContain('Review and edit the issue in your browser if needed.')
+				expect(firstCall).toContain('Press any key to open issue for editing...')
+
+				// Check that second waitForKeypress is called with confirmation message
+				expect(waitForKeypress).toHaveBeenNthCalledWith(2, 'Press any key to continue with workspace creation...')
+			})
+
+			it('should handle errors gracefully', async () => {
+				vi.mocked(mockGitHubService.getIssueUrl).mockRejectedValue(new Error('Network error'))
+
+				await expect(service.waitForReviewAndOpen(123, true)).rejects.toThrow('Network error')
+			})
 		})
 	})
 })

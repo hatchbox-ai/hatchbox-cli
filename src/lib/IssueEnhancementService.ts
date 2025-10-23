@@ -86,19 +86,25 @@ export class IssueEnhancementService {
 
 	/**
 	 * Waits for user keypress and opens issue in browser for review.
-	 * Command exits immediately after opening browser.
+	 * @param issueNumber - Issue number to open for review
+	 * @param confirm - If true, wait for additional keypress after opening browser before returning
 	 */
-	public async waitForReviewAndOpen(issueNumber: number): Promise<void> {
+	public async waitForReviewAndOpen(issueNumber: number, confirm = false): Promise<void> {
 		// Get issue URL
 		const issueUrl = await this.gitHubService.getIssueUrl(issueNumber)
 
-		// Display message and wait for keypress
-		logger.info(`Created issue #${issueNumber}.`)
-		logger.info('Review and edit the issue in your browser if needed.')
-		logger.info('Press any key to open issue for editing...')
-		await waitForKeypress('')
+		// Display message and wait for first keypress
+		const message = `Created issue #${issueNumber}.
+Review and edit the issue in your browser if needed.
+Press any key to open issue for editing...`
+		await waitForKeypress(message)
 
-		// Open issue in browser and exit
+		// Open issue in browser
 		await openBrowser(issueUrl)
+
+		// If confirmation required, wait for second keypress
+		if (confirm) {
+			await waitForKeypress('Press any key to continue with workspace creation...')
+		}
 	}
 }

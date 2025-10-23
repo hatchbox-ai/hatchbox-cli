@@ -173,9 +173,9 @@ export class StartCommand {
 			throw new Error('Missing required argument: identifier')
 		}
 
-		// Check for description: >50 chars AND >2 spaces
+		// Check for description: >25 chars AND >2 spaces
 		const spaceCount = (trimmedIdentifier.match(/ /g) ?? []).length
-		if (trimmedIdentifier.length > 50 && spaceCount > 2) {
+		if (trimmedIdentifier.length > 25 && spaceCount > 2) {
 			return {
 				type: 'description',
 				originalInput: trimmedIdentifier,
@@ -324,7 +324,7 @@ export class StartCommand {
 		// Use IssueEnhancementService for the workflow
 		const enhancedDescription = await this.enhancementService.enhanceDescription(description)
 		const result = await this.enhancementService.createEnhancedIssue(description, enhancedDescription)
-		await this.enhancementService.waitForReviewAndOpen(result.number)
+		await this.enhancementService.waitForReviewAndOpen(result.number, true)
 
 		return result.number
 	}
