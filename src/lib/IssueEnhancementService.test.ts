@@ -431,7 +431,7 @@ describe('IssueEnhancementService', () => {
 				expect(firstCall).toContain('Press any key to open issue for editing...')
 
 				// Check that second waitForKeypress is called with confirmation message
-				expect(waitForKeypress).toHaveBeenNthCalledWith(2, 'Press any key to continue with workspace creation...')
+				expect(waitForKeypress).toHaveBeenNthCalledWith(2, 'Press any key to continue with Hatchbox creation...')
 			})
 
 			it('should handle errors gracefully', async () => {

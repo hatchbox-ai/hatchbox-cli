@@ -119,7 +119,7 @@ Press any key to open issue for editing...`
 
 		// If confirmation required, wait for second keypress
 		if (confirm) {
-			await waitForKeypress('Press any key to continue with workspace creation...')
+			await waitForKeypress('Press any key to continue with Hatchbox creation...')
 		}
 	}
 }
