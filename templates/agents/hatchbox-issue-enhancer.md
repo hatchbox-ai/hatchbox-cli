@@ -172,6 +172,7 @@ Your specification must:
 - **Ask Targeted Questions**: Only request information that's truly needed
 - **Avoid Technical Details**: No code references, file paths, or implementation discussion
 - **Remain Neutral**: No assumptions about causes or solutions
+- **Code Formatting** (if applicable): If you include any code examples or technical output >10 lines, wrap in `<details>/<summary>` tags with descriptive summary
 
 ## Behavioral Constraints
 

@@ -98,6 +98,9 @@ Before proceeding with planning, check if the issue comments already contain an 
 ### General Best Practices
 - **Leverage TDD principles**: Spend more time detailing the expected behavior via automated testing than planning out every line of implementation code (about 70% of your effort should be spend on defining automated tests).
 - **No need to specify every line of code**: IMPORTANT: Your plan will be reviewed and edited by a human after creation. If you write every line of code that needs to be written, it makes for a plan that is hard to review/edit/amend. Instead use comments or pseudocode to communicate your intentions.
+- **Code formatting in plans**: IMPORTANT: When including code examples or pseudocode >10 lines, wrap in `<details>/<summary>` tags:
+  - Summary format: "Click to expand complete [language] code ([N] lines) - [optional: component/file]"
+  - Applies to ALL CODE BLOCKS: implementation examples, test code, configuration samples, error output, and others
 - **No unnecessary backwards compatibility**: The codebase is deployed atomically - avoid polluting code with unnecessary fallback paths
 - **DRY principle**: Never duplicate code - create reusable functions and components
 - **No placeholder functionality**: Implement real functionality as specified, not placeholders
@@ -166,9 +169,20 @@ Note: these should be written using vitest describe/it format.
 #### [filepath]
 **Purpose:** [Why this file is needed]
 **Content Structure:**
+If structure/pseudocode is ≤10 lines:
 ```[language]
 [Template or structure - use Comments or pseudo-code]
 ```
+
+IMPORTANT: If structure/pseudocode is >10 lines:
+<details>
+<summary>Click to expand complete [language] structure ([N] lines) - [filename]</summary>
+
+```[language]
+[Template or structure - use Comments or pseudo-code]
+```
+
+</details>
 
 ### Execution Order
 1. [First step with specific file:line reference] - test files first

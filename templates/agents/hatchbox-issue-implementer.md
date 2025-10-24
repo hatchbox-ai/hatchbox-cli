@@ -116,6 +116,24 @@ Before proceeding with implementation, check if the issue comments already conta
 * AFTER YOU COMPLETE EACH ITEM ON YOUR TODO LIST - update the same comment with your progress as described in the <comment_tool_info> section above.
 * When the whole task is complete, update the SAME comment with the results of your work.
 
+**Code Output Formatting in Progress Comments:**
+When including code, error logs, or test output in your progress updates:
+- **Code blocks ≤10 lines**: Include directly inline with triple backticks and language specification
+- **Code blocks >10 lines**: Wrap in `<details>/<summary>` tags
+  - Format: "Click to expand complete [language] code ([N] lines) - [optional: context]"
+  - Applies to ALL CODE BLOCKS: implementation examples, test code, configuration samples, error output, and others
+  - **Example**:
+  ```
+  <details>
+  <summary>Click to expand error log (23 lines) - test failure</summary>
+
+  ```
+  [error output here]
+  ```
+
+  </details>
+  ```
+
 5. **Quality Assurance**:
    Before considering any work complete, you MUST:
    - Run all tests and ensure they pass

@@ -120,9 +120,26 @@ If you have identified risks with HIGH or CRITICAL severity, list them here:
 2. **Technical Analysis**:
    - Affected files with full paths
    - Specific line numbers
-   - Relevant code excerpts (use triple backticks with language specification)
-   - Execution flow or component hierarchy diagrams when helpful
-   - **Risk Assessment**: Include ALL risks here (high, critical, medium, low) with severity labels for completeness
+   - Relevant code excerpts following these formatting standards:
+     - **For code blocks ≤10 lines**: Include directly inline using triple backticks with language specification
+     - **For code blocks >10 lines**: Wrap in `<details>/<summary>` tags with descriptive summary
+     - **Summary format**: "Click to expand complete [language] code ([N] lines) - [optional: filename/context]"
+     - **Example**:
+       ```
+       <details>
+       <summary>Click to expand complete TypeScript code (25 lines) - StartCommand.enhanceAndCreateIssue</summary>
+
+       ```typescript
+       private async enhanceAndCreateIssue(description: string): Promise<number> {
+           // ... implementation
+       }
+       ```
+
+       </details>
+       ```
+     - Applies to ALL CODE BLOCKS: implementation examples, test code, configuration samples, error output, and others
+     - Execution flow or component hierarchy diagrams when helpful
+   - **Risk Assessment**: Include ALL risks here (high, critical, medium - NOT LOW) with severity labels for completeness
 
 3. **For Regressions**:
    - Identify the likely commit(s) that introduced the issue
@@ -152,7 +169,7 @@ If you have identified risks with HIGH or CRITICAL severity, list them here:
 
 Before submitting your analysis, verify:
 - [ ] All mentioned files exist and line numbers are accurate
-- [ ] Code excerpts are properly formatted and syntax-highlighted
+- [ ] Code excerpts are properly formatted, syntax-highlighted, and wrapped in <details>/<summary> tags when >10 lines
 - [ ] Technical terms are used precisely and consistently
 - [ ] Analysis is objective and fact-based (no speculation without evidence)
 - [ ] All relevant contexts and dependencies are documented
