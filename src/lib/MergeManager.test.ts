@@ -44,7 +44,7 @@ describe('MergeManager', () => {
 			// Expect: should throw clear error
 			await expect(
 				manager.rebaseOnMain('/test/worktree')
-			).rejects.toThrow(/main branch does not exist/i)
+			).rejects.toThrow(/branch.*does not exist/i)
 
 			// Verify: show-ref command was called
 			expect(git.executeGitCommand).toHaveBeenCalledWith(
@@ -371,7 +371,7 @@ describe('MergeManager', () => {
 			// Expect: should throw clear error
 			await expect(
 				manager.performFastForwardMerge('feature-branch', '/test/worktree', { force: true })
-			).rejects.toThrow(/main branch/i)
+			).rejects.toThrow(/branch/i)
 		})
 
 		it('should fail if branch verification shows not on main', async () => {
@@ -502,7 +502,7 @@ describe('MergeManager', () => {
 
 			await expect(
 				manager.rebaseOnMain('/test/worktree')
-			).rejects.toThrow(/main branch/i)
+			).rejects.toThrow(/branch.*does not exist/i)
 		})
 
 		it('should handle invalid branch name', async () => {
@@ -578,6 +578,143 @@ describe('MergeManager', () => {
 
 			// This check should pass (no error thrown)
 			// Continuing would show we expect clean state
+		})
+	})
+
+	describe('Custom Main Branch Configuration', () => {
+		it('should use custom main branch from settings in rebase', async () => {
+			// Mock: settings with custom main branch
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({ mainBranch: 'develop' })
+			manager = new MergeManager(mockSettingsManager)
+
+			// Mock: successful rebase on develop
+			vi.mocked(git.executeGitCommand)
+				.mockResolvedValueOnce('') // show-ref: develop exists
+				.mockResolvedValueOnce('') // status --porcelain: clean
+				.mockResolvedValueOnce('abc123') // merge-base
+				.mockResolvedValueOnce('def456') // rev-parse develop
+				.mockResolvedValueOnce('abc123 Commit 1') // log: commits to rebase
+				.mockResolvedValueOnce('') // rebase develop: success
+
+			await manager.rebaseOnMain('/test/worktree', { force: true })
+
+			// Verify: commands used 'develop' instead of 'main'
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['show-ref', '--verify', '--quiet', 'refs/heads/develop'],
+				expect.objectContaining({ cwd: '/test/worktree' })
+			)
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['merge-base', 'develop', 'HEAD'],
+				expect.objectContaining({ cwd: '/test/worktree' })
+			)
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['rev-parse', 'develop'],
+				expect.objectContaining({ cwd: '/test/worktree' })
+			)
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['log', '--oneline', 'develop..HEAD'],
+				expect.objectContaining({ cwd: '/test/worktree' })
+			)
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['rebase', 'develop'],
+				expect.objectContaining({ cwd: '/test/worktree' })
+			)
+		})
+
+		it('should use custom main branch in fast-forward merge validation', async () => {
+			// Mock: settings with custom main branch
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({ mainBranch: 'trunk' })
+			manager = new MergeManager(mockSettingsManager)
+
+			const mergeBase = 'abc123'
+			const mainHead = 'abc123'
+
+			// Mock: merge-base and trunk HEAD match (fast-forward possible)
+			vi.mocked(git.executeGitCommand)
+				.mockResolvedValueOnce(mergeBase) // merge-base
+				.mockResolvedValueOnce(mainHead) // rev-parse trunk
+
+			await manager.validateFastForwardPossible('feature-branch', '/test/repo')
+
+			// Verify: commands used 'trunk' instead of 'main'
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['merge-base', 'trunk', 'feature-branch'],
+				expect.objectContaining({ cwd: '/test/repo' })
+			)
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['rev-parse', 'trunk'],
+				expect.objectContaining({ cwd: '/test/repo' })
+			)
+		})
+
+		it('should use custom main branch in fast-forward merge execution', async () => {
+			// Mock: settings with custom main branch
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({ mainBranch: 'master' })
+			manager = new MergeManager(mockSettingsManager)
+
+			// Mock: successful merge flow
+			vi.mocked(git.findMainWorktreePathWithSettings).mockResolvedValueOnce('/test/repo')
+			vi.mocked(git.executeGitCommand)
+				.mockResolvedValueOnce('master') // branch --show-current
+				.mockResolvedValueOnce('abc123') // merge-base
+				.mockResolvedValueOnce('abc123') // rev-parse master
+				.mockResolvedValueOnce('abc123 Commit 1') // log commits
+				.mockResolvedValueOnce('') // merge --ff-only
+
+			await manager.performFastForwardMerge('feature-branch', '/test/worktree', { force: true })
+
+			// Verify: commands used 'master' instead of 'main'
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['merge-base', 'master', 'feature-branch'],
+				expect.objectContaining({ cwd: '/test/repo' })
+			)
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['rev-parse', 'master'],
+				expect.objectContaining({ cwd: '/test/repo' })
+			)
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['log', '--oneline', 'master..feature-branch'],
+				expect.objectContaining({ cwd: '/test/repo' })
+			)
+		})
+
+		it('should default to "main" when no mainBranch in settings', async () => {
+			// Mock: settings without mainBranch (should default to 'main')
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({})
+			manager = new MergeManager(mockSettingsManager)
+
+			// Mock: successful rebase
+			vi.mocked(git.executeGitCommand)
+				.mockResolvedValueOnce('') // show-ref: main exists
+				.mockResolvedValueOnce('') // status
+				.mockResolvedValueOnce('abc123') // merge-base
+				.mockResolvedValueOnce('def456') // rev-parse main
+				.mockResolvedValueOnce('abc123 Commit 1') // log
+				.mockResolvedValueOnce('') // rebase
+
+			await manager.rebaseOnMain('/test/worktree', { force: true })
+
+			// Verify: defaults to 'main'
+			expect(git.executeGitCommand).toHaveBeenCalledWith(
+				['show-ref', '--verify', '--quiet', 'refs/heads/main'],
+				expect.objectContaining({ cwd: '/test/worktree' })
+			)
+		})
+
+		it('should include custom branch name in error messages', async () => {
+			// Mock: settings with custom main branch
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({ mainBranch: 'production' })
+			manager = new MergeManager(mockSettingsManager)
+
+			// Mock: production branch doesn't exist
+			vi.mocked(git.executeGitCommand).mockRejectedValueOnce(
+				new Error('fatal: Couldn\'t find remote ref refs/heads/production')
+			)
+
+			// Expect: error message includes 'production'
+			await expect(
+				manager.rebaseOnMain('/test/worktree')
+			).rejects.toThrow(/production/)
 		})
 	})
 

@@ -18,6 +18,15 @@ export class MergeManager {
 	}
 
 	/**
+	 * Get the main branch name from settings (defaults to 'main')
+	 * @private
+	 */
+	private async getMainBranch(): Promise<string> {
+		const settings = await this.settingsManager.loadSettings()
+		return settings.mainBranch ?? 'main'
+	}
+
+	/**
 	 * Rebase current branch on main with fail-fast on conflicts
 	 * Ports bash/merge-and-clean.sh lines 781-913
 	 *
@@ -27,18 +36,19 @@ export class MergeManager {
 	 */
 	async rebaseOnMain(worktreePath: string, options: MergeOptions = {}): Promise<void> {
 		const { dryRun = false, force = false } = options
+		const mainBranch = await this.getMainBranch()
 
-		logger.info('Starting rebase on main branch...')
+		logger.info(`Starting rebase on ${mainBranch} branch...`)
 
 		// Step 1: Check if main branch exists
 		try {
-			await executeGitCommand(['show-ref', '--verify', '--quiet', 'refs/heads/main'], {
+			await executeGitCommand(['show-ref', '--verify', '--quiet', `refs/heads/${mainBranch}`], {
 				cwd: worktreePath,
 			})
 		} catch {
 			throw new Error(
-				'Main branch does not exist. Cannot rebase.\n' +
-					'Ensure the repository has a "main" branch or create it first.'
+				`Main branch "${mainBranch}" does not exist. Cannot rebase.\n` +
+					`Ensure the repository has a "${mainBranch}" branch or create it first.`
 			)
 		}
 
@@ -56,11 +66,11 @@ export class MergeManager {
 		}
 
 		// Step 3: Check if rebase is needed by comparing merge-base with main HEAD
-		const mergeBase = await executeGitCommand(['merge-base', 'main', 'HEAD'], {
+		const mergeBase = await executeGitCommand(['merge-base', mainBranch, 'HEAD'], {
 			cwd: worktreePath,
 		})
 
-		const mainHead = await executeGitCommand(['rev-parse', 'main'], {
+		const mainHead = await executeGitCommand(['rev-parse', mainBranch], {
 			cwd: worktreePath,
 		})
 
@@ -69,12 +79,12 @@ export class MergeManager {
 
 		// If merge-base matches main HEAD, branch is already up to date
 		if (mergeBaseTrimmed === mainHeadTrimmed) {
-			logger.success('Branch is already up to date with main. No rebase needed.')
+			logger.success(`Branch is already up to date with ${mainBranch}. No rebase needed.`)
 			return
 		}
 
 		// Step 4: Show commits to be rebased (for informational purposes)
-		const commitsOutput = await executeGitCommand(['log', '--oneline', 'main..HEAD'], {
+		const commitsOutput = await executeGitCommand(['log', '--oneline', `${mainBranch}..HEAD`], {
 			cwd: worktreePath,
 		})
 
@@ -87,7 +97,7 @@ export class MergeManager {
 			commitLines.forEach((commit) => logger.info(`  ${commit}`))
 		} else {
 			// Main has moved forward but branch has no new commits
-			logger.info('Main branch has moved forward. Rebasing to update branch...')
+			logger.info(`${mainBranch} branch has moved forward. Rebasing to update branch...`)
 		}
 
 		// Step 5: User confirmation (unless force mode or dry-run)
@@ -99,7 +109,7 @@ export class MergeManager {
 
 		// Step 6: Execute rebase (unless dry-run)
 		if (dryRun) {
-			logger.info('[DRY RUN] Would execute: git rebase main')
+			logger.info(`[DRY RUN] Would execute: git rebase ${mainBranch}`)
 			if (commitLines.length > 0) {
 				logger.info(`[DRY RUN] This would rebase ${commitLines.length} commit(s)`)
 			}
@@ -108,7 +118,7 @@ export class MergeManager {
 
 		// Execute rebase
 		try {
-			await executeGitCommand(['rebase', 'main'], { cwd: worktreePath })
+			await executeGitCommand(['rebase', mainBranch], { cwd: worktreePath })
 			logger.success('Rebase completed successfully!')
 		} catch (error) {
 			// Detect conflicts
@@ -151,13 +161,15 @@ export class MergeManager {
 	 * @throws Error if fast-forward is not possible
 	 */
 	async validateFastForwardPossible(branchName: string, mainWorktreePath: string): Promise<void> {
+		const mainBranch = await this.getMainBranch()
+
 		// Step 1: Get merge-base between main and branch
-		const mergeBase = await executeGitCommand(['merge-base', 'main', branchName], {
+		const mergeBase = await executeGitCommand(['merge-base', mainBranch, branchName], {
 			cwd: mainWorktreePath,
 		})
 
 		// Step 2: Get current HEAD of main
-		const mainHead = await executeGitCommand(['rev-parse', 'main'], {
+		const mainHead = await executeGitCommand(['rev-parse', mainBranch], {
 			cwd: mainWorktreePath,
 		})
 
@@ -168,11 +180,11 @@ export class MergeManager {
 		if (mergeBaseTrimmed !== mainHeadTrimmed) {
 			throw new Error(
 				'Cannot perform fast-forward merge.\n' +
-					'The main branch has moved forward since this branch was created.\n' +
+					`The ${mainBranch} branch has moved forward since this branch was created.\n` +
 					`Merge base: ${mergeBaseTrimmed}\n` +
 					`Main HEAD:  ${mainHeadTrimmed}\n\n` +
 					'To fix this:\n' +
-					`  1. Rebase the branch on main: git rebase main\n` +
+					`  1. Rebase the branch on ${mainBranch}: git rebase ${mainBranch}\n` +
 					`  2. Or use: hb finish to automatically rebase and merge\n`
 			)
 		}
@@ -193,6 +205,7 @@ export class MergeManager {
 		options: MergeOptions = {}
 	): Promise<void> {
 		const { dryRun = false, force = false } = options
+		const mainBranch = await this.getMainBranch()
 
 		logger.info('Starting fast-forward merge...')
 
@@ -202,16 +215,16 @@ export class MergeManager {
 			await findMainWorktreePathWithSettings(worktreePath, this.settingsManager)
 
 		// Step 3: No need to checkout main - it's already checked out in mainWorktreePath
-		logger.debug(`Using main branch location: ${mainWorktreePath}`)
+		logger.debug(`Using ${mainBranch} branch location: ${mainWorktreePath}`)
 
 		// Step 4: Verify on main branch
 		const currentBranch = await executeGitCommand(['branch', '--show-current'], {
 			cwd: mainWorktreePath,
 		})
 
-		if (currentBranch.trim() !== 'main') {
+		if (currentBranch.trim() !== mainBranch) {
 			throw new Error(
-				`Expected main branch but found: ${currentBranch.trim()}\n` +
+				`Expected ${mainBranch} branch but found: ${currentBranch.trim()}\n` +
 					`At location: ${mainWorktreePath}\n` +
 					'This indicates the main worktree detection failed.'
 			)
@@ -221,7 +234,7 @@ export class MergeManager {
 		await this.validateFastForwardPossible(branchName, mainWorktreePath)
 
 		// Step 6: Show commits to be merged
-		const commitsOutput = await executeGitCommand(['log', '--oneline', `main..${branchName}`], {
+		const commitsOutput = await executeGitCommand(['log', '--oneline', `${mainBranch}..${branchName}`], {
 			cwd: mainWorktreePath,
 		})
 
@@ -229,7 +242,7 @@ export class MergeManager {
 
 		// If no commits, branch is already merged
 		if (!commits) {
-			logger.success('Branch is already merged into main. No merge needed.')
+			logger.success(`Branch is already merged into ${mainBranch}. No merge needed.`)
 			return
 		}
 
