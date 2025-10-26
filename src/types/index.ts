@@ -138,6 +138,10 @@ export interface AddIssueOptions {
   // Currently empty - command accepts no options
 }
 
+export interface EnhanceOptions {
+  noBrowser?: boolean  // --no-browser flag - skip browser opening prompt
+}
+
 export interface FinishOptions {
   force?: boolean      // -f, --force - Skip confirmation prompts
   dryRun?: boolean    // -n, --dry-run - Preview actions without executing

@@ -146,6 +146,29 @@ program
   })
 
 program
+  .command('enhance')
+  .description('Apply enhancement agent to existing GitHub issue')
+  .argument('<issue-number>', 'GitHub issue number to enhance', parseInt)
+  .option('--no-browser', 'Skip browser opening prompt')
+  .action(async (issueNumber: number, options: { browser?: boolean }) => {
+    try {
+      const { EnhanceCommand } = await import('./commands/enhance.js')
+      const command = new EnhanceCommand()
+      await command.execute({
+        issueNumber,
+        options: {
+          noBrowser: options.browser === false
+        }
+      })
+      logger.success(`Enhancement process completed for issue #${issueNumber}`)
+      process.exit(0)
+    } catch (error) {
+      logger.error(`Failed to enhance issue: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      process.exit(1)
+    }
+  })
+
+program
   .command('finish')
   .alias('dn')
   .description('Merge work and cleanup workspace')
