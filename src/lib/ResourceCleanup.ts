@@ -426,9 +426,10 @@ export class ResourceCleanup {
 		options: BranchDeleteOptions = {},
 		cwd?: string
 	): Promise<boolean> {
+		// Get protected branches list from centralized method
+		const protectedBranches = await this.settingsManager.getProtectedBranches(cwd)
+
 		// Check for protected branches
-		//TODO [CONFIG]: Make this configurable
-		const protectedBranches = ['main', 'master', 'develop']
 		if (protectedBranches.includes(branchName)) {
 			throw new Error(`Cannot delete protected branch: ${branchName}`)
 		}

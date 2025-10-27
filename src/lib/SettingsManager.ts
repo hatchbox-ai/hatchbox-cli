@@ -78,6 +78,10 @@ export const HatchboxSettingsSchema = z.object({
 		.min(1, "Settings 'mainBranch' cannot be empty")
 		.optional()
 		.describe('Name of the main/primary branch for the repository'),
+	protectedBranches: z
+		.array(z.string().min(1, 'Protected branch name cannot be empty'))
+		.optional()
+		.describe('List of branches that cannot be deleted (defaults to [mainBranch, "main", "master", "develop"])'),
 	workflows: WorkflowsSettingsSchema.describe('Per-workflow-type permission configurations'),
 	agents: z
 		.record(z.string(), AgentSettingsSchema)
@@ -201,5 +205,38 @@ export class SettingsManager {
 	 */
 	private getSettingsPath(projectRoot: string): string {
 		return path.join(projectRoot, '.hatchbox', 'settings.json')
+	}
+
+	/**
+	 * Get effective protected branches list with mainBranch always included
+	 *
+	 * This method provides a single source of truth for protected branches logic:
+	 * 1. Use configured protectedBranches if provided
+	 * 2. Otherwise use defaults: [mainBranch, 'main', 'master', 'develop']
+	 * 3. ALWAYS ensure mainBranch is included even if user configured custom list
+	 *
+	 * @param projectRoot - Optional project root directory (defaults to process.cwd())
+	 * @returns Array of protected branch names with mainBranch guaranteed to be included
+	 */
+	async getProtectedBranches(projectRoot?: string): Promise<string[]> {
+		const settings = await this.loadSettings(projectRoot)
+		const mainBranch = settings.mainBranch ?? 'main'
+
+		// Build protected branches list:
+		// 1. Use configured protectedBranches if provided
+		// 2. Otherwise use defaults: [mainBranch, 'main', 'master', 'develop']
+		// 3. ALWAYS ensure mainBranch is included even if user configured custom list
+		let protectedBranches: string[]
+		if (settings.protectedBranches) {
+			// Use configured list but ensure mainBranch is always included
+			protectedBranches = settings.protectedBranches.includes(mainBranch)
+				? settings.protectedBranches
+				: [mainBranch, ...settings.protectedBranches]
+		} else {
+			// Use defaults with current mainBranch
+			protectedBranches = [mainBranch, 'main', 'master', 'develop']
+		}
+
+		return protectedBranches
 	}
 }

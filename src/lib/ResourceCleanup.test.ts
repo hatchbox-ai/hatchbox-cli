@@ -28,6 +28,7 @@ describe('ResourceCleanup', () => {
 		mockDatabase = new DatabaseManager()
 		mockSettingsManager = {
 			loadSettings: vi.fn().mockResolvedValue({}),
+			getProtectedBranches: vi.fn().mockResolvedValue(['main', 'main', 'master', 'develop']),
 		} as unknown as SettingsManager
 
 		// Initialize ResourceCleanup with mocks
@@ -424,6 +425,179 @@ describe('ResourceCleanup', () => {
 
 			expect(result).toBe(true)
 			expect(executeGitCommand).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('deleteBranch - custom protected branches', () => {
+		it('should use custom protectedBranches from settings', async () => {
+			// Mock settings with custom protected branches
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({
+				protectedBranches: ['develop', 'staging', 'production'],
+			})
+			// mainBranch defaults to 'main', so protected list is: ['main', 'develop', 'staging', 'production']
+			mockSettingsManager.getProtectedBranches = vi
+				.fn()
+				.mockResolvedValue(['main', 'develop', 'staging', 'production'])
+
+			// Should protect custom branches
+			await expect(resourceCleanup.deleteBranch('develop')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+			await expect(resourceCleanup.deleteBranch('staging')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+			await expect(resourceCleanup.deleteBranch('production')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+		})
+
+		it('should always protect mainBranch even if not in protectedBranches setting', async () => {
+			const { executeGitCommand, findMainWorktreePathWithSettings } = await import('../utils/git.js')
+
+			// Mock settings with mainBranch: 'trunk', protectedBranches: ['staging']
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({
+				mainBranch: 'trunk',
+				protectedBranches: ['staging'],
+			})
+			// getProtectedBranches should prepend 'trunk' to ['staging']
+			mockSettingsManager.getProtectedBranches = vi.fn().mockResolvedValue(['trunk', 'staging'])
+
+			// Verify 'trunk' is protected even though not in protectedBranches array
+			await expect(resourceCleanup.deleteBranch('trunk')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+
+			// Verify 'staging' is also protected
+			await expect(resourceCleanup.deleteBranch('staging')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+
+			// Verify non-protected branches can be deleted
+			vi.mocked(findMainWorktreePathWithSettings).mockResolvedValueOnce('/path/to/main')
+			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
+
+			const result = await resourceCleanup.deleteBranch('feature-123', { force: false })
+			expect(result).toBe(true)
+		})
+
+		it('should use default protected branches when not configured', async () => {
+			const { executeGitCommand, findMainWorktreePathWithSettings } = await import('../utils/git.js')
+
+			// Mock settings without protectedBranches
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({})
+			// getProtectedBranches returns defaults: ['main', 'main', 'master', 'develop']
+			mockSettingsManager.getProtectedBranches = vi
+				.fn()
+				.mockResolvedValue(['main', 'main', 'master', 'develop'])
+
+			// Verify default list is used: ['main', 'master', 'develop']
+			await expect(resourceCleanup.deleteBranch('main')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+			await expect(resourceCleanup.deleteBranch('master')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+			await expect(resourceCleanup.deleteBranch('develop')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+
+			// Verify non-protected branches can be deleted
+			vi.mocked(findMainWorktreePathWithSettings).mockResolvedValueOnce('/path/to/main')
+			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
+
+			const result = await resourceCleanup.deleteBranch('feature-456', { force: false })
+			expect(result).toBe(true)
+		})
+
+		it('should protect custom mainBranch by default', async () => {
+			// Mock settings with mainBranch: 'production', no protectedBranches
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({
+				mainBranch: 'production',
+			})
+			// getProtectedBranches returns defaults with custom mainBranch
+			mockSettingsManager.getProtectedBranches = vi
+				.fn()
+				.mockResolvedValue(['production', 'main', 'master', 'develop'])
+
+			// Verify 'production' is protected along with defaults
+			await expect(resourceCleanup.deleteBranch('production')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+			await expect(resourceCleanup.deleteBranch('main')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+			await expect(resourceCleanup.deleteBranch('master')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+			await expect(resourceCleanup.deleteBranch('develop')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+		})
+
+		it('should include custom branch name in protected branch error messages', async () => {
+			// Mock settings with mainBranch: 'production'
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({
+				mainBranch: 'production',
+			})
+			// getProtectedBranches returns defaults with custom mainBranch
+			mockSettingsManager.getProtectedBranches = vi
+				.fn()
+				.mockResolvedValue(['production', 'main', 'master', 'develop'])
+
+			// Attempt to delete 'production' and verify error message includes it
+			await expect(resourceCleanup.deleteBranch('production')).rejects.toThrow('production')
+		})
+
+		it('should allow deletion of non-protected custom branches', async () => {
+			const { executeGitCommand, findMainWorktreePathWithSettings } = await import('../utils/git.js')
+
+			// Mock settings with mainBranch: 'trunk', protectedBranches: ['trunk', 'staging']
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({
+				mainBranch: 'trunk',
+				protectedBranches: ['trunk', 'staging'],
+			})
+			// getProtectedBranches should not duplicate 'trunk'
+			mockSettingsManager.getProtectedBranches = vi.fn().mockResolvedValue(['trunk', 'staging'])
+
+			// Verify 'feature-123' can be deleted
+			vi.mocked(findMainWorktreePathWithSettings).mockResolvedValueOnce('/path/to/main')
+			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
+
+			const result = await resourceCleanup.deleteBranch('feature-123', { force: false })
+
+			expect(result).toBe(true)
+			expect(executeGitCommand).toHaveBeenCalledWith(
+				['branch', '-d', 'feature-123'],
+				{ cwd: '/path/to/main' }
+			)
+		})
+
+		it('should not duplicate mainBranch in protectedBranches if already present', async () => {
+			const { executeGitCommand, findMainWorktreePathWithSettings } = await import('../utils/git.js')
+
+			// Mock settings with mainBranch already in protectedBranches
+			mockSettingsManager.loadSettings = vi.fn().mockResolvedValue({
+				mainBranch: 'develop',
+				protectedBranches: ['develop', 'staging', 'production'],
+			})
+			// getProtectedBranches should not duplicate 'develop'
+			mockSettingsManager.getProtectedBranches = vi
+				.fn()
+				.mockResolvedValue(['develop', 'staging', 'production'])
+
+			// Verify 'develop' is protected
+			await expect(resourceCleanup.deleteBranch('develop')).rejects.toThrow(
+				/Cannot delete protected branch/
+			)
+
+			// The implementation should not create duplicates
+			// We can't directly test the array, but we can ensure behavior is correct
+			vi.mocked(findMainWorktreePathWithSettings).mockResolvedValueOnce('/path/to/main')
+			vi.mocked(executeGitCommand).mockResolvedValueOnce('')
+
+			// Non-protected branch should still work
+			const result = await resourceCleanup.deleteBranch('feature-789', { force: false })
+			expect(result).toBe(true)
 		})
 	})
 

@@ -31,8 +31,10 @@ export async function executeGitCommand(
 
 /**
  * Parse git worktree list output into structured data
+ * @param output - The output from git worktree list --porcelain
+ * @param defaultBranch - Default branch name to use for bare repositories (defaults to 'main')
  */
-export function parseWorktreeList(output: string): GitWorktree[] {
+export function parseWorktreeList(output: string, defaultBranch?: string): GitWorktree[] {
   const worktrees: GitWorktree[] = []
   const lines = output.trim().split('\n')
 
@@ -69,7 +71,7 @@ export function parseWorktreeList(output: string): GitWorktree[] {
 
       if (line === 'bare') {
         bare = true
-        branch = 'main' // Default assumption for bare repo
+        branch = defaultBranch ?? 'main' // Default assumption for bare repo
       } else if (line === 'detached') {
         detached = true
         branch = 'HEAD'
@@ -266,7 +268,7 @@ export async function findMainWorktreePath(
 ): Promise<string> {
   try {
     const output = await executeGitCommand(['worktree', 'list', '--porcelain'], { cwd: path })
-    const worktrees = parseWorktreeList(output)
+    const worktrees = parseWorktreeList(output, options?.mainBranch)
 
     // Guard: empty worktree list
     if (worktrees.length === 0) {
@@ -383,19 +385,30 @@ export async function getDefaultBranch(path: string = process.cwd()): Promise<st
  * - PR patterns: pr/25, pull/25, pr-25, feature/pr-25
  *
  * Based on bash cleanup-worktree.sh find_issue_branches() (lines 133-154)
+ *
+ * @param issueNumber - The issue or PR number to search for
+ * @param path - Working directory to search from (defaults to process.cwd())
+ * @param settingsManager - Optional SettingsManager instance (for DI/testing)
  */
 export async function findAllBranchesForIssue(
   issueNumber: number,
-  path: string = process.cwd()
+  path: string = process.cwd(),
+  settingsManager?: SettingsManager
 ): Promise<string[]> {
+  // Lazy load SettingsManager to avoid circular dependencies
+  if (!settingsManager) {
+    const { SettingsManager: SM } = await import('../lib/SettingsManager.js')
+    settingsManager = new SM()
+  }
+
+  // Get protected branches list from centralized method
+  const protectedBranches = await settingsManager.getProtectedBranches(path)
+
   // Get all branches (local and remote)
   const output = await executeGitCommand(['branch', '-a'], { cwd: path })
 
   const branches: string[] = []
   const lines = output.split('\n').filter(Boolean)
-
-  // Protected branches to exclude
-  const protectedBranches = ['main', 'master', 'develop']
 
   for (const line of lines) {
     // Skip remotes/origin/HEAD pointer

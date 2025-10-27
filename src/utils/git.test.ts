@@ -208,6 +208,62 @@ describe('Git Utility Functions', () => {
     })
   })
 
+  describe('parseWorktreeList - custom default branch', () => {
+    it('should use custom default branch for bare repository when provided', () => {
+      const output = ['worktree /Users/dev/bare-repo', 'bare', ''].join('\n')
+
+      const result = parseWorktreeList(output, 'develop')
+
+      expect(result).toHaveLength(1)
+      expect(result[0].bare).toBe(true)
+      expect(result[0].branch).toBe('develop')
+      expect(result[0].path).toBe('/Users/dev/bare-repo')
+    })
+
+    it('should use "trunk" as default branch for bare repository', () => {
+      const output = ['worktree /Users/dev/bare-repo', 'bare', ''].join('\n')
+
+      const result = parseWorktreeList(output, 'trunk')
+
+      expect(result[0].branch).toBe('trunk')
+    })
+
+    it('should default to "main" for bare repository when no defaultBranch provided', () => {
+      const output = ['worktree /Users/dev/bare-repo', 'bare', ''].join('\n')
+
+      // Call without defaultBranch parameter
+      const result = parseWorktreeList(output)
+
+      expect(result[0].branch).toBe('main')
+    })
+
+    it('should use custom default branch in mixed worktree scenario', () => {
+      const output = [
+        'worktree /Users/dev/bare-repo',
+        'bare',
+        '',
+        'worktree /Users/dev/feature-worktree',
+        'HEAD abc123',
+        'branch refs/heads/feature-123',
+        '',
+      ].join('\n')
+
+      const result = parseWorktreeList(output, 'develop')
+
+      expect(result).toHaveLength(2)
+      expect(result[0].branch).toBe('develop') // bare repo uses custom default
+      expect(result[1].branch).toBe('feature-123') // regular worktree uses actual branch
+    })
+
+    it('should use custom default branch for bare repo with "master" as default', () => {
+      const output = ['worktree /Users/dev/bare-repo', 'bare', ''].join('\n')
+
+      const result = parseWorktreeList(output, 'master')
+
+      expect(result[0].branch).toBe('master')
+    })
+  })
+
   describe('isPRBranch', () => {
     it('should identify PR branches correctly', () => {
       const prBranches = [

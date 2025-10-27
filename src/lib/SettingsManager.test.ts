@@ -969,4 +969,154 @@ describe('SettingsManager', () => {
 			expect(result.workflows?.issue?.startAiAgent).toBe(false)
 		})
 	})
+
+	describe('getProtectedBranches', () => {
+		it('should return default protected branches when no settings configured', async () => {
+			const projectRoot = '/test/project'
+			// Return empty settings (ENOENT)
+			const error: { code?: string; message: string } = {
+				code: 'ENOENT',
+				message: 'ENOENT: no such file or directory',
+			}
+			vi.mocked(readFile).mockRejectedValueOnce(error)
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should return defaults with 'main' as default mainBranch
+			expect(result).toEqual(['main', 'main', 'master', 'develop'])
+		})
+
+		it('should return default protected branches with custom mainBranch', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'develop',
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should return defaults with 'develop' as mainBranch
+			expect(result).toEqual(['develop', 'main', 'master', 'develop'])
+		})
+
+		it('should use configured protectedBranches and ensure mainBranch is included', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'main',
+				protectedBranches: ['production', 'staging'],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should prepend mainBranch to configured list
+			expect(result).toEqual(['main', 'production', 'staging'])
+		})
+
+		it('should not duplicate mainBranch if already in protectedBranches', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'main',
+				protectedBranches: ['main', 'production', 'staging'],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should use configured list as-is since mainBranch is already included
+			expect(result).toEqual(['main', 'production', 'staging'])
+		})
+
+		it('should add custom mainBranch to configured protectedBranches if not present', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'develop',
+				protectedBranches: ['main', 'master', 'production'],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should prepend 'develop' to configured list
+			expect(result).toEqual(['develop', 'main', 'master', 'production'])
+		})
+
+		it('should handle empty protectedBranches array', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'main',
+				protectedBranches: [],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should add mainBranch to empty configured list
+			expect(result).toEqual(['main'])
+		})
+
+		it('should use process.cwd() when projectRoot not provided', async () => {
+			const settings = {
+				mainBranch: 'main',
+				protectedBranches: ['production'],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches()
+
+			// Should work without explicit projectRoot
+			expect(result).toEqual(['main', 'production'])
+		})
+
+		it('should handle master as mainBranch with configured protectedBranches', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'master',
+				protectedBranches: ['main', 'develop'],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should prepend 'master' to configured list
+			expect(result).toEqual(['master', 'main', 'develop'])
+		})
+
+		it('should handle mainBranch already in middle of protectedBranches list', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'main',
+				protectedBranches: ['production', 'main', 'staging'],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should use configured list as-is since mainBranch is already included
+			expect(result).toEqual(['production', 'main', 'staging'])
+		})
+
+		it('should handle mainBranch at end of protectedBranches list', async () => {
+			const projectRoot = '/test/project'
+			const settings = {
+				mainBranch: 'main',
+				protectedBranches: ['production', 'staging', 'main'],
+			}
+
+			vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(settings))
+
+			const result = await settingsManager.getProtectedBranches(projectRoot)
+
+			// Should use configured list as-is since mainBranch is already included
+			expect(result).toEqual(['production', 'staging', 'main'])
+		})
+	})
 })
