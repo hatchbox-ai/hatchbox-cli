@@ -519,19 +519,6 @@ describe('CommitManager', () => {
       expect(commitCall?.[0][3]).toContain('Fixes #123')
     })
 
-    it('should sanitize Claude output (strip newlines, carriage returns)', async () => {
-      vi.mocked(claude.launchClaude).mockResolvedValue('Add feature\nwith multiple\r\nlines')
-      vi.mocked(git.executeGitCommand).mockResolvedValue('')
-
-      await manager.commitChanges(mockWorktreePath, { dryRun: false })
-
-      const commitCall = vi.mocked(git.executeGitCommand).mock.calls.find(
-        (call) => call[0][0] === 'commit'
-      )
-      // Sanitized message should have newlines replaced with spaces
-      expect(commitCall?.[0][3]).toBe('Add feature with multiple lines')
-    })
-
     it('should pass worktree path to Claude via addDir option', async () => {
       vi.mocked(claude.launchClaude).mockResolvedValue('Add feature')
       vi.mocked(git.executeGitCommand).mockResolvedValue('')

@@ -239,7 +239,7 @@ export class CommitManager {
 
       logger.debug('Raw Claude output received', {
         outputLength: result.length,
-        preview: result.substring(0, 200) + (result.length > 100 ? '...' : '')
+        preview: result.substring(0, 200) + (result.length > 200 ? '...' : '')
       })
 
 
@@ -306,7 +306,7 @@ export class CommitManager {
     const issueContext = issueNumber
       ? `\n<IssueContext>
 This commit is associated with GitHub issue #${issueNumber}.
-If the changes appear to resolve the issue, include "Fixes #${issueNumber}" at the end of the commit message.
+If the changes appear to resolve the issue, include "Fixes #${issueNumber}" at the end of the first line of commit message.
 </IssueContext>`
       : ''
 
@@ -391,9 +391,6 @@ Start your response immediately with the commit message text.
         }
       }
     }
-
-    // Clean up whitespace and formatting
-    cleaned = cleaned.replace(/\n/g, ' ').replace(/\r/g, '').replace(/\s+/g, ' ').trim()
 
     // Remove quotes if the entire message is wrapped in them
     if ((cleaned.startsWith('"') && cleaned.endsWith('"')) ||
