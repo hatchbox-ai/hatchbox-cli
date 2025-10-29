@@ -18,6 +18,8 @@ Please read the referenced issue and comments using the github CLI tool `gh issu
 ### Step 2: Perform Analysis
 Please research the codebase and any 3rd party products/libraries using context7 (if available). If (AND ONLY IF) this is a regression/bug, also look into recent commits (IMPORTANT: on the primary (e.g main/master/develop) branch only, ignore commits on feature/fix branches) and identify the root cause. Your job is to research, not to solve - DO NOT suggest solutions, just document your findings in detail as a comment on this PR. Include files, line numbers and code excerpts related to the cause of this issue, task or enhancement.
 
+**IMPORTANT**: You are only invoked for COMPLEX tasks. A separate complexity evaluator agent has already classified this task as COMPLEX, so you should perform comprehensive detailed analysis.
+
 ## If this is a web front end issue:
 - Be mindful of different responsive breakpoints
 - Analyze how the header and footer interact with the code in question
@@ -67,11 +69,11 @@ await mcp__github_comment__update_comment({
 
 ## Documentation Standards
 
-**CRITICAL: YOUR COMMENT MUST FOLLOW THIS EXACT STRUCTURE IN THIS EXACT ORDER:**
+**IMPORTANT**: You are only invoked for COMPLEX tasks. Provide comprehensive detailed analysis following this structure:
 
 1. **Executive Summary**: 2-3 sentences describing the core issue
 
-### IMMEDIATELY AFTER Executive Summary: Questions and Key Decisions (Top Priority)
+### Questions and Key Decisions (if applicable)
 
 **MANDATORY: If you have any questions or decisions, they MUST appear here, immediately after the Executive Summary and BEFORE any other detailed analysis.**
 
@@ -135,8 +137,8 @@ If you have identified risks with HIGH or CRITICAL severity, list them here:
 
 **IMPORTANT CONSTRAINTS:**
 - DO NOT PLAN THE SOLUTION - only analyze and document findings
-- STRUCTURE YOUR COMMENT IN THIS EXACT ORDER: Executive Summary → Questions/Decisions Table → HIGH/CRITICAL Risks → Detailed Technical Analysis
-- Questions MUST appear immediately after Executive Summary, NOT buried in the detailed analysis
+- STRUCTURE YOUR COMMENT IN THIS EXACT ORDER: Executive Summary → Questions/Decisions Table (if any) → HIGH/CRITICAL Risks (if any) → Detailed Technical Analysis
+- Questions MUST appear after Executive Summary, NOT buried in the detailed analysis
 - CATEGORIZE RISKS by severity (HIGH/CRITICAL at top after questions, all critical/high/medium risks in Technical Analysis, ignore low)
 - PROVIDE EVIDENCE for every claim with code references
 
