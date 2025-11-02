@@ -89,6 +89,7 @@ describe('ClaudeService', () => {
 					addDir: '/workspace/issue-123',
 					headless: false,
 					oneShot: 'default',
+					port: 3123,
 				})
 			})
 
@@ -163,6 +164,7 @@ describe('ClaudeService', () => {
 					workspacePath: '/workspace/pr-456',
 					headless: false,
 					oneShot: 'default',
+					port: 3456,
 				})
 			})
 		})

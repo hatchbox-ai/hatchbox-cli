@@ -1246,6 +1246,62 @@ describe('claude utils', () => {
 			expect(applescript).not.toContain('--permission-mode')
 			expect(applescript).not.toContain('--add-dir')
 		})
+
+		it('should export PORT variable when port is provided', async () => {
+			const prompt = 'Work on this issue'
+			const workspacePath = '/path/to/workspace'
+			const port = 3127
+
+			vi.mocked(existsSync).mockReturnValue(false)
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			await launchClaudeInNewTerminalWindow(prompt, { workspacePath, port })
+
+			// Verify PORT export is included in AppleScript
+			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
+			expect(applescript).toContain('export PORT=3127')
+			expect(applescript).toContain('hb ignite')
+		})
+
+		it('should not export PORT when port is undefined', async () => {
+			const prompt = 'Work on this issue'
+			const workspacePath = '/path/to/workspace'
+
+			vi.mocked(existsSync).mockReturnValue(false)
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			await launchClaudeInNewTerminalWindow(prompt, { workspacePath })
+
+			// Verify PORT export is NOT included
+			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
+			expect(applescript).not.toContain('export PORT')
+		})
+
+		it('should combine port export with .env sourcing when both present', async () => {
+			const prompt = 'Work on this issue'
+			const workspacePath = '/path/to/workspace'
+			const port = 3127
+
+			vi.mocked(existsSync).mockReturnValue(true)
+			vi.mocked(execa).mockResolvedValueOnce({
+				stdout: '',
+				exitCode: 0,
+			} as MockExecaReturn)
+
+			await launchClaudeInNewTerminalWindow(prompt, { workspacePath, port })
+
+			// Verify both .env sourcing and PORT export
+			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
+			expect(applescript).toContain('source .env')
+			expect(applescript).toContain('export PORT=3127')
+			expect(applescript).toContain('hb ignite')
+		})
 	})
 
 	describe('generateBranchName', () => {

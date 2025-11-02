@@ -9,6 +9,7 @@ export interface ClaudeCliOptions {
 	addDir?: string
 	headless?: boolean
 	branchName?: string // Optional branch name for terminal coloring
+	port?: number // Optional port for terminal window export
 	timeout?: number // Timeout in milliseconds
 	appendSystemPrompt?: string // System instructions to append to system prompt
 	mcpConfig?: Record<string, unknown>[] // Array of MCP server configurations
@@ -159,7 +160,7 @@ export async function launchClaudeInNewTerminalWindow(
 		workspacePath: string // Required for terminal window launch
 	}
 ): Promise<void> {
-	const { workspacePath, branchName, oneShot = 'default' } = options
+	const { workspacePath, branchName, oneShot = 'default', port } = options
 
 	// Verify required parameter
 	if (!workspacePath) {
@@ -198,6 +199,7 @@ export async function launchClaudeInNewTerminalWindow(
 		command: launchCommand,
 		...(backgroundColor && { backgroundColor }),
 		includeEnvSetup: hasEnvFile, // source .env only if it exists
+		...(port !== undefined && { port, includePortExport: true }),
 	})
 }
 

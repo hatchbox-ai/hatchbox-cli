@@ -144,6 +144,11 @@ export class ClaudeService {
 				claudeOptions.branchName = branchName
 			}
 
+			// Add optional port for terminal window export
+			if (port !== undefined) {
+				claudeOptions.port = port
+			}
+
 			logger.debug('Launching Claude for workflow', {
 				type,
 				model,
