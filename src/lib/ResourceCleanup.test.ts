@@ -735,7 +735,8 @@ describe('ResourceCleanup', () => {
 			const result = await resourceCleanup.validateCleanupSafety('issue-25')
 
 			expect(result.isSafe).toBe(false)
-			expect(result.blockers).toContain('Cannot cleanup main worktree')
+			expect(result.blockers.length).toBe(1)
+			expect(result.blockers[0]).toMatch(/Cannot cleanup main worktree/)
 		})
 
 		it('should block when worktree does not exist', async () => {

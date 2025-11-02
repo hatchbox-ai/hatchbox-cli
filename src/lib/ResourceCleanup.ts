@@ -597,7 +597,7 @@ export class ResourceCleanup {
 		// Check if main worktree
 		const isMain = await this.gitWorktree.isMainWorktree(worktree)
 		if (isMain) {
-			blockers.push('Cannot cleanup main worktree')
+			blockers.push(`Cannot cleanup main worktree: "${worktree.branch}" @ "${worktree.path}"`)
 		}
 
 		// Check for uncommitted changes
