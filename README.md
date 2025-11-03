@@ -355,4 +355,16 @@ If you're currently using the bash workflow scripts, see [docs/migration-strateg
 
 ## License
 
-MIT (TBC)
+**Business Source License 1.1** - Free to use for any purpose, including commercial use within your organization. See [LICENSE](./LICENSE) for full terms.
+
+**Key Points:**
+- ✅ Use freely in your organization and commercial projects
+- ✅ Modify and distribute internally
+- ✅ Build paid applications with it
+- ❌ Cannot resell Hatchbox itself as a product or service
+- ❌ Cannot incorporate into products/services you sell to others
+- ❌ Cannot offer as a hosted service or SaaS
+
+**Converts to Apache 2.0 on 2029-01-01** - Will become fully open source automatically.
+
+For commercial licensing inquiries, contact Adam Creeger.

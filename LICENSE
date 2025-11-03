@@ -1,0 +1,33 @@
+Business Source License 1.1
+
+Licensor: Adam Creeger  
+Licensed Work: Hatchbox AI CLI  
+The Licensed Work is (c) 2025 Adam Creeger.
+
+Additional Use Grant:
+You are free to use, modify, and distribute this software for any purpose,
+including within your organization and in commercial environments,
+**except** that you may not:
+  - Sell, license, or offer this software itself as a paid product or service
+  - Incorporate this software into a commercial product or service that you sell,
+    license, or offer to third parties
+  - Offer this software as part of a hosted service, platform, or SaaS offering
+without a separate commercial agreement with the Licensor.
+
+For clarity, "commercial use" includes using this software as part of your
+internal business operations, building paid applications with it, and deploying
+it within your organization. What is prohibited is redistributing or offering
+access to this software (in original or modified form) as part of something
+you sell or provide to others.
+
+Change Date: 2029-01-01  
+Change License: Apache License 2.0
+
+For clarity, on or after the Change Date, the Licensed Work will
+automatically be made available under the Change License.
+
+---
+
+Licensed under the Business Source License 1.1
+The text of this license is available at:
+https://mariadb.com/bsl11/
