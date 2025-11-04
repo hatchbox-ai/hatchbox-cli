@@ -1121,7 +1121,7 @@ describe('claude utils', () => {
 		})
 	})
 
-	describe('launchClaudeInNewTerminalWindow', () => {
+	describe.runIf(process.platform === 'darwin')('launchClaudeInNewTerminalWindow', () => {
 		it('should open new terminal window with hb ignite command', async () => {
 			const prompt = 'Work on this issue'
 			const workspacePath = '/path/to/workspace'
