@@ -1,7 +1,7 @@
 # Hatchbox AI
 
 <div align="center">
-  <img width="327" height="328" alt="hatchbox-ai-logo" src="https://github.com/user-attachments/assets/2129e04d-9ae3-43be-894d-48324f7d4e02" />
+  <img width="327" height="328" alt="hatchbox-ai-logo" src="https://github.com/user-attachments/assets/3732fcf8-2301-4d95-ad55-8d4c67d3fd0f" />
   <div>Scale understanding, not just output.</div>
 </div>
 
