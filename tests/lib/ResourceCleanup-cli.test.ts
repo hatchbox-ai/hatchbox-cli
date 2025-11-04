@@ -11,9 +11,26 @@ vi.mock('../../src/lib/GitWorktreeManager.js')
 vi.mock('../../src/lib/DatabaseManager.js')
 vi.mock('../../src/lib/process/ProcessManager.js')
 vi.mock('../../src/lib/CLIIsolationManager.js')
+vi.mock('../../src/utils/logger.js', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn()
+  },
+  createLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn()
+  }))
+}))
 vi.mock('../../src/utils/git.js', () => ({
   executeGitCommand: vi.fn(),
   findMainWorktreePath: vi.fn().mockResolvedValue('/main/worktree'),
+  findMainWorktreePathWithSettings: vi.fn().mockResolvedValue('/main/worktree'),
   hasUncommittedChanges: vi.fn().mockResolvedValue(false)
 }))
 
