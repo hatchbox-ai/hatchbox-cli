@@ -44,7 +44,9 @@ hb start 34 # grabs context from this PR and its original issue, then iterates o
 
 # then
 
-hb finish # it knows which hatchbox you're in, runs vaidation, and merges your code back to your primary branch. If you hit compilation/lint/test failures or merge conflicts along the way - Claude will help resolve them automaticaly.
+hb finish # it knows which hatchbox you're in, runs vaidation, and merges your code back to your primary branch.
+          # If you hit compilation/lint/test failures or merge conflicts along the way,
+          # Claude will help resolve them automaticaly.
 ```
 
 
