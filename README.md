@@ -1,7 +1,7 @@
 # Hatchbox AI
 
 <div align="center">
-  <img width="327" height="328" alt="hatchbox-ai-logo" src="https://github.com/user-attachments/assets/3732fcf8-2301-4d95-ad55-8d4c67d3fd0f" />
+  <img width="327" height="328" alt="hatchbox-ai-logo" src="https://raw.githubusercontent.com/hatchbox-ai/hatchbox-cli/main/assets/logo.png" />
   <div>Scale understanding, not just output.</div>
 </div>
 
@@ -41,7 +41,7 @@ The result: more time spent briefing AI than building, more time fixing AI's wor
 Hatchbox takes what context you already have, and works with you to build a shared mental model of the task at hand.
 
 ```bash
-npm -g install hatchbox-cli
+npm -g install @hatchbox-ai/hatchbox-cli
 
 gh auth login #hatchbox doesn't need your github access token, it uses the gh cli instead.
 
@@ -376,7 +376,7 @@ We (Claude and I) are actively working on expanding platform and integration sup
 
 ```bash
 # Install globally
-npm install -g hatchbox-cli
+npm install -g @hatchbox-ai/hatchbox-cli
 
 # Authenticate with GitHub
 gh auth login
