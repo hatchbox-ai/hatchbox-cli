@@ -43,23 +43,28 @@ Hatchbox takes what context you already have, and works with you to build a shar
 ```bash
 > npm -g install @hatchbox-ai/hatchbox-cli
 
-> gh auth login #hatchbox doesn't need your github access token, it uses the gh cli instead.
+# Hatchbox doesn't need your github access token, it uses the gh cli instead.
+> gh auth login 
 
-> hb start 25 # Pulls in issue 25 from GitHub, even if it's just an issue title. Fills in the blanks alongside you.
+# Pulls in issue 25 from GitHub, even if it's just an issue title. Fills in the blanks alongside you.
+> hb start 25 
 
 # or 
 
-> hb start "user auth broken" # Creates an issue, builds that same shared mental model from scratch.
+# Creates an issue, builds that same shared mental model from scratch.
+> hb start "user auth broken" 
 
 # or
 
-> hb start 34 # grabs context from this PR and its original issue, then iterates on it alongside you 
+# grabs context from this PR and its original issue, then iterates on it alongside you 
+> hb start 34 
 
 # then
 
-> hb finish # it knows which hatchbox you're in, runs validation, and merges your code back to your primary branch.
-          # If you hit compilation/lint/test failures or merge conflicts along the way,
-          # Claude will help resolve them automatically.
+# it knows which hatchbox you're in, runs validation, and merges your code back to your primary branch.
+> hb finish 
+
+# If you hit compilation/lint/test failures or merge conflicts along the way, Claude will help resolve them automatically.
 ```
 
 
@@ -71,10 +76,10 @@ Hatchbox treats context as a first-class concern. It's not a tool for managing b
 
 Each Hatchbox follows the same workflow — structured, visible, repeatable.
 
-`hb start` doesn't just create a hatchbox. Here's what happens:
+`hb start` doesn't just create a git worktree. Here's what happens:
 
 - Fetches the full GitHub issue (or PR) including all comments and requirements - or not, if they don't exist.
-- Creates an isolated environment (Git worktree, database branch, web server on deterministic, unique port)
+- Creates an isolated environment (Git worktree, database branch, web server on deterministic unique port)
 - Enhances the GitHub issue with better issue descriptions, structured analysis and planning. Asking questions and stating assumptions along the way, all in GitHub comments.
 - Launches Claude with this context pre-loaded from the issue, guides you through a structured workflow. You can stop at any time, pick up where you left off.
 - Each hatchbox is color coded - from terminal windows to VSCode, so you visually know which context you're in
@@ -91,6 +96,7 @@ Each Hatchbox follows the same workflow — structured, visible, repeatable.
 # ✅ Merges to main, installs dependencies
 # ✅ Cleans up everything - worktree, database branch, and the web server you were using to test your work
 ```
+(as you can see, using Hatchbox does not spare you from copious emoji)
 
 This isn't just convenience automation. You know you're merging the correct code, correctly - the commit message is auto-generated from the issue context, and any build/test/merge failures get fixed automatically with Claude's help. It helps keep resources in check too, local and remote, by safely shutting down servers and cleaning up Neon db branches.
 
