@@ -1,4 +1,5 @@
 {
+  "worktreePrefix": "",
   "mainBranch": "main",
   "workflows": {
     "issue": {
