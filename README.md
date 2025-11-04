@@ -41,23 +41,23 @@ The result: more time spent briefing AI than building, more time fixing AI's wor
 Hatchbox takes what context you already have, and works with you to build a shared mental model of the task at hand.
 
 ```bash
-npm -g install @hatchbox-ai/hatchbox-cli
+> npm -g install @hatchbox-ai/hatchbox-cli
 
-gh auth login #hatchbox doesn't need your github access token, it uses the gh cli instead.
+> gh auth login #hatchbox doesn't need your github access token, it uses the gh cli instead.
 
-hb start 25 # Pulls in issue 25 from GitHub, even if it's just an issue title. Fills in the blanks alongside you.
+> hb start 25 # Pulls in issue 25 from GitHub, even if it's just an issue title. Fills in the blanks alongside you.
 
 # or 
 
-hb start "user auth broken" # Creates an issue, builds that same shared mental model from scratch.
+> hb start "user auth broken" # Creates an issue, builds that same shared mental model from scratch.
 
 # or
 
-hb start 34 # grabs context from this PR and its original issue, then iterates on it alongside you 
+> hb start 34 # grabs context from this PR and its original issue, then iterates on it alongside you 
 
 # then
 
-hb finish # it knows which hatchbox you're in, runs validation, and merges your code back to your primary branch.
+> hb finish # it knows which hatchbox you're in, runs validation, and merges your code back to your primary branch.
           # If you hit compilation/lint/test failures or merge conflicts along the way,
           # Claude will help resolve them automatically.
 ```
@@ -84,7 +84,7 @@ Each Hatchbox follows the same workflow — structured, visible, repeatable.
 ### Merge with Confidence
 
 ```bash
-hb finish
+> hb finish
 # ✅ Runs tests, types, lint - Claude helps fix any failures automatically
 # ✅ Generates commit message from the issue context
 # ✅ Handles merge conflicts with AI assistance
@@ -146,7 +146,7 @@ Hatchbox orchestrates specialized AI agents that analyze issues, evaluate comple
 ### Creating Context
 
 ```bash
-hb start 25
+> hb start 25
 ```
 
 Hatchbox executes a multi-phase context-establishment workflow:
@@ -376,18 +376,18 @@ We (Claude and I) are actively working on expanding platform and integration sup
 
 ```bash
 # Install globally
-npm install -g @hatchbox-ai/hatchbox-cli
+> npm install -g @hatchbox-ai/hatchbox-cli
 
 # Authenticate with GitHub
-gh auth login
-# do `gh auth login --scopes project` to automatically move issues to in progress 
+> gh auth login
+# do `gh auth login --scopes project` to automatically move issues to in progress
 
 # Initialize in your project
-cd your-project
+> cd your-project
 
 # Start working
-hb start 25 # existing issue
-hb start "Enable log in/sign up with Google account" # new issue
+> hb start 25 # existing issue
+> hb start "Enable log in/sign up with Google account" # new issue
 ```
 
 ## Pull Request Support
@@ -395,7 +395,7 @@ hb start "Enable log in/sign up with Google account" # new issue
 Hatchbox works identically with GitHub pull requests:
 
 ```bash
-hb start 125  # PR number instead of issue number
+> hb start 125  # PR number instead of issue number
 ```
 
 Automatically detects PR, fetches the branch, and creates hatchbox with PR context. Everything else works the same.
@@ -436,12 +436,12 @@ Hatchbox provides first-class support for Node.js web applications (next/express
 **How it integrates:**
 
 ```bash
-hb start 25
+> hb start 25
 # ✅ Runs `pnpm install` in worktree
 # ✅ Launches `pnpm dev` on port 3025 (3000 + issue number)
 # ✅ Sets up database branch with correct DATABASE_URL
 
-hb finish
+> hb finish
 # ✅ Runs `pnpm test` (fails if tests fail)
 # ✅ Runs `pnpm build` (fails if build fails)
 # ✅ Runs `pnpm typecheck` if configured
@@ -458,14 +458,14 @@ Hatchbox was built using Hatchbox itself. CLI tools get the same isolation benef
 When you create a hatchbox for a CLI project, Hatchbox creates workspace-specific binaries so you can test each issue's version independently:
 
 ```bash
-hb start 52  # Working on CLI feature in issue 52
-cli-tool-52 --version  # Test issue 52's version
+> hb start 52  # Working on CLI feature in issue 52
+> cli-tool-52 --version  # Test issue 52's version
 
-hb start 137  # Switch to different CLI issue
-cli-tool-137 --help    # Test issue 137's version
+> hb start 137  # Switch to different CLI issue
+> cli-tool-137 --help    # Test issue 137's version
 
 # Original binary still works from main branch
-cli-tool --version     # Unaffected by hatchbox CLIs
+> cli-tool --version     # Unaffected by hatchbox CLIs
 ```
 
 **Binary naming**: `<original-name>-<issue/pr-number>`
@@ -492,13 +492,13 @@ A Git worktree is a separate working directory for the same repository. Instead 
 
 Traditional approach:
 ```bash
-git checkout feature-a    # Switch branch
+> git checkout feature-a    # Switch branch
 # Edit files
-git stash                 # Save work
-git checkout feature-b    # Switch branch again
+> git stash                 # Save work
+> git checkout feature-b    # Switch branch again
 # Edit different files
-git stash pop             # Restore work
-git checkout feature-a    # Switch back
+> git stash pop             # Restore work
+> git checkout feature-a    # Switch back
 ```
 
 Git worktree approach:
