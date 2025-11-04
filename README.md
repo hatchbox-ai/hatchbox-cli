@@ -73,11 +73,11 @@ hb finish
 # ✅ Runs tests, types, lint - Claude helps fix any failures automatically
 # ✅ Generates commit message from the issue context
 # ✅ Handles merge conflicts with AI assistance
-# ✅ Merges to main
-# ✅ Cleans up everything - worktree, database branch, and the web server you were using to test the work
+# ✅ Merges to main, installs dependencies
+# ✅ Cleans up everything - worktree, database branch, and the web server you were using to test your work
 ```
 
-This isn't just convenience automation. You know you're merging the correct code, correctly - the commit message is auto-generated from the structured issue context, and any build/test/merge failures get fixed automatically with Claude's help. It helps keep resources in check too - local and remote by safely shutting down servers and cleaning up Neon db branches.
+This isn't just convenience automation. You know you're merging the correct code, correctly - the commit message is auto-generated from the issue context, and any build/test/merge failures get fixed automatically with Claude's help. It helps keep resources in check too, local and remote, by safely shutting down servers and cleaning up Neon db branches.
 
 ## What This Means for How You Work
 
@@ -376,7 +376,7 @@ src/
 
 For development guidelines and testing strategy, see [CLAUDE.md](./CLAUDE.md).
 
-## Development Status
+## Roadmap
 
 **Currently in Development** - Actively developing this CLI tool, with the intent of support more workflow flexibility and different tech stacks, task management tools and db providers.
 
