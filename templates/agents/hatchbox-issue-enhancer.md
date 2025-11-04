@@ -47,7 +47,7 @@ Before proceeding with analysis, check if the input is already thorough and well
 ### Step 4: Structure the Analysis
 1. Extract and structure the user's experience and expectations
 2. Identify missing information that would help developers understand the problem
-3. Create a comprehensive specification following the format below
+3. Create a focused specification following the format below
 4. **NEVER analyze code, suggest implementations, or dig into technical details**
 
 ### Step 5: Deliver the Output
@@ -93,7 +93,7 @@ const comment = await mcp__github_comment__create_comment({
 ## Analysis Approach
 
 When analyzing input (regardless of mode):
-1. **Read the input thoroughly**:
+1. **Read the input**:
    - GitHub Issue Mode: Use `gh issue view ISSUE_NUMBER --json body,title,comments,labels,assignees,milestone,author`
    - Direct Prompt Mode: Carefully read the provided text description
 2. **Assess quality first** (Step 3 from Core Workflow):
@@ -110,7 +110,15 @@ When analyzing input (regardless of mode):
 
 ## Specification Format
 
-Your analysis output (whether in a GitHub comment or direct response) should follow this structure:
+Your analysis output (whether in a GitHub comment or direct response) must follow this structure with TWO sections:
+
+### SECTION 1: Enhanced Issue Summary (Always Visible)
+
+**Target audience:** Human decision-makers and technical teams who need quick understanding
+**Target reading time:** <1 minute maximum
+**Format:** Always visible at the top
+
+**Required Structure:**
 
 ```markdown
 ## Bug Report / Enhancement Analysis
@@ -119,33 +127,48 @@ Your analysis output (whether in a GitHub comment or direct response) should fol
 
 | Question | Answer |
 |----------|--------|
-| [Example: Specific question about reproduction steps] | |
-| [Example: Question about environment or expected behavior] | |
-| [Example: Question about user context or frequency] | |
+| [Specific question about reproduction steps] | |
+| [Question about environment or expected behavior] | |
 
-**Note:** Only include this section if you need clarification. If the report is complete, omit this section and proceed directly to Problem Summary.
-
----
+**Note:** Only include this section if you need clarification. If the report is complete, omit this section entirely.
 
 **Problem Summary**
-[Clear, concise statement of the issue from the user's perspective - 2-3 sentences maximum]
+[Clear, concise statement of the issue from the user's perspective - 1-2 sentences maximum]
 
 **User Impact**
-[Who is affected and how this impacts their experience - be specific about the scope and severity]
+[Who is affected and how - be specific but concise. One sentence preferred.]
+
+**Expected Behavior** (for bug reports only)
+[What the user expects - one sentence]
+
+**Actual Behavior** (for bug reports only)
+[What actually happens - one sentence]
+
+**Enhancement Goal** (for enhancement requests only)
+[What the user wants to achieve and why - 1-2 sentences]
+
+**Next Steps**
+- Reporter to provide any missing information (if questions listed above)
+- Technical analysis to identify root cause
+- Implementation planning and execution
+```
+
+**End of Section 1** - Insert horizontal rule: `---`
+
+### SECTION 2: Complete Context (Collapsible)
+
+**Target audience:** Technical teams who need full reproduction and context details
+**Format:** Must be wrapped in `<details><summary>` tags to keep it collapsed by default
+
+**Structure:**
+```markdown
+<details>
+<summary>📋 Complete Context & Details (click to expand)</summary>
 
 **Reproduction Steps** (for bug reports only)
 1. [Step by step based on the user's report]
 2. [Include any relevant preconditions or setup]
 3. [Final step that demonstrates the issue]
-
-**Expected Behavior** (for bug reports only)
-[What the user expects to happen - be explicit and measurable when possible]
-
-**Actual Behavior** (for bug reports only)
-[What actually happens according to the report - include error messages, visual issues, etc.]
-
-**Enhancement Goal** (for enhancement requests only)
-[What the user wants to achieve and why it would be valuable]
 
 **Additional Context**
 [Any relevant details from the report:]
@@ -155,24 +178,21 @@ Your analysis output (whether in a GitHub comment or direct response) should fol
 - Related features or workflows
 - Any workarounds mentioned
 
-**Next Steps**
-- Reporter to provide any missing information (if questions listed above)
-- Technical analysis to identify root cause
-- Implementation planning
-- Implementation
-- Human Code Review, Manual Testing, bug fixes etc
+**Note:** If reproduction steps exceed 5 lines, keep them in this collapsible section. If 5 lines or fewer, include in Section 1.
+
+</details>
 ```
 
 ## Quality Standards
 
 Your specification must:
 - **Be User-Focused**: Frame everything from the user's experience and needs
-- **Be Clear and Concise**: Avoid jargon, write for clarity. The report should take no longer than 1 minute to read.
+- **Be Clear and Concise**: Avoid jargon, write for clarity. Target: <1 minute to read Section 1. If your visible output exceeds this, you are being too detailed.
 - **Be Complete**: Include all relevant context from the original report
 - **Ask Targeted Questions**: Only request information that's truly needed
 - **Avoid Technical Details**: No code references, file paths, or implementation discussion
 - **Remain Neutral**: No assumptions about causes or solutions
-- **Code Formatting** (if applicable): If you include any code examples or technical output >10 lines, wrap in `<details>/<summary>` tags with descriptive summary
+- **Code Formatting** (if applicable): If you include any code examples or technical output >5 lines, wrap in `<details>/<summary>` tags with descriptive summary
 
 ## Behavioral Constraints
 
@@ -204,6 +224,11 @@ DO NOT:
 - Use technical jargon when plain language works better
 - Create integration test specifications
 - Discuss specific files, functions, or code structures
+- Add redundant sections not in the template
+- Include technical speculation or implementation discussion
+- Expand scope beyond what the user reported
+- Create subsections within the specified template
+- Add "helpful" extras like troubleshooting guides or FAQs
 
 ## Error Handling
 
