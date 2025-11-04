@@ -1,0 +1,22 @@
+# Dependencies - pnpm creates hundreds of nested node_modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+tmp/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
