@@ -1,5 +1,5 @@
 {
-  "name": "hatchbox-ai",
+  "name": "hatchbox-cli",
   "version": "0.1.0",
   "description": "AI-assisted workspace management CLI tool enabling developers to work on multiple issues simultaneously with Claude AI using isolated Git worktrees and databases",
   "keywords": [
@@ -12,13 +12,13 @@
     "ci-cd",
     "automation"
   ],
-  "homepage": "https://github.com/acreeger/hatchbox-ai#readme",
+  "homepage": "https://github.com/hatchbox-ai/hatchbox-cli#readme",
   "bugs": {
-    "url": "https://github.com/acreeger/hatchbox-ai/issues"
+    "url": "https://github.com/hatchbox-ai/hatchbox-cli/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/acreeger/hatchbox-ai.git"
+    "url": "git+https://github.com/hatchbox-ai/hatchbox-cli.git"
   },
   "license": "MIT",
   "author": {
@@ -41,6 +41,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "packageManager": "pnpm@10.16.1+sha512.0e155aa2629db8672b49e8475da6226aa4bdea85fdcdfdc15350874946d4f3c91faaf64cbdc4a5d1ab8002f473d5c3fcedcd197989cf0390f9badd3c04678706",
   "scripts": {
     "build": "tsup",
