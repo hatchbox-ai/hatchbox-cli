@@ -43,10 +43,15 @@ vi.mock('../lib/SettingsManager.js', () => ({
 	})),
 }))
 
-// Mock branchExists utility
-vi.mock('../utils/git.js', () => ({
-	branchExists: vi.fn().mockResolvedValue(false),
-}))
+// Mock git utilities
+vi.mock('../utils/git.js', async () => {
+	const actual = await vi.importActual<typeof import('../utils/git.js')>('../utils/git.js')
+	return {
+		...actual,
+		branchExists: vi.fn().mockResolvedValue(false),
+		findMainWorktreePathWithSettings: vi.fn().mockResolvedValue('/test/main'),
+	}
+})
 
 // Mock claude utilities
 vi.mock('../utils/claude.js', () => ({
@@ -1395,6 +1400,73 @@ describe('StartCommand', () => {
 					).rejects.toThrow('Failed to load settings')
 				})
 			})
+		})
+	})
+
+	describe('worktree directory behavior', () => {
+		it('should call findMainWorktreePathWithSettings during execute', async () => {
+			const { findMainWorktreePathWithSettings } = await import('../utils/git.js')
+			const mockIssue = {
+				number: 123,
+				title: 'Test Issue',
+				body: '',
+				state: 'open' as const,
+				labels: [],
+				assignees: [],
+				url: 'https://github.com/test/repo/issues/123',
+			}
+
+			vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
+				type: 'issue',
+				number: 123,
+				rawInput: '123',
+			})
+			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
+			vi.mocked(mockGitHubService.validateIssueState).mockResolvedValue()
+
+			await command.execute({
+				identifier: '123',
+				options: {},
+			})
+
+			// Verify findMainWorktreePathWithSettings was called
+			expect(findMainWorktreePathWithSettings).toHaveBeenCalled()
+		})
+
+		it('should initialize GitWorktreeManager with main worktree path (not process.cwd)', async () => {
+			const { GitWorktreeManager } = await import('../lib/GitWorktreeManager.js')
+			const { findMainWorktreePathWithSettings } = await import('../utils/git.js')
+
+			// Mock findMainWorktreePathWithSettings to return a specific path
+			vi.mocked(findMainWorktreePathWithSettings).mockResolvedValue('/test/main-repo')
+
+			const mockIssue = {
+				number: 123,
+				title: 'Test Issue',
+				body: '',
+				state: 'open' as const,
+				labels: [],
+				assignees: [],
+				url: 'https://github.com/test/repo/issues/123',
+			}
+
+			vi.mocked(mockGitHubService.detectInputType).mockResolvedValue({
+				type: 'issue',
+				number: 123,
+				rawInput: '123',
+			})
+			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
+			vi.mocked(mockGitHubService.validateIssueState).mockResolvedValue()
+
+			// Create new command to trigger constructor with main path
+			const newCommand = new StartCommand(mockGitHubService)
+			await newCommand.execute({
+				identifier: '123',
+				options: {},
+			})
+
+			// Verify GitWorktreeManager was constructed with the main path
+			expect(GitWorktreeManager).toHaveBeenCalledWith('/test/main-repo')
 		})
 	})
 })

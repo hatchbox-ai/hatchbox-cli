@@ -11,7 +11,7 @@ import { AgentManager } from '../lib/AgentManager.js'
 import { DatabaseManager } from '../lib/DatabaseManager.js'
 import { NeonProvider } from '../lib/providers/NeonProvider.js'
 import { IssueEnhancementService } from '../lib/IssueEnhancementService.js'
-import { branchExists } from '../utils/git.js'
+import { branchExists, findMainWorktreePathWithSettings } from '../utils/git.js'
 import { loadEnvIntoProcess } from '../utils/env.js'
 import type { StartOptions } from '../types/index.js'
 
@@ -29,10 +29,11 @@ export interface ParsedInput {
 
 export class StartCommand {
 	private gitHubService: GitHubService
-	private hatchboxManager: HatchboxManager
+	private hatchboxManager: HatchboxManager | null = null
 	private agentManager: AgentManager
 	private settingsManager: SettingsManager
 	private enhancementService: IssueEnhancementService
+	private providedHatchboxManager: HatchboxManager | undefined
 
 	constructor(
 		gitHubService?: GitHubService,
@@ -48,6 +49,8 @@ export class StartCommand {
 			this.agentManager,
 			this.settingsManager
 		)
+		// Store provided HatchboxManager for testing, but don't initialize yet
+		this.providedHatchboxManager = hatchboxManager
 
 		// Load environment variables first
 		const envResult = loadEnvIntoProcess()
@@ -57,6 +60,24 @@ export class StartCommand {
 		if (envResult.parsed) {
 			logger.debug(`Loaded ${Object.keys(envResult.parsed).length} environment variables`)
 		}
+	}
+
+	/**
+	 * Initialize HatchboxManager with the main worktree path
+	 * Uses lazy initialization to ensure we have the correct path
+	 */
+	private async initializeHatchboxManager(): Promise<HatchboxManager> {
+		if (this.hatchboxManager) {
+			return this.hatchboxManager
+		}
+
+		if (this.providedHatchboxManager) {
+			this.hatchboxManager = this.providedHatchboxManager
+			return this.hatchboxManager
+		}
+
+		// Find main worktree path
+		const mainWorktreePath = await findMainWorktreePathWithSettings()
 
 		// Create DatabaseManager with NeonProvider and EnvironmentManager
 		const environmentManager = new EnvironmentManager()
@@ -76,18 +97,18 @@ export class StartCommand {
 		})
 		const databaseManager = new DatabaseManager(neonProvider, environmentManager)
 
-		this.hatchboxManager =
-			hatchboxManager ??
-			new HatchboxManager(
-				new GitWorktreeManager(),
-				this.gitHubService,
-				environmentManager,  // Reuse same instance
-				new ClaudeContextManager(),
-				new ProjectCapabilityDetector(),
-				new CLIIsolationManager(),
-				new SettingsManager(),
-				databaseManager  // Add database manager
-			)
+		this.hatchboxManager = new HatchboxManager(
+			new GitWorktreeManager(mainWorktreePath),
+			this.gitHubService,
+			environmentManager,  // Reuse same instance
+			new ClaudeContextManager(),
+			new ProjectCapabilityDetector(),
+			new CLIIsolationManager(),
+			new SettingsManager(),
+			databaseManager  // Add database manager
+		)
+
+		return this.hatchboxManager
 	}
 
 	/**
@@ -95,6 +116,9 @@ export class StartCommand {
 	 */
 	public async execute(input: StartCommandInput): Promise<void> {
 		try {
+			// Step 0: Initialize HatchboxManager with main worktree path
+			const hatchboxManager = await this.initializeHatchboxManager()
+
 			// Step 1: Parse and validate input
 			const parsed = await this.parseInput(input.identifier)
 
@@ -147,7 +171,7 @@ export class StartCommand {
 				enableDevServer,
 			})
 			
-			const hatchbox = await this.hatchboxManager.createHatchbox({
+			const hatchbox = await hatchboxManager.createHatchbox({
 				type: parsed.type,
 				identifier,
 				originalInput: parsed.originalInput,

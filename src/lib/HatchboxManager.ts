@@ -321,7 +321,7 @@ export class HatchboxManager {
     if (input.type === 'pr') {
       logger.info('Fetching all remote branches...')
       try {
-        await executeGitCommand(['fetch', 'origin'])
+        await executeGitCommand(['fetch', 'origin'], { cwd: this.gitWorktree.workingDirectory })
         logger.success('Successfully fetched from remote')
       } catch (error) {
         throw new Error(

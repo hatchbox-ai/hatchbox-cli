@@ -26,10 +26,17 @@ import {
  * Ports functionality from bash scripts into TypeScript
  */
 export class GitWorktreeManager {
-  private readonly repoPath: string
+  private readonly _workingDirectory: string
 
-  constructor(repoPath: string = process.cwd()) {
-    this.repoPath = repoPath
+  constructor(workingDirectory: string = process.cwd()) {
+    this._workingDirectory = workingDirectory
+  }
+
+  /**
+   * Get the working directory for git operations (main worktree path)
+   */
+  get workingDirectory(): string {
+    return this._workingDirectory
   }
 
   /**
@@ -43,7 +50,7 @@ export class GitWorktreeManager {
     if (options.porcelain !== false) args.push('--porcelain')
     if (options.verbose) args.push('-v')
 
-    const output = await executeGitCommand(args, { cwd: this.repoPath })
+    const output = await executeGitCommand(args, { cwd: this._workingDirectory })
     return parseWorktreeList(output)
   }
 
@@ -128,7 +135,7 @@ export class GitWorktreeManager {
       args.push(options.baseBranch)
     }
 
-    await executeGitCommand(args, { cwd: this.repoPath })
+    await executeGitCommand(args, { cwd: this._workingDirectory })
     return absolutePath
   }
 
@@ -177,7 +184,7 @@ export class GitWorktreeManager {
     if (options.force) args.push('--force')
     args.push(worktreePath)
 
-    await executeGitCommand(args, { cwd: this.repoPath })
+    await executeGitCommand(args, { cwd: this._workingDirectory })
 
     // Remove directory if requested
     if (options.removeDirectory && (await fs.pathExists(worktreePath))) {
@@ -188,7 +195,7 @@ export class GitWorktreeManager {
     if (options.removeBranch && !worktree.bare) {
       try {
         await executeGitCommand(['branch', '-D', worktree.branch], {
-          cwd: this.repoPath,
+          cwd: this._workingDirectory,
         })
       } catch (error) {
         // Don't fail the whole operation if branch deletion fails
@@ -315,7 +322,7 @@ export class GitWorktreeManager {
     customRoot?: string,
     options?: { isPR?: boolean; prNumber?: number; prefix?: string }
   ): string {
-    const root = customRoot ?? this.repoPath
+    const root = customRoot ?? this._workingDirectory
     return generateWorktreePath(branchName, root, options)
   }
 
@@ -338,7 +345,7 @@ export class GitWorktreeManager {
    */
   async isRepoReady(): Promise<boolean> {
     try {
-      const repoRoot = await getRepoRoot(this.repoPath)
+      const repoRoot = await getRepoRoot(this._workingDirectory)
       return repoRoot !== null
     } catch {
       return false
@@ -353,9 +360,9 @@ export class GitWorktreeManager {
     defaultBranch: string
     currentBranch: string | null
   }> {
-    const root = await getRepoRoot(this.repoPath)
-    const defaultBranch = await getDefaultBranch(this.repoPath)
-    const currentBranch = await getCurrentBranch(this.repoPath)
+    const root = await getRepoRoot(this._workingDirectory)
+    const defaultBranch = await getDefaultBranch(this._workingDirectory)
+    const currentBranch = await getCurrentBranch(this._workingDirectory)
 
     return {
       root,
@@ -368,7 +375,7 @@ export class GitWorktreeManager {
    * Prune stale worktree entries (worktrees that no longer exist on disk)
    */
   async pruneWorktrees(): Promise<void> {
-    await executeGitCommand(['worktree', 'prune', '-v'], { cwd: this.repoPath })
+    await executeGitCommand(['worktree', 'prune', '-v'], { cwd: this._workingDirectory })
   }
 
   /**
@@ -378,14 +385,14 @@ export class GitWorktreeManager {
     const args = ['worktree', 'lock', worktreePath]
     if (reason) args.push('--reason', reason)
 
-    await executeGitCommand(args, { cwd: this.repoPath })
+    await executeGitCommand(args, { cwd: this._workingDirectory })
   }
 
   /**
    * Unlock a previously locked worktree
    */
   async unlockWorktree(worktreePath: string): Promise<void> {
-    await executeGitCommand(['worktree', 'unlock', worktreePath], { cwd: this.repoPath })
+    await executeGitCommand(['worktree', 'unlock', worktreePath], { cwd: this._workingDirectory })
   }
 
   /**
