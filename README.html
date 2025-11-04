@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>README.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="hatchbox-ai">Hatchbox AI</h1>
+<div align="center">
+  <img src="images/hatch-box-ai.png" alt="Hatchbox AI Logo" width="300"/>
+</div>
+<blockquote>
+<p>Scale understanding, not just output.</p>
+</blockquote>
+<h2 id="a-very-modern-problem">A Very Modern Problem</h2>
+<p>The promise of AI-assisted development is profound: write more code, ship features faster, handle complexity at scale. But there's a hidden cost that most tools ignore.</p>
+<p><strong>AI agents are incredibly powerful at generating code. They're remarkably poor at staying in sync with their human collaborator.</strong></p>
+<p>When you're juggling multiple issues simultaneously, the real challenge isn't the mechanics of branch switching or port conflicts. It's cognitive: <strong>keeping yourself and your AI aligned on what you're trying to accomplish</strong>.</p>
+<p>The friction compounds quickly:</p>
+<p>Work on 10 GitHub issues a day, 3 at a time, and you and your AI lose track. It's stressful. Chaotic. You start new Claude chats for each problem, then have to context switch in your own head to figure out what context to provide. That mental overhead is painful. You wonder if AI-assisted coding is actually making things worse. The promise was speed and convenience. The reality feels unproductive and overwhelming.</p>
+<p>Hidden assumptions make it worse: your AI assumes you want to use Axios when your team standardizes on fetch, or picks the wrong authentication pattern because it never learned your team's conventions. Hit the context window limit mid-conversation, and suddenly your AI shamelessly forgets the problem you were solving.</p>
+<p>The result: more time spent briefing AI than building, more time fixing AI's work than deploying. Solutions that technically work but miss the actual intent.</p>
+<p><strong>The bottleneck isn't output velocity. It's maintaining shared understanding between human and AI at scale.</strong></p>
+<h2 id="how-hatchbox-solves-this">How Hatchbox Solves This</h2>
+<p>Hatchbox takes what context you already have, and works with you to build a shared mental model of the problem you're working on.</p>
+<pre class="hljs"><code><div>npm -g install hatchbox-cli
+
+hb start 25 <span class="hljs-comment"># Pulls in issue 25 from GitHub, even if it's just an issue title. Fills in the blanks alongside you.</span>
+
+<span class="hljs-comment"># or </span>
+
+hb start <span class="hljs-string">"user auth broken"</span> <span class="hljs-comment"># Creates an issue, builds that same shared mental model from scratch.</span>
+
+<span class="hljs-comment"># or</span>
+
+hb start 34 <span class="hljs-comment"># grabs context from this PR and its original issue, then iterates on it alongside you </span>
+
+<span class="hljs-comment"># then</span>
+
+hb finish <span class="hljs-comment"># it knows which hatchbox you're in, runs vaidation, and merges your code back to your primary branch. If you hit compilation/lint/test failures or merge conflicts along the way - Claude will help resolve them automaticaly.</span>
+</div></code></pre>
+<p>Hatchbox treats context as a first-class concern. It's not a tool for managing branches - it's a control plane for maintaining alignment between you and your AI assistant as you work across multiple issues simultaneously.</p>
+<p><strong>The Hatchbox difference</strong>: Surface hidden assumptions up front, then persist all the analysis and reasoning in GitHub issue comments - visible and editable - rather than burning tokens in the context window where they're invisible and set in stone. Each hatchbox builds up structured context over multiple steps, but the AI only loads what's relevant for the current phase.</p>
+<h3 id="one-command-parallel-work-predictable-flow">One Command, Parallel Work, Predictable Flow</h3>
+<p><code>hb start</code> doesn't just create a hatchbox. Here's what happens:</p>
+<ul>
+<li>Fetches the full GitHub issue (or PR) including all comments and requirements - or not, if they don't exist.</li>
+<li>Creates an isolated environment (Git worktree, database branch, web server on determinstic, unique port)</li>
+<li>Enhances the GitHub issue with better issue descriptions, structured analysis and planning. Asking questions and stating assumptions along the way, all in GitHub comments.</li>
+<li>Launches Claude with this context pre-loaded from the issue, guides you through a structured workflow. You can stop at any time, pick up where you left off.</li>
+<li>Each hatchbox is color coded - from terminal windows to VSCode, so you visually know which context you're in</li>
+</ul>
+<p><strong>When you switch to this hatchbox, both you and Claude know exactly what you're working on and why.</strong></p>
+<h3 id="merge-with-confidence">Merge with Confidence</h3>
+<pre class="hljs"><code><div>hb finish
+<span class="hljs-comment"># ✅ Runs tests, types, lint - Claude helps fix any failures automatically</span>
+<span class="hljs-comment"># ✅ Generates commit message from the issue context</span>
+<span class="hljs-comment"># ✅ Handles merge conflicts with AI assistance</span>
+<span class="hljs-comment"># ✅ Merges to main</span>
+<span class="hljs-comment"># ✅ Cleans up everything - worktree, database branch, and the web server you were using to test the work</span>
+</div></code></pre>
+<p>This isn't just convenience automation. You know you're merging the correct code, correctly - the commit message is auto-generated from the structured issue context, and any build/test/merge failures get fixed automatically with Claude's help. It helps keep resources in check too - local and remote by safely shutting down servers and cleaning up Neon db branches.</p>
+<h2 id="what-this-means-for-how-you-work">What This Means for How You Work</h2>
+<h3 id="you-stop-babysitting-your-ai-start-collaborating-with-it">You Stop Babysitting Your AI, Start Collaborating With It</h3>
+<p>Traditional approach:</p>
+<ol>
+<li>Start working on a feature</li>
+<li>Explain context to Claude</li>
+<li>Review Claude's generated code, discover mistakes and misunderstanding</li>
+<li>Get asked to fix an urgent bug - stash or WIP commit, switch branch, spin up new Claude</li>
+<li>Lose context on your progress, face all the same issues with your urgent bug fix</li>
+</ol>
+<p>Hatchbox approach:</p>
+<ol>
+<li><code>hb start 45</code> - feature work in progress</li>
+<li>Review Hatchbox's analysis in Github, correct an assumption, move to the planning phase</li>
+<li><code>hb start 99</code> - urgent bug, Claude already has the context from the issue</li>
+<li>You can switch between them as they work - color coding makes it easy to tell each hatchbox apart.</li>
+<li><code>hb finish</code> - urgent bug fixed and merged</li>
+<li>Switch back to the feature hatchbox - you and Claude pick up exactly where you left off - you can simply re-read the issue's comments to get on the same page as Claude.</li>
+<li><code>hb finish</code> - Issue #45 is in the bag too.</li>
+</ol>
+<p><strong>The difference</strong>: Your AI becomes a persistent collaborator rather than a tool you're constantly playing catch-up with.</p>
+<p><strong>Plus, your AI's reasoning is now visible to everyone, including future you:</strong>
+The AI analysis gets posted as GitHub comments, so anyone on your team can see the context and planning without having to ask you for background.</p>
+<h3 id="you-scale-understanding-not-just-output">You Scale Understanding, Not Just Output</h3>
+<p>Without Hatchbox, adding AI to your workflow increases code production but also increases cognitive load. You're managing what the AI knows, correcting misaligned suggestions, and second-guessing its understanding. Not to mention managing its context window.</p>
+<p>With Hatchbox, the cognitive load stays constant as you scale. Each hatchbox is a bounded context where you and your AI share complete understanding. Work on ten issues simultaneously, and each one maintains perfect clarity about its own purpose.</p>
+<p><strong>This is how you achieve sustainable velocity with AI assistance.</strong></p>
+<h3 id="you-reduce-rework-and-chaos">You Reduce Rework and Chaos</h3>
+<p>When you and your AI are in lock step:</p>
+<ul>
+<li>Features get built right the first time because you spot when the AI is going off course, way before it writes a line of code.</li>
+<li>Reviews focus on the quality of the AI's thinking, not just its code.</li>
+<li>Fewer suprises thanks to AI agents invetning requirements or inconsistently implementing existing patterns</li>
+<li>If the AI takes a wrong turn - you don't spend hours arguing with Claude and playing context window Tetris. You just start the process again with better issue descriptions, different assumptions and better context for your AI assistant.</li>
+</ul>
+<h3 id="the-power-of-predictable-flow">The Power of Predictable Flow</h3>
+<p>Every Hatchbox follows the same rhythm — Start → Enhance → Analyze → Plan → Implement → Human Review → Finish.<br>
+The steps never change. The tools stay aligned.<br>
+Predictability becomes muscle memory — you focus on ideas, not process.</p>
+<h2 id="how-it-works">How It Works</h2>
+<p>Hatchbox orchestrates specialized AI agents that analyze issues, evaluate complexity, create implementation plans, and document everything directly in GitHub comments. Each agent has a specific role and writes structured output that becomes permanent project, and team, knowledge.</p>
+<h3 id="creating-context">Creating Context</h3>
+<pre class="hljs"><code><div>hb start 25
+</div></code></pre>
+<p>Hatchbox executes a multi-phase context-establishment workflow:</p>
+<ol>
+<li><strong>Fetch complete requirements</strong> - GitHub issue body + all comments</li>
+<li><strong>Create isolated hatchbox</strong> - Git worktree at <code>~/project-hatchboxes/issue-25-auth-issues/</code> (branch names are generated)</li>
+<li><strong>Run AI workflow agents</strong> - Enhance, analyze, plan, and document directly in GitHub comments:
+<ul>
+<li><strong>Enhancement Agent</strong>: Expands brief issues into detailed requirements (if needed)</li>
+<li><strong>Complexity Evaluator</strong>: Assesses scope and determines workflow approach
+<ul>
+<li><strong>Simple workflow</strong>: Combined analysis and planning in one step</li>
+<li><strong>Complex workflow</strong>: Separate analysis phase, then detailed planning phase</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Establish environment</strong> - Unique web server port (i.e. 3025), isolated database branch, <code>.env</code> file with correct DATABASE_URL env var</li>
+<li><strong>Launch tools</strong> - VSCode with color theme, dev server, Claude with pre-loaded context from GitHub comments</li>
+</ol>
+<p><strong>Result</strong>: A complete bounded context where both you and your AI share understanding, with all context stored as structured GitHub comments. Open the issue in your browser to see:</p>
+<ul>
+<li>Enhancement analysis (if the issue was brief)</li>
+<li>Complexity evaluation with metrics</li>
+<li>Root cause analysis and technical findings</li>
+<li>Implementation plan (for complex issues)</li>
+<li>All context is editable, reviewable, and persists across machines</li>
+</ul>
+<h3 id="maintaining-context">Maintaining Context</h3>
+<p>Each hatchbox is isolated:</p>
+<ul>
+<li><strong>Git worktree</strong> - Separate filesystem, different branch checked out, no switching overhead</li>
+<li><strong>Database branch</strong> - Schema changes don't affect other contexts (optional, requires Neon - other provider support coming soon)</li>
+<li><strong>Unique port</strong> - Multiple dev servers run simultaneously (base port + issue number)</li>
+<li><strong>Environment variables</strong> - Each hatchbox has correct database URL</li>
+<li><strong>Visual identity</strong> - Color-coded VSCode window (40 distinct pastel colors)</li>
+<li><strong>GitHub issue comments</strong> - Multi-phase context (enhancement, analysis, planning) persists and is editable by team members</li>
+</ul>
+<p><strong>When you switch hatchboxes, the context switches with you.</strong></p>
+<h3 id="context-that-scales-with-your-team">Context That Scales With Your Team</h3>
+<p>Traditional AI workflows store context locally in chat history or markdown files. Hatchbox stores context where it belongs - in the GitHub issue itself.</p>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li><strong>Transparency</strong>: All AI analysis and planning is visible to your entire team</li>
+<li><strong>Collaboration</strong>: Team members can review, comment on, and refine AI-generated context</li>
+<li><strong>Persistence</strong>: Context survives repository clones, machine switches, and team member changes</li>
+<li><strong>Version Control</strong>: GitHub tracks all context changes with timestamps and authors</li>
+<li><strong>Searchability</strong>: GitHub's search finds AI insights across all your issues</li>
+<li><strong>Integration</strong>: Context appears in notifications, project boards, and automation workflows</li>
+<li><strong>No Sync Issues</strong>: Everyone sees the same context - no local file drift</li>
+</ul>
+<p>When Claude analyzes your issue and creates a comment with &quot;### Root Cause Analysis&quot;, that insight becomes permanent project knowledge. When you switch machines, clone the repo elsewhere, or bring in a new team member - the context is already there.</p>
+<p><strong>This is context as infrastructure, not files.</strong></p>
+<h3 id="understanding-the-multi-agent-workflow">Understanding the Multi-Agent Workflow</h3>
+<p>When you run <code>hb start 25</code>, Hatchbox orchestrates specialized AI agents that work through a structured analysis and planning process:</p>
+<p><strong>Phase 1: Enhancement (optional)</strong></p>
+<ul>
+<li>Checks if issue needs more detail (word count, structure, clarity)</li>
+<li>Expands brief descriptions into comprehensive requirements</li>
+<li>Posts enhancement as a GitHub comment</li>
+</ul>
+<p><strong>Phase 2: Complexity Evaluation</strong></p>
+<ul>
+<li>Analyzes scope, file changes, breaking changes, risks</li>
+<li>Classifies as SIMPLE or COMPLEX</li>
+<li>Posts evaluation as a GitHub comment with metrics</li>
+</ul>
+<p><strong>Phase 3: Analysis</strong></p>
+<ul>
+<li>Investigates root causes and technical constraints</li>
+<li>Documents findings and implementation considerations</li>
+<li>Posts analysis as a GitHub comment</li>
+</ul>
+<p><strong>Phase 4: Planning</strong> (COMPLEX issues only)</p>
+<ul>
+<li>Creates detailed implementation roadmap</li>
+<li>Breaks work into phases with validation points</li>
+<li>Posts plan as a GitHub comment</li>
+</ul>
+<p><strong>Phase 5: Implementation Tracking</strong></p>
+<ul>
+<li>Updates progress in a GitHub comment</li>
+<li>Documents decisions and completion status</li>
+</ul>
+<p>All agent output is written to GitHub issue comments using a structured markdown format, making the AI's reasoning process transparent and collaborative. You can review, edit, or refine any comment before proceeding to the next phase.</p>
+<h2 id="commands">Commands</h2>
+<h3 id="hatchbox-management">Hatchbox Management</h3>
+<pre class="hljs"><code><div>hb start &lt;issue-number | pr-number | issue-description | branch-name&gt;
+<span class="hljs-comment"># Create hatchbox with complete context</span>
+<span class="hljs-comment"># Orchestrates AI agents that analyze the issue and post structured comments</span>
+<span class="hljs-comment"># Phases: Enhancement → Analysis → Planning → Implementation with review checkpoints at every step</span>
+<span class="hljs-comment"># Aliases: create, up</span>
+<span class="hljs-comment"># Options:</span>
+<span class="hljs-comment">#   --one-shot &lt;mode&gt;  - Automation level for Claude CLI</span>
+<span class="hljs-comment">#                        default: Standard behavior with prompts</span>
+<span class="hljs-comment">#                        noReview: Skip template approval prompts</span>
+<span class="hljs-comment">#                        bypassPermissions: Full automation, skip all prompts. Be careful!</span>
+
+hb finish
+<span class="hljs-comment"># AI assisted validation, commit, merge steps, and cleanup hatchbox (run from hatchbox directory)</span>
+<span class="hljs-comment"># Alias: dn</span>
+
+hb cleanup [identifier...]
+<span class="hljs-comment"># Remove a hatchbox without merging (safely, by default)</span>
+
+hb list
+<span class="hljs-comment"># Show active hatchboxes with their ports and paths</span>
+
+hb ignite
+<span class="hljs-comment"># Launch Claude with auto-detected hatchbox context</span>
+<span class="hljs-comment"># Options:</span>
+<span class="hljs-comment">#   --one-shot=&lt;mode&gt;  - Same automation modes as 'start'</span>
+
+hb open [identifier]
+<span class="hljs-comment"># Open hatchbox in browser (web projects) or run configured CLI tool</span>
+</div></code></pre>
+<h3 id="issue-management">Issue Management</h3>
+<pre class="hljs"><code><div>hb add-issue &lt;description&gt;
+<span class="hljs-comment"># Create and AI-enhance GitHub issue (doesn't start hatchbox)</span>
+<span class="hljs-comment"># Alias: a</span>
+<span class="hljs-comment"># Example: hb add-issue "Add dark mode toggle to settings"</span>
+
+hb enhance &lt;issue-number&gt;
+<span class="hljs-comment"># Apply AI enhancement agent to existing GitHub issue</span>
+<span class="hljs-comment"># Expands requirements and adds implementation context</span>
+</div></code></pre>
+<h3 id="setup">Setup</h3>
+<pre class="hljs"><code><div>hb init
+<span class="hljs-comment"># Initialize .hatchbox/settings.json and shell autocomplete</span>
+<span class="hljs-comment"># Run once per project</span>
+</div></code></pre>
+<h2 id="configuration">Configuration</h2>
+<p>Hatchbox uses <code>.hatchbox/settings.json</code> for project-specific behavior:</p>
+<p><strong>Key Configuration:</strong></p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"mainBranch"</span>: <span class="hljs-string">"main"</span>,
+  <span class="hljs-attr">"capabilities"</span>: {
+    <span class="hljs-attr">"web"</span>: { <span class="hljs-attr">"basePort"</span>: <span class="hljs-number">3000</span> }
+  },
+  <span class="hljs-attr">"workflows"</span>: {
+    <span class="hljs-attr">"issue"</span>: {
+      <span class="hljs-attr">"permissionMode"</span>: <span class="hljs-string">"default"</span>,
+      <span class="hljs-attr">"startIde"</span>: <span class="hljs-literal">true</span>,
+      <span class="hljs-attr">"startDevServer"</span>: <span class="hljs-literal">true</span>,
+      <span class="hljs-attr">"startAiAgent"</span>: <span class="hljs-literal">true</span>
+    }
+  },
+  <span class="hljs-attr">"agents"</span>: {
+    <span class="hljs-attr">"issueEnhancer"</span>: <span class="hljs-string">"sonnet"</span>,
+    <span class="hljs-attr">"branchNamer"</span>: <span class="hljs-string">"haiku"</span>
+  }
+}
+</div></code></pre>
+<p><strong>Configuration options:</strong></p>
+<ul>
+<li><code>mainBranch</code> - Primary branch for merging (default: &quot;main&quot;)</li>
+<li><code>capabilities.web.basePort</code> - Base port for dev servers (default: 3000)</li>
+<li><code>workflows</code> - Per-workflow Claude CLI permission modes and tool launching</li>
+<li><code>agents</code> - Claude model selection (sonnet/opus/haiku) per agent type</li>
+</ul>
+<p>Port calculation: <code>assignedPort = basePort + issueNumber</code>
+Example: Issue #25 with basePort 3000 = port 3025</p>
+<p>For complete configuration reference, see <a href="./.hatchbox/README.md">.hatchbox/README.md</a></p>
+<h2 id="requirements">Requirements</h2>
+<p><strong>Essential:</strong></p>
+<ul>
+<li>Claude CLI - AI assistance with issue context pre-loaded</li>
+<li>Node.js 16+</li>
+<li>Git 2.5+ (for worktree support)</li>
+<li>GitHub CLI (<code>gh</code>) - authenticated with your repository</li>
+</ul>
+<p><strong>Recommended</strong></p>
+<ul>
+<li>A Claude Max subscription</li>
+</ul>
+<p><strong>Optional (auto-detected):</strong></p>
+<ul>
+<li><strong>Neon CLI</strong> - Isolated database branches per hatchbox</li>
+<li><strong>VSCode</strong> - Color-coded editor windows for visual context</li>
+</ul>
+<p>The tool works with just the essentials. Optional features activate automatically when detected.</p>
+<h2 id="installation">Installation</h2>
+<pre class="hljs"><code><div><span class="hljs-comment"># Install globally</span>
+npm install -g hatchbox-cli
+
+<span class="hljs-comment"># Authenticate with GitHub</span>
+gh auth login
+<span class="hljs-comment"># do gh auth login --scopes project to automatically move issues to in progress </span>
+
+<span class="hljs-comment"># Initialize in your project</span>
+<span class="hljs-built_in">cd</span> your-project
+
+<span class="hljs-comment"># Start working</span>
+hb start 25 <span class="hljs-comment"># existing issue</span>
+hb start <span class="hljs-string">"Enable log in/sign up with Google account"</span> <span class="hljs-comment"># new issue</span>
+</div></code></pre>
+<h2 id="pull-request-support">Pull Request Support</h2>
+<p>Hatchbox works identically with GitHub pull requests:</p>
+<pre class="hljs"><code><div>hb start 125  <span class="hljs-comment"># PR number instead of issue number</span>
+</div></code></pre>
+<p>Automatically detects PR, fetches the branch, and creates hatchbox with PR context. Everything else works the same.</p>
+<h2 id="development-status">Development Status</h2>
+<p><strong>Currently in Development</strong> - Converting proven bash workflow scripts to robust TypeScript implementation.</p>
+<p>This migration brings:</p>
+<ul>
+<li><strong>Type safety</strong> and better error handling</li>
+<li><strong>Test-driven development</strong> (70% coverage requirement)</li>
+<li><strong>Cross-platform compatibility</strong></li>
+<li><strong>Enhanced Claude AI integration</strong></li>
+</ul>
+<p>The bash scripts work and are being used daily. The TypeScript version is replacing them with a more maintainable foundation.</p>
+<p>See <a href="./plan.md">plan.md</a> for complete development roadmap and <a href="./docs/">docs/</a> for technical documentation.</p>
+<h2 id="architecture">Architecture</h2>
+<p><strong>Technologies:</strong></p>
+<ul>
+<li>TypeScript CLI built with Commander.js</li>
+<li>Git worktrees for hatchbox isolation</li>
+<li>GitHub CLI integration for issues/PRs</li>
+<li>Integration with node-based web servers via standard package.json scripts</li>
+<li>Database branching (Neon) - optional</li>
+<li>Claude CLI integration for AI assistance to resolve compilation/test/lint/merge errors.</li>
+</ul>
+<p><strong>Project structure:</strong></p>
+<pre class="hljs"><code><div>src/
+├── commands/          # CLI commands (start, finish, cleanup, list, add-issue, enhance, ignite, init, open)
+├── lib/              # Core business logic (WorkspaceManager, GitWorktreeManager, etc.)
+├── utils/            # Utility functions (git, github, env, database, shell)
+└── types/            # TypeScript definitions
+</div></code></pre>
+<p>For development guidelines and testing strategy, see <a href="./CLAUDE.md">CLAUDE.md</a>.</p>
+<h3 id="understanding-git-worktrees">Understanding Git Worktrees</h3>
+<p>A Git worktree is a separate working directory for the same repository. Instead of switching branches in one directory, you have multiple directories with different branches checked out simultaneously.</p>
+<p>Traditional approach:</p>
+<pre class="hljs"><code><div>git checkout feature<span class="hljs-_">-a</span>    <span class="hljs-comment"># Switch branch</span>
+<span class="hljs-comment"># Edit files</span>
+git stash                 <span class="hljs-comment"># Save work</span>
+git checkout feature-b    <span class="hljs-comment"># Switch branch again</span>
+<span class="hljs-comment"># Edit different files</span>
+git stash pop             <span class="hljs-comment"># Restore work</span>
+git checkout feature<span class="hljs-_">-a</span>    <span class="hljs-comment"># Switch back</span>
+</div></code></pre>
+<p>Worktree approach:</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># All exist simultaneously:</span>
+~/project-hatchboxes/issue-25/  <span class="hljs-comment"># feature-a checked out</span>
+~/project-hatchboxes/issue-30/  <span class="hljs-comment"># feature-b checked out</span>
+~/project/                      <span class="hljs-comment"># main branch</span>
+
+<span class="hljs-comment"># No branch switching, no stashing, less confusion</span>
+</div></code></pre>
+<p>This is the foundation that enables hatchbox isolation and persistent context. Other awesome tools use worktrees too.</p>
+<h2 id="contributing">Contributing</h2>
+<p>This project follows Test-Driven Development. All code must:</p>
+<ul>
+<li>Be written test-first with comprehensive unit tests</li>
+<li>Achieve &gt;70% code coverage</li>
+<li>Include regression tests against bash script behavior</li>
+<li>Use mock factories for all external dependencies</li>
+</ul>
+<h2 id="license">License</h2>
+<p><strong>Business Source License 1.1</strong> - Free to use for any purpose, including commercial use within your organization.</p>
+<p><strong>You can:</strong></p>
+<ul>
+<li>✅ Use freely in your organization and commercial projects</li>
+<li>✅ Modify and distribute internally</li>
+<li>✅ Build paid applications with it</li>
+</ul>
+<p><strong>You cannot:</strong></p>
+<ul>
+<li>❌ Resell Hatchbox itself as a product or service</li>
+<li>❌ Incorporate into products/services you sell to others</li>
+<li>❌ Offer as a hosted service or SaaS</li>
+</ul>
+<p><strong>Converts to Apache 2.0 on 2029-01-01</strong> - Becomes fully open source automatically.</p>
+<p>For commercial licensing inquiries, contact Adam Creeger.</p>
+<p>See <a href="./LICENSE">LICENSE</a> for complete terms.</p>
+
+</body>
+</html>

@@ -4,367 +4,440 @@
   <img src="images/hatch-box-ai.png" alt="Hatchbox AI Logo" width="300"/>
 </div>
 
-> Work on multiple issues simultaneously without thinking about it. One command launches everything you need - isolated workspaces, dev servers, VSCode, and Claude - all color-coded so you never lose track of what you're working on.
+> Scale understanding, not just output.
 
-## The Problem
+## A Very Modern Problem
 
-Working on multiple issues simultaneously is painful:
+The promise of AI-assisted development is profound: write more code, ship features faster, handle complexity at scale. But there's a hidden cost that most tools ignore.
 
-- **Branch switching breaks everything**: Stop dev server, commit/stash, checkout, restart, reinstall dependencies
-- **Port conflicts**: Can't run two dev servers at once
-- **Database conflicts**: Changes in one feature corrupt another
-- **You lose track**: Which terminal is working on which issue? Which branch am I on?
-- **Wasted mental energy**: Constantly remembering which context you're in
-- **Fear of mistakes**: Easy to commit the wrong changes to the wrong branch
+**AI agents are incredibly powerful at generating code. They're remarkably poor at staying in sync with their human collaborator.**
 
-**Result**: Developers are forced to finish one issue completely before starting another, or constantly deal with the friction and confusion of switching contexts.
+When you're juggling multiple issues simultaneously, the real challenge isn't the mechanics of branch switching or port conflicts. It's cognitive: **keeping yourself and your AI aligned on what you're trying to accomplish**.
 
-## The Solution
+The friction compounds quickly:
 
-**One command launches everything you need:**
+Work on 10 GitHub issues a day, 3 at a time, and you and your AI lose track. It's stressful. Chaotic. You start new Claude chats for each problem, then have to context switch in your own head to figure out what context to provide. That mental overhead is painful. You wonder if AI-assisted coding is actually making things worse. The promise was speed and convenience. The reality feels unproductive and overwhelming.
 
-```bash
-# Start issue #25 - opens VSCode, dev server, Claude, database - all ready in ~30 seconds
-hb start 25
+Hidden assumptions make it worse: your AI assumes you want to use Axios when your team standardizes on fetch, or picks the wrong authentication pattern because it never learned your team's conventions. Hit the context window limit mid-conversation, and suddenly your AI shamelessly forgets the problem you were solving.
 
-# Everything is now running in a color-coded workspace:
-# Blue VSCode window - /Users/you/project/hatchbox-worktrees/workspace-25/
-# Dev server on port 3025 - http://localhost:3025
-# Claude with full context about issue #25
-# Isolated database branch: issue-25 (optional, requires Neon)
-```
+The result: more time spent briefing AI than building, more time fixing AI's work than deploying. Solutions that technically work but miss the actual intent.
 
-**Work on issue #30 in parallel - just run the same command:**
+**The bottleneck isn't output velocity. It's maintaining shared understanding between human and AI at scale.**
+
+## How Hatchbox Solves This
+
+Hatchbox takes what context you already have, and works with you to build a shared mental model of the problem you're working on.
 
 ```bash
-# Opens a second set of everything, color-coded differently
-hb start 30
+npm -g install hatchbox-cli
 
-# Now you have:
-# Green VSCode window - /Users/you/project/hatchbox-worktrees/workspace-30/
-# Dev server on port 3030 - http://localhost:3030
-# Claude with full context about issue #30
-# Isolated database branch: issue-30 (optional)
+hb start 25 # Pulls in issue 25 from GitHub, even if it's just an issue title. Fills in the blanks alongside you.
+
+# or 
+
+hb start "user auth broken" # Creates an issue, builds that same shared mental model from scratch.
+
+# or
+
+hb start 34 # grabs context from this PR and its original issue, then iterates on it alongside you 
+
+# then
+
+hb finish # it knows which hatchbox you're in, runs vaidation, and merges your code back to your primary branch. If you hit compilation/lint/test failures or merge conflicts along the way - Claude will help resolve them automaticaly.
 ```
 
-**Switch between them by switching windows - no commands needed:**
-- Blue VSCode window = issue #25, you know exactly what you're working on
-- Green VSCode window = issue #30, visually distinct
-- Dev servers both running simultaneously on different ports
-- Claude sessions each know their context
-- Zero chance of committing to the wrong branch
 
-**Finish and cleanup with one command:**
+Hatchbox treats context as a first-class concern. It's not a tool for managing branches - it's a control plane for maintaining alignment between you and your AI assistant as you work across multiple issues simultaneously.
+
+**The Hatchbox difference**: Surface hidden assumptions up front, then persist all the analysis and reasoning in GitHub issue comments - visible and editable - rather than burning tokens in the context window where they're invisible and set in stone. Each hatchbox builds up structured context over multiple steps, but the AI only loads what's relevant for the current phase.
+
+### One Command, Parallel Work, Predictable Flow
+
+`hb start` doesn't just create a hatchbox. Here's what happens:
+
+- Fetches the full GitHub issue (or PR) including all comments and requirements - or not, if they don't exist.
+- Creates an isolated environment (Git worktree, database branch, web server on determinstic, unique port)
+- Enhances the GitHub issue with better issue descriptions, structured analysis and planning. Asking questions and stating assumptions along the way, all in GitHub comments.
+- Launches Claude with this context pre-loaded from the issue, guides you through a structured workflow. You can stop at any time, pick up where you left off.
+- Each hatchbox is color coded - from terminal windows to VSCode, so you visually know which context you're in
+
+**When you switch to this hatchbox, both you and Claude know exactly what you're working on and why.**
+
+### Merge with Confidence
 
 ```bash
-# Validates, merges, and cleans up everything automatically
-hb finish 25
-# ✅ Runs tests and type checking
-# ✅ Merges to main branch
-# ✅ Deletes workspace and database branch
-# ✅ Stops dev server
+hb finish
+# ✅ Runs tests, types, lint - Claude helps fix any failures automatically
+# ✅ Generates commit message from the issue context
+# ✅ Handles merge conflicts with AI assistance
+# ✅ Merges to main
+# ✅ Cleans up everything - worktree, database branch, and the web server you were using to test the work
 ```
 
-## Why Developers Love It
+This isn't just convenience automation. You know you're merging the correct code, correctly - the commit message is auto-generated from the structured issue context, and any build/test/merge failures get fixed automatically with Claude's help. It helps keep resources in check too - local and remote by safely shutting down servers and cleaning up Neon db branches.
 
-### Launch Everything at Once
-No more manual setup. `hb start 25` opens:
-- VSCode in a color-coded window
-- Dev server on a dedicated port (3025)
-- Claude CLI with issue context pre-loaded (optional)
-- Database branch with isolated data (optional, requires Neon)
+## What This Means for How You Work
 
-**30 seconds from command to coding.**
+### You Stop Babysitting Your AI, Start Collaborating With It
 
-### Visual Differentiation
-Color-coded VSCode windows mean you instantly know which issue you're working on:
-- Blue window = issue #25
-- Green window = issue #30
-- Orange window = issue #35
+Traditional approach:
+1. Start working on a feature
+2. Explain context to Claude
+3. Review Claude's generated code, discover mistakes and misunderstanding
+4. Get asked to fix an urgent bug - stash or WIP commit, switch branch, spin up new Claude
+5. Lose context on your progress, face all the same issues with your urgent bug fix
 
-No more "wait, which branch am I on?"
+Hatchbox approach:
+1. `hb start 45` - feature work in progress
+2. Review Hatchbox's analysis in Github, correct an assumption, move to the planning phase
+2. `hb start 99` - urgent bug, Claude already has the context from the issue
+3. You can switch between them as they work - color coding makes it easy to tell each hatchbox apart.
+3. `hb finish` - urgent bug fixed and merged
+4. Switch back to the feature hatchbox - you and Claude pick up exactly where you left off - you can simply re-read the issue's comments to get on the same page as Claude.
+5. `hb finish` - Issue #45 is in the bag too.
 
-Hatchbox uses a palette of 40 distinct pastel colors to ensure visual uniqueness across your workspaces.
+**The difference**: Your AI becomes a persistent collaborator rather than a tool you're constantly playing catch-up with.
 
-### True Parallel Work
-Run 3-4 dev servers simultaneously:
-- Issue #25 on port 3025
-- Issue #30 on port 3030
-- Issue #35 on port 3035
+**Plus, your AI's reasoning is now visible to everyone, including future you:**
+The AI analysis gets posted as GitHub comments, so anyone on your team can see the context and planning without having to ask you for background.
 
-Each with its own database (optional), no conflicts possible.
+### You Scale Understanding, Not Just Output
 
-### Zero Mental Overhead
-- No git branch switching
-- No manual port management
-- No database migration conflicts (with optional database branching)
-- No "did I commit to the right branch?"
+Without Hatchbox, adding AI to your workflow increases code production but also increases cognitive load. You're managing what the AI knows, correcting misaligned suggestions, and second-guessing its understanding. Not to mention managing its context window.
 
-Just switch windows and keep coding.
+With Hatchbox, the cognitive load stays constant as you scale. Each hatchbox is a bounded context where you and your AI share complete understanding. Work on ten issues simultaneously, and each one maintains perfect clarity about its own purpose.
 
-### Built-in Safety
-When you run `hb finish 25`:
-- ✅ Runs tests and type checking
-- ✅ Checks for merge conflicts
-- ✅ Verifies fast-forward merge possible
-- ✅ Cleans up everything automatically
+**This is how you achieve sustainable velocity with AI assistance.**
 
-**Can't accidentally break something while moving fast.**
+### You Reduce Rework and Chaos
 
-### Works with Pull Requests Too
-```bash
-# Start work from an existing PR
-hb start 125  # Where 125 is a PR number
+When you and your AI are in lock step:
+- Features get built right the first time because you spot when the AI is going off course, way before it writes a line of code.
+- Reviews focus on the quality of the AI's thinking, not just its code.
+- Fewer suprises thanks to AI agents invetning requirements or inconsistently implementing existing patterns
+- If the AI takes a wrong turn - you don't spend hours arguing with Claude and playing context window Tetris. You just start the process again with better issue descriptions, different assumptions and better context for your AI assistant.
 
-# Hatchbox detects it's a PR and:
-# ✅ Fetches the PR branch
-# ✅ Creates workspace with PR context
-# ✅ Sets up everything just like for issues
-```
+### The Power of Predictable Flow
 
-### GitHub Projects Integration
-When you finish work, Hatchbox can automatically:
-- Move issues to "Done" column
-- Update issue status
-- Add completion comments
-
-### Bulk Cleanup
-```bash
-# Clean up multiple workspaces at once
-hb cleanup 25 30 35
-
-# Clean up by pattern
-hb cleanup --all  # Remove all workspaces
-```
-
-## Real Developer Workflow
-
-**Morning: Juggling Multiple Issues**
-
-```bash
-# Start your day with 3 issues
-hb start 45  # "Add OAuth login" - opens blue VSCode, port 3045
-hb start 46  # "Fix API timeout" - opens green VSCode, port 3046
-hb start 47  # "Update docs" - opens orange VSCode, port 3047
-
-# All three dev servers now running simultaneously
-# All three Claude sessions ready with context (if Claude CLI installed)
-```
-
-**Mid-morning: Parallel Development**
-
-- Blue window: Working with Claude on OAuth implementation
-- Green window: Testing the API fix with Postman
-- Orange window: Writing documentation updates
-
-**Switch between them by alt-tabbing - everything is already running**
-
-**10:30 AM: Urgent Bug Report**
-
-```bash
-# Hot fix needed immediately
-hb start 99  # "Payment processing broken" - opens red VSCode, port 3099
-
-# 20 minutes later - bug fixed
-hb finish 99
-# ✅ Tests pass
-# ✅ Merged to main
-# ✅ Workspace cleaned up
-# ✅ Back to the other three issues
-```
-
-**Afternoon: Finishing Work**
-
-```bash
-# API fix is done and tested
-cd ~/project/hatchbox-worktrees/workspace-46
-hb finish 46
-# ✅ Validated and merged
-
-# OAuth needs more work tomorrow - leave it running
-# Blue VSCode and port 3045 still active for tomorrow morning
-
-# Docs are done
-cd ~/project/hatchbox-worktrees/workspace-47
-hb finish 47
-# ✅ Validated and merged
-
-# End of day: Only issue #45 still open
-# Blue VSCode window still there
-# Dev server still running on 3045
-# Pick up right where you left off tomorrow
-```
-
-**Why This Works:**
-
-1. **No context switching overhead** - Each workspace stays open until you finish it
-2. **Visual clarity** - Color-coded windows prevent confusion and mistakes
-3. **True parallelism** - Dev servers run simultaneously on different ports
-4. **Safety** - `hb finish` validates everything before merging
-5. **Speed** - From `hb start` to coding in ~30 seconds
+Every Hatchbox follows the same rhythm — Start → Enhance → Analyze → Plan → Implement → Human Review → Finish.  
+The steps never change. The tools stay aligned.  
+Predictability becomes muscle memory — you focus on ideas, not process.
 
 ## How It Works
 
-**One command sets up everything:**
+Hatchbox orchestrates specialized AI agents that analyze issues, evaluate complexity, create implementation plans, and document everything directly in GitHub comments. Each agent has a specific role and writes structured output that becomes permanent project, and team, knowledge.
 
-When you run `hb start 25`, Hatchbox:
-
-1. **Fetches issue details** from GitHub
-2. **Creates isolated Git worktree** (`~/project/hatchbox-worktrees/workspace-25/`)
-3. **Creates database branch** (optional - `issue-25` with isolated data if Neon CLI detected)
-4. **Assigns unique port** (3025 = 3000 + issue number)
-5. **Configures environment** (`.env` with correct database URL and port)
-6. **Opens VSCode** with a color-coded theme (if installed)
-7. **Starts dev server** on the assigned port
-8. **Launches Claude** with pre-loaded context about issue #25 (if Claude CLI installed)
-
-**Total time: ~30 seconds**
-
-**Each workspace is completely isolated:**
-
-- **Git worktree** - Separate filesystem directory, no branch switching, no stash/unstash needed
-- **Database branch** - Schema and data changes don't affect other workspaces (optional, requires Neon)
-- **Unique port** - Calculated as 3000 + issue number, run 10 dev servers simultaneously if you want
-- **Clean .env** - No credential mixing or port conflicts
-- **Visual theme** - Color-coded so you always know which issue you're in (requires VSCode)
-
-**What are Git worktrees?** A Git worktree is a separate working directory for the same repository. Instead of switching branches in one directory, you have multiple directories, each with its own branch checked out. This means you can have different branches in different directories simultaneously without any switching overhead.
-
-**One command cleans up everything:**
-
-When you run `hb finish 25`, Hatchbox:
-
-1. **Validates** - Runs tests, type checking, linting
-2. **Checks for conflicts** - Ensures clean merge
-3. **Merges to main** - Fast-forward merge
-4. **Cleans up** - Deletes worktree and database branch
-5. **Stops servers** - Terminates dev server
-
-**Can't forget to clean up - it's automatic.**
-
-## Quick Start
+### Creating Context
 
 ```bash
-# Install globally
-npm install -g hatchbox-ai
+hb start 25
+```
 
-# Make sure GitHub CLI is authenticated
-gh auth login
+Hatchbox executes a multi-phase context-establishment workflow:
 
-# Start working on multiple issues
-hb start 25  # Opens everything for issue #25 (blue theme)
-hb start 30  # Opens everything for issue #30 (green theme)
-hb start 35  # Opens everything for issue #35 (orange theme)
+1. **Fetch complete requirements** - GitHub issue body + all comments
+2. **Create isolated hatchbox** - Git worktree at `~/project-hatchboxes/issue-25-auth-issues/` (branch names are generated)
+3. **Run AI workflow agents** - Enhance, analyze, plan, and document directly in GitHub comments:
+   - **Enhancement Agent**: Expands brief issues into detailed requirements (if needed)
+   - **Complexity Evaluator**: Assesses scope and determines workflow approach
+     - **Simple workflow**: Combined analysis and planning in one step
+     - **Complex workflow**: Separate analysis phase, then detailed planning phase
+4. **Establish environment** - Unique web server port (i.e. 3025), isolated database branch, `.env` file with correct DATABASE_URL env var
+5. **Launch tools** - VSCode with color theme, dev server, Claude with pre-loaded context from GitHub comments
 
-# Switch between them by switching windows
-# All dev servers running on different ports
-# All Claude sessions know their context (if Claude CLI installed)
+**Result**: A complete bounded context where both you and your AI share understanding, with all context stored as structured GitHub comments. Open the issue in your browser to see:
+- Enhancement analysis (if the issue was brief)
+- Complexity evaluation with metrics
+- Root cause analysis and technical findings
+- Implementation plan (for complex issues)
+- All context is editable, reviewable, and persists across machines
 
-# Finish when done
-hb finish 25  # Validates, merges, cleans up
-hb finish 30  # Validates, merges, cleans up
+### Maintaining Context
 
-# Check what's still open
+Each hatchbox is isolated:
+
+- **Git worktree** - Separate filesystem, different branch checked out, no switching overhead
+- **Database branch** - Schema changes don't affect other contexts (optional, requires Neon - other provider support coming soon)
+- **Unique port** - Multiple dev servers run simultaneously (base port + issue number)
+- **Environment variables** - Each hatchbox has correct database URL
+- **Visual identity** - Color-coded VSCode window (40 distinct pastel colors)
+- **GitHub issue comments** - Multi-phase context (enhancement, analysis, planning) persists and is editable by team members
+
+**When you switch hatchboxes, the context switches with you.**
+
+### Context That Scales With Your Team
+
+Traditional AI workflows store context locally in chat history or markdown files. Hatchbox stores context where it belongs - in the GitHub issue itself.
+
+**Benefits:**
+
+- **Transparency**: All AI analysis and planning is visible to your entire team
+- **Collaboration**: Team members can review, comment on, and refine AI-generated context
+- **Persistence**: Context survives repository clones, machine switches, and team member changes
+- **Version Control**: GitHub tracks all context changes with timestamps and authors
+- **Searchability**: GitHub's search finds AI insights across all your issues
+- **Integration**: Context appears in notifications, project boards, and automation workflows
+- **No Sync Issues**: Everyone sees the same context - no local file drift
+
+When Claude analyzes your issue and creates a comment with "### Root Cause Analysis", that insight becomes permanent project knowledge. When you switch machines, clone the repo elsewhere, or bring in a new team member - the context is already there.
+
+**This is context as infrastructure, not files.**
+
+### Understanding the Multi-Agent Workflow
+
+When you run `hb start 25`, Hatchbox orchestrates specialized AI agents that work through a structured analysis and planning process:
+
+**Phase 1: Enhancement (optional)**
+- Checks if issue needs more detail (word count, structure, clarity)
+- Expands brief descriptions into comprehensive requirements
+- Posts enhancement as a GitHub comment
+
+**Phase 2: Complexity Evaluation**
+- Analyzes scope, file changes, breaking changes, risks
+- Classifies as SIMPLE or COMPLEX
+- Posts evaluation as a GitHub comment with metrics
+
+**Phase 3: Analysis**
+- Investigates root causes and technical constraints
+- Documents findings and implementation considerations
+- Posts analysis as a GitHub comment
+
+**Phase 4: Planning** (COMPLEX issues only)
+- Creates detailed implementation roadmap
+- Breaks work into phases with validation points
+- Posts plan as a GitHub comment
+
+**Phase 5: Implementation Tracking**
+- Updates progress in a GitHub comment
+- Documents decisions and completion status
+
+All agent output is written to GitHub issue comments using a structured markdown format, making the AI's reasoning process transparent and collaborative. You can review, edit, or refine any comment before proceeding to the next phase.
+
+## Commands
+
+### Hatchbox Management
+
+```bash
+hb start <issue-number | pr-number | issue-description | branch-name>
+# Create hatchbox with complete context
+# Orchestrates AI agents that analyze the issue and post structured comments
+# Phases: Enhancement → Analysis → Planning → Implementation with review checkpoints at every step
+# Aliases: create, up
+# Options:
+#   --one-shot <mode>  - Automation level for Claude CLI
+#                        default: Standard behavior with prompts
+#                        noReview: Skip template approval prompts
+#                        bypassPermissions: Full automation, skip all prompts. Be careful!
+
+hb finish
+# AI assisted validation, commit, merge steps, as well as hatchbox cleanup (run this from hatchbox directory)
+# Alias: dn
+
+hb cleanup [identifier...]
+# Remove a hatchbox without merging (safely, by default)
+
 hb list
-# workspace-35 | issue-35 | port 3035 | ~/project/hatchbox-worktrees/workspace-35
+# Show active hatchboxes with their ports and paths
+
+hb ignite
+# Launch Claude with auto-detected hatchbox context
+# Options:
+#   --one-shot=<mode>  - Same automation modes as 'start'
+
+hb open [identifier]
+# Open hatchbox in browser (web projects) or run configured CLI tool
 ```
 
-## Core Commands
+### Issue Management
 
 ```bash
-hb start <issue-number>    # Create isolated workspace for an issue/PR
-hb finish <issue-number>   # Merge work and cleanup workspace
-hb cleanup [identifier]    # Remove one or more workspaces
-hb list                    # Show active workspaces
+hb add-issue <description>
+# Create and AI-enhance GitHub issue (doesn't start hatchbox)
+# Alias: a
+# Example: hb add-issue "Add dark mode toggle to settings"
+
+hb enhance <issue-number>
+# Apply AI enhancement agent to existing GitHub issue
+# Expands requirements and adds implementation context
 ```
 
-**Coming Soon:**
+### Setup
+
 ```bash
-hb switch <identifier>     # Switch to workspace context
+hb init
+# Setup guide for shell autocomplete (will do much more soon)
+# Run once per project
 ```
+
+## Configuration
+
+Hatchbox uses `.hatchbox/settings.json` for project-specific behavior:
+
+**Key Configuration:**
+
+```json
+{
+  "mainBranch": "main",
+  "capabilities": {
+    "web": { "basePort": 3000 }
+  },
+  "workflows": {
+    "issue": {
+      "permissionMode": "default",
+      "startIde": true,
+      "startDevServer": true,
+      "startAiAgent": true
+    }
+  },
+  "agents": {
+    "issueEnhancer": "sonnet",
+    "branchNamer": "haiku"
+  }
+}
+```
+
+**Configuration options:**
+- `mainBranch` - Primary branch for merging (default: "main")
+- `capabilities.web.basePort` - Base port for dev servers (default: 3000)
+- `workflows` - Per-workflow Claude CLI permission modes and tool launching
+- `agents` - Claude model selection (sonnet/opus/haiku) per agent type
+
+Port calculation: `assignedPort = basePort + issueNumber`
+Example: Issue #25 with basePort 3000 = port 3025
+
+For complete configuration reference, see [.hatchbox/README.md](./.hatchbox/README.md)
 
 ## Requirements
 
-**Essential**:
+**Essential:**
+- Claude CLI - AI assistance with issue context pre-loaded
 - Node.js 16+
 - Git 2.5+ (for worktree support)
-- GitHub CLI (`gh`) - must be authenticated with your repository
+- GitHub CLI (`gh`) - authenticated with your repository
 
-**Optional Enhancements**:
-- **Claude CLI** - AI-assisted development with issue context pre-loaded
-- **Neon CLI** - Isolated database branches per workspace (also supports Supabase, PlanetScale)
-- **VSCode** - Color-coded editor windows for visual differentiation
+**Recommended**
+- A Claude Max subscription
 
-The tool works with just the essentials, with enhanced features enabled automatically when optional tools are detected.
+**Optional (auto-detected):**
+- **Neon CLI** - Isolated database branches per hatchbox 
+- **VSCode** - Color-coded editor windows for visual context
+
+The tool works with just the essentials. Optional features activate automatically when detected.
+
+## Installation
+
+```bash
+# Install globally
+npm install -g hatchbox-cli
+
+# Authenticate with GitHub
+gh auth login
+# do gh auth login --scopes project to automatically move issues to in progress 
+
+# Initialize in your project
+cd your-project
+
+# Start working
+hb start 25 # existing issue
+hb start "Enable log in/sign up with Google account" # new issue
+```
+
+## Pull Request Support
+
+Hatchbox works identically with GitHub pull requests:
+
+```bash
+hb start 125  # PR number instead of issue number
+```
+
+Automatically detects PR, fetches the branch, and creates hatchbox with PR context. Everything else works the same.
 
 ## Development Status
 
-**Currently in Development** - Converting existing bash workflow scripts to TypeScript.
+**Currently in Development** - Converting proven bash workflow scripts to robust TypeScript implementation.
 
-This project is migrating from proven bash scripts to a robust TypeScript implementation with:
-
-- **Test-Driven Development** (70% coverage requirement - 95% created too many tests that were brittle/hard to maintain)
-- **Type Safety** and better error handling
+This migration brings:
+- **Type safety** and better error handling
+- **Test-driven development** (70% coverage requirement)
 - **Cross-platform compatibility**
 - **Enhanced Claude AI integration**
 
-See [plan.md](./plan.md) for complete development roadmap and [docs/](./docs/) for detailed technical documentation.
+The bash scripts work and are being used daily. The TypeScript version is replacing them with a more maintainable foundation.
+
+See [plan.md](./plan.md) for complete development roadmap and [docs/](./docs/) for technical documentation.
 
 ## Architecture
 
-**Core Technologies**:
-
+**Technologies:**
 - TypeScript CLI built with Commander.js
-- Git worktrees for workspace isolation
+- Git worktrees for hatchbox isolation
 - GitHub CLI integration for issues/PRs
-- Database branching (Neon, Supabase, PlanetScale) - optional
-- Claude CLI integration for AI assistance - optional
+- Integration with node-based web servers via standard package.json scripts
+- Database branching (Neon) - optional
+- Claude CLI integration for AI assistance to resolve compilation/test/lint/merge errors.
 
-**Project Structure**:
-
+**Project structure:**
 ```
 src/
-├── commands/          # CLI commands (start, finish, cleanup, list)
-├── lib/              # Core business logic
-├── utils/            # Utility functions
+├── commands/          # CLI commands (start, finish, cleanup, list, add-issue, enhance, ignite, init, open)
+├── lib/              # Core business logic (WorkspaceManager, GitWorktreeManager, etc.)
+├── utils/            # Utility functions (git, github, env, database, shell)
 └── types/            # TypeScript definitions
 ```
 
+For development guidelines and testing strategy, see [CLAUDE.md](./CLAUDE.md).
+
+### Understanding Git Worktrees
+
+A Git worktree is a separate working directory for the same repository. Instead of switching branches in one directory, you have multiple directories with different branches checked out simultaneously.
+
+Traditional approach:
+```bash
+git checkout feature-a    # Switch branch
+# Edit files
+git stash                 # Save work
+git checkout feature-b    # Switch branch again
+# Edit different files
+git stash pop             # Restore work
+git checkout feature-a    # Switch back
+```
+
+Worktree approach:
+```bash
+# All exist simultaneously:
+~/project-hatchboxes/issue-25/  # feature-a checked out
+~/project-hatchboxes/issue-30/  # feature-b checked out
+~/project/                      # main branch
+
+# No branch switching, no stashing, less confusion
+```
+
+This is the foundation that enables hatchbox isolation and persistent context. Other awesome tools use worktrees too.
+
 ## Contributing
 
-This project follows Test-Driven Development (TDD). All code must:
-
+This project follows Test-Driven Development. All code must:
 - Be written test-first with comprehensive unit tests
 - Achieve >70% code coverage
 - Include regression tests against bash script behavior
 - Use mock factories for all external dependencies
 
-See [docs/testing-strategy.md](./docs/testing-strategy.md) for detailed testing requirements.
-
-## Migration from Bash Scripts
-
-If you're currently using the bash workflow scripts, see [docs/migration-strategy.md](./docs/migration-strategy.md) for a safe, gradual migration path.
-
-## Success Metrics
-
-1. **Time to Start**: < 30 seconds from `hb start 25` to coding
-2. **Parallel Workflows**: Developers routinely work on 3-5 issues simultaneously
-3. **Context Switch Time**: < 2 seconds (just alt-tab between windows)
-4. **Mistake Prevention**: Zero "committed to wrong branch" incidents
-5. **Developer Productivity**: Work on multiple issues in parallel without context switching overhead
-
 ## License
 
-**Business Source License 1.1** - Free to use for any purpose, including commercial use within your organization. See [LICENSE](./LICENSE) for full terms.
+**Business Source License 1.1** - Free to use for any purpose, including commercial use within your organization.
 
-**Key Points:**
+**You can:**
 - ✅ Use freely in your organization and commercial projects
 - ✅ Modify and distribute internally
 - ✅ Build paid applications with it
-- ❌ Cannot resell Hatchbox itself as a product or service
-- ❌ Cannot incorporate into products/services you sell to others
-- ❌ Cannot offer as a hosted service or SaaS
 
-**Converts to Apache 2.0 on 2029-01-01** - Will become fully open source automatically.
+**You cannot:**
+- ❌ Resell Hatchbox itself as a product or service
+- ❌ Incorporate into products/services you sell to others
+- ❌ Offer as a hosted service or SaaS
+
+**Converts to Apache 2.0 on 2029-01-01** - Becomes fully open source automatically.
 
 For commercial licensing inquiries, contact Adam Creeger.
+
+See [LICENSE](./LICENSE) for complete terms.

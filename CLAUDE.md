@@ -142,14 +142,3 @@ Each workspace gets a unique port calculated as `3000 + issue/PR number`. This p
 ## Database Branch Isolation
 
 Uses Neon database branching to create isolated database copies per workspace. Each branch gets independent schema and data, preventing conflicts between features under development.
-
-## Claude Context Generation
-
-Automatically generates `.claude-context.md` files in each worktree containing:
-
-- Issue/PR details and requirements
-- Workspace-specific environment information
-- Port assignments and database connection details
-- Project-specific development commands
-
-This ensures Claude has complete context about the current workspace without confusion from other parallel work.
