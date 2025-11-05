@@ -144,11 +144,11 @@ If workflow plan determined SKIP_COMPLEXITY_EVAL:
 Only execute if workflow plan determined NEEDS_ANALYSIS AND complexity is COMPLEX:
 1. Execute: @agent-hatchbox-issue-analyzer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.
 2. Upon completion: Extract issue+comment link from agent output and provide link to GitHub issue comment (including comment ID)
-3. Mark todos #10, #11, and #12 as completed
+3. Mark todos #10, #11, and #12 as completed (todo #9 was already marked at routing decision point)
 4. **STOP HERE** - Request explicit approval before proceeding to planning phase
 
 If workflow plan determined SKIP_ANALYSIS:
-1. Mark todos #10, #11, and #12 as completed
+1. Mark todos #10, #11, and #12 as completed (todo #9 was already marked at routing decision point)
 2. Proceed directly to ROUTING DECISION POINT
 
 ---
@@ -162,14 +162,16 @@ After STEP 1.5 completes and complexity is confirmed, determine which workflow p
 **IF SIMPLE complexity confirmed:**
 1. Display to user: "✓ Using SIMPLE workflow: Combined analysis and planning via @agent-hatchbox-issue-analyze-and-plan, then implementation"
 2. Mark todo #8 as completed
-3. Skip to **STEP 2-SIMPLE** (Combined Analysis and Planning Phase)
-4. Note: After STEP 2-SIMPLE completes, skip separate analysis (STEP 2) and planning (STEP 3) phases, go directly to implementation (STEP 4)
+3. Mark todos #10, #11, #12, #13, #14, and #15 as completed (COMPLEX workflow steps that will not execute)
+4. Skip to **STEP 2-SIMPLE** (Combined Analysis and Planning Phase)
+5. Note: After STEP 2-SIMPLE completes, skip separate analysis (STEP 2) and planning (STEP 3) phases, go directly to implementation (STEP 4)
 
 **IF COMPLEX complexity confirmed:**
 1. Display to user: "✓ Using COMPLEX workflow: Separate analysis, planning, and implementation phases"
 2. Mark todo #8 as completed
-3. Continue to **STEP 2** (Analysis Phase) above
-4. Follow normal workflow through STEP 2, STEP 3, and STEP 4
+3. Mark todo #9 as completed (SIMPLE workflow step that will not execute)
+4. Continue to **STEP 2** (Analysis Phase) above
+5. Follow normal workflow through STEP 2, STEP 3, and STEP 4
 
 ---
 
@@ -181,7 +183,7 @@ Execute combined analyze-and-plan agent:
 1. Display: "Executing combined analyze-and-plan agent for SIMPLE task..."
 2. Execute: @agent-hatchbox-issue-analyze-and-plan ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.
 3. Upon completion: Extract issue+comment link from agent output and provide link to GitHub issue comment (including comment ID)
-4. Mark todos #9, #10, #11, #12, #13, #14, and #15 as completed (this combined phase covers both analysis and planning)
+4. Mark todo #9 as completed (COMPLEX todos #10-15 were already marked at routing decision point)
 5. Provide summary: "Combined analysis and planning complete. See results at: [GitHub comment URL]"
 6. **STOP HERE** - Request explicit approval before proceeding to implementation
 7. After approval, proceed to STEP 4 (Implementation Phase)
@@ -195,11 +197,11 @@ Execute combined analyze-and-plan agent:
 Only execute if workflow plan determined NEEDS_PLANNING AND complexity is COMPLEX:
 1. Execute: @agent-hatchbox-issue-planner ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.
 2. Upon completion: Extract issue+comment link from agent output and provide link to GitHub issue comment (including comment ID)
-3. Mark todos #13, #14, and #15 as completed
+3. Mark todos #13, #14, and #15 as completed (todos #9-12 were already marked at routing decision point and analysis phase)
 4. **STOP HERE** - Request explicit approval before proceeding to implementation
 
 If workflow plan determined SKIP_PLANNING AND complexity is COMPLEX:
-1. Mark todos #13, #14, and #15 as completed
+1. Mark todos #13, #14, and #15 as completed (todos #9-12 were already marked at routing decision point and analysis phase)
 2. Proceed directly to Step 4 (Implementation Phase)
 
 **STEP 4 - Implementation Phase:**
