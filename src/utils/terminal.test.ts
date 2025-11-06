@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { detectPlatform, openTerminalWindow, detectITerm2, openDualTerminalWindow } from './terminal.js'
+import { detectPlatform, openTerminalWindow, openDualTerminalWindow } from './terminal.js'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 
@@ -256,30 +256,6 @@ describe('openTerminalWindow', () => {
 		// The entire command sequence should start with a space
 		// This prevents commands from appearing in shell history when HISTCONTROL=ignorespace
 		expect(applescript).toMatch(/do script " [^"]+/)
-	})
-})
-
-describe('detectITerm2', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
-
-	it('should return true when iTerm2.app exists', async () => {
-		vi.mocked(existsSync).mockReturnValue(true)
-
-		const result = await detectITerm2()
-
-		expect(result).toBe(true)
-		expect(existsSync).toHaveBeenCalledWith('/Applications/iTerm.app')
-	})
-
-	it('should return false when iTerm2.app does not exist', async () => {
-		vi.mocked(existsSync).mockReturnValue(false)
-
-		const result = await detectITerm2()
-
-		expect(result).toBe(false)
-		expect(existsSync).toHaveBeenCalledWith('/Applications/iTerm.app')
 	})
 })
 
