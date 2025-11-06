@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { detectPlatform, openTerminalWindow } from './terminal.js'
+import { detectPlatform, openTerminalWindow, detectITerm2, openDualTerminalWindow } from './terminal.js'
 import { execa } from 'execa'
+import { existsSync } from 'node:fs'
 
 // Mock execa
 vi.mock('execa')
+// Mock fs
+vi.mock('node:fs', () => ({
+	existsSync: vi.fn(),
+}))
 
 describe('detectPlatform', () => {
 	const originalPlatform = process.platform
@@ -148,12 +153,13 @@ describe('openTerminalWindow', () => {
 
 		await openTerminalWindow({
 			workspacePath: '/Users/test/workspace',
-			backgroundColor: { r: 0.5, g: 0.3, b: 0.7 },
+			backgroundColor: { r: 128, g: 77, b: 179 },
 		})
 
 		const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
-		// Math.round(0.3 * 256) = 77, not 76
-		expect(applescript).toContain('set background color of newTab to {128, 77, 179}')
+		// 8-bit RGB (0-255) converted to 16-bit RGB (0-65535): multiply by 257
+		// 128 * 257 = 32896, 77 * 257 = 19789, 179 * 257 = 46003
+		expect(applescript).toContain('set background color of newTab to {32896, 19789, 46003}')
 	})
 
 	it('should execute command in terminal when provided', async () => {
@@ -250,5 +256,184 @@ describe('openTerminalWindow', () => {
 		// The entire command sequence should start with a space
 		// This prevents commands from appearing in shell history when HISTCONTROL=ignorespace
 		expect(applescript).toMatch(/do script " [^"]+/)
+	})
+})
+
+describe('detectITerm2', () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it('should return true when iTerm2.app exists', async () => {
+		vi.mocked(existsSync).mockReturnValue(true)
+
+		const result = await detectITerm2()
+
+		expect(result).toBe(true)
+		expect(existsSync).toHaveBeenCalledWith('/Applications/iTerm.app')
+	})
+
+	it('should return false when iTerm2.app does not exist', async () => {
+		vi.mocked(existsSync).mockReturnValue(false)
+
+		const result = await detectITerm2()
+
+		expect(result).toBe(false)
+		expect(existsSync).toHaveBeenCalledWith('/Applications/iTerm.app')
+	})
+})
+
+describe('openDualTerminalWindow', () => {
+	const originalPlatform = process.platform
+
+	beforeEach(() => {
+		vi.clearAllMocks()
+		Object.defineProperty(process, 'platform', {
+			value: 'darwin',
+			writable: true,
+		})
+	})
+
+	afterEach(() => {
+		Object.defineProperty(process, 'platform', {
+			value: originalPlatform,
+			writable: true,
+		})
+	})
+
+	it('should throw error on non-macOS platforms', async () => {
+		Object.defineProperty(process, 'platform', {
+			value: 'linux',
+			writable: true,
+		})
+
+		await expect(
+			openDualTerminalWindow(
+				{ workspacePath: '/test/path1' },
+				{ workspacePath: '/test/path2' }
+			)
+		).rejects.toThrow('Terminal window launching not yet supported on linux')
+	})
+
+	it('should use iTerm2 when available and create single window with two tabs', async () => {
+		vi.mocked(existsSync).mockReturnValue(true) // iTerm2 exists
+		vi.mocked(execa).mockResolvedValue({} as unknown)
+
+		await openDualTerminalWindow(
+			{
+				workspacePath: '/Users/test/workspace1',
+				command: 'hb ignite',
+				title: 'Claude - Issue #42',
+				backgroundColor: { r: 128, g: 77, b: 179 },
+			},
+			{
+				workspacePath: '/Users/test/workspace2',
+				command: 'pnpm dev',
+				title: 'Dev Server - Issue #42',
+				backgroundColor: { r: 128, g: 77, b: 179 },
+				port: 3042,
+				includePortExport: true,
+			}
+		)
+
+		// Should call osascript once for iTerm2 dual tab creation
+		expect(execa).toHaveBeenCalledWith('osascript', ['-e', expect.any(String)])
+		const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
+
+		// Verify iTerm2 AppleScript structure (uses application id, not name)
+		expect(applescript).toContain('tell application id "com.googlecode.iterm2"')
+		expect(applescript).toContain('create window with default profile')
+		expect(applescript).toContain('create tab with default profile')
+
+		// Verify both commands are present
+		expect(applescript).toContain('hb ignite')
+		expect(applescript).toContain('pnpm dev')
+
+		// Verify both paths
+		expect(applescript).toContain('/Users/test/workspace1')
+		expect(applescript).toContain('/Users/test/workspace2')
+
+		// Verify background colors applied to both tabs (16-bit RGB)
+		// 8-bit RGB (0-255) converted to 16-bit RGB (0-65535): multiply by 257
+		// 128 * 257 = 32896, 77 * 257 = 19789, 179 * 257 = 46003
+		expect(applescript).toContain('{32896, 19789, 46003}')
+
+		// Verify tab titles
+		expect(applescript).toContain('Claude - Issue #42')
+		expect(applescript).toContain('Dev Server - Issue #42')
+
+		// Verify port export in second tab
+		expect(applescript).toContain('export PORT=3042')
+
+		// Verify iTerm2 is activated
+		expect(applescript).toContain('activate')
+	})
+
+	it('should fall back to Terminal.app when iTerm2 not available', async () => {
+		vi.mocked(existsSync).mockReturnValue(false) // iTerm2 not available
+		vi.mocked(execa).mockResolvedValue({} as unknown)
+
+		await openDualTerminalWindow(
+			{
+				workspacePath: '/Users/test/workspace1',
+				command: 'hb ignite',
+			},
+			{
+				workspacePath: '/Users/test/workspace2',
+				command: 'pnpm dev',
+			}
+		)
+
+		// Should call osascript multiple times for Terminal.app (2 windows + 2 activations)
+		expect(execa).toHaveBeenCalled()
+		const calls = vi.mocked(execa).mock.calls
+
+		// Check that Terminal.app is used, not iTerm2
+		const firstScript = calls[0][1]?.[1] as string
+		expect(firstScript).toContain('tell application "Terminal"')
+		expect(firstScript).not.toContain('tell application "iTerm2"')
+	})
+
+	it('should handle paths with single quotes in iTerm2 mode', async () => {
+		vi.mocked(existsSync).mockReturnValue(true)
+		vi.mocked(execa).mockResolvedValue({} as unknown)
+
+		await openDualTerminalWindow(
+			{
+				workspacePath: "/Users/test/workspace's/path1",
+				command: 'echo test',
+			},
+			{
+				workspacePath: "/Users/test/workspace's/path2",
+				command: 'echo test2',
+			}
+		)
+
+		const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
+		// Single quotes should be properly escaped in both paths
+		expect(applescript).toContain("workspace'\\\\''s")
+	})
+
+	it('should handle environment setup in both tabs', async () => {
+		vi.mocked(existsSync).mockReturnValue(true)
+		vi.mocked(execa).mockResolvedValue({} as unknown)
+
+		await openDualTerminalWindow(
+			{
+				workspacePath: '/Users/test/workspace1',
+				command: 'hb ignite',
+				includeEnvSetup: true,
+			},
+			{
+				workspacePath: '/Users/test/workspace2',
+				command: 'pnpm dev',
+				includeEnvSetup: true,
+			}
+		)
+
+		const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
+		// Should include source .env for both tabs
+		const envCount = (applescript.match(/source \.env/g) || []).length
+		expect(envCount).toBe(2)
 	})
 })

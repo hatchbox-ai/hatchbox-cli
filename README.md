@@ -422,10 +422,11 @@ For complete configuration reference, see [.hatchbox/README.md](./.hatchbox/READ
 - A Claude Max subscription - Hatchbox uses your own subscription
 
 **Optional (auto-detected):**
-- **Neon CLI** - Isolated database branches per hatchbox 
+- **Neon CLI** - Isolated database branches per hatchbox
 - **VS Code** - Color-coded editor windows for visual context
+- **iTerm2** (macOS only) - Enhanced terminal experience with dual tabs in a single window (when configured to open both Claude and start a dev server)
 
-The tool works with just the essentials. Optional features activate automatically when detected.
+Optional features activate automatically when detected.
 
 ## Platform & Integration Support
 

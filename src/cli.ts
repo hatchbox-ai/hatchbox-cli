@@ -660,6 +660,24 @@ program
     }
   })
 
+// Test command for iTerm2 dual tab functionality
+program
+  .command('test-tabs')
+  .description('Test iTerm2 dual tab functionality - opens two tabs with test commands')
+  .action(async () => {
+    try {
+      const { TestTabsCommand } = await import('./commands/test-tabs.js')
+      const command = new TestTabsCommand()
+      await command.execute()
+    } catch (error) {
+      logger.error(`Test tabs failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      if (error instanceof Error && error.stack) {
+        logger.debug(error.stack)
+      }
+      process.exit(1)
+    }
+  })
+
 // Test command for worktree prefix configuration
 program
   .command('test-prefix')

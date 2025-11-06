@@ -64,22 +64,13 @@ describe('HatchboxLauncher', () => {
 					enableDevServer: true,
 				})
 
-				// Should launch Claude
-				expect(mockClaudeContext.launchWithContext).toHaveBeenCalledWith({
-					workspacePath: baseOptions.worktreePath,
-					type: 'issue',
-					identifier: 42,
-					branchName: baseOptions.branchName,
-					title: baseOptions.title,
-					port: baseOptions.port,
-					oneShot: 'default',
-				})
-
 				// Should launch VSCode
 				expect(vscode.openVSCodeWindow).toHaveBeenCalledWith(baseOptions.worktreePath)
 
-				// Should launch dev server terminal (dual terminals)
-				expect(terminal.openTerminalWindow).toHaveBeenCalled()
+				// Should launch dual terminals (not individual Claude/terminal calls)
+				expect(terminal.openDualTerminalWindow).toHaveBeenCalled()
+				expect(mockClaudeContext.launchWithContext).not.toHaveBeenCalled()
+				expect(terminal.openTerminalWindow).not.toHaveBeenCalled()
 			})
 
 			it('should handle PR workflow type', async () => {
@@ -88,11 +79,9 @@ describe('HatchboxLauncher', () => {
 					workflowType: 'pr',
 				})
 
-				expect(mockClaudeContext.launchWithContext).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: 'pr',
-					})
-				)
+				// Dual terminals should be launched (not individual Claude call)
+				expect(terminal.openDualTerminalWindow).toHaveBeenCalled()
+				expect(mockClaudeContext.launchWithContext).not.toHaveBeenCalled()
 			})
 
 			it('should handle regular workflow type', async () => {
@@ -101,11 +90,9 @@ describe('HatchboxLauncher', () => {
 					workflowType: 'regular',
 				})
 
-				expect(mockClaudeContext.launchWithContext).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: 'regular',
-					})
-				)
+				// Dual terminals should be launched (not individual Claude call)
+				expect(terminal.openDualTerminalWindow).toHaveBeenCalled()
+				expect(mockClaudeContext.launchWithContext).not.toHaveBeenCalled()
 			})
 		})
 
@@ -195,8 +182,10 @@ describe('HatchboxLauncher', () => {
 					enableDevServer: true,
 				})
 
-				expect(mockClaudeContext.launchWithContext).toHaveBeenCalled()
-				expect(terminal.openTerminalWindow).toHaveBeenCalled()
+				// Should use dual terminal window
+				expect(terminal.openDualTerminalWindow).toHaveBeenCalled()
+				expect(mockClaudeContext.launchWithContext).not.toHaveBeenCalled()
+				expect(terminal.openTerminalWindow).not.toHaveBeenCalled()
 				expect(vscode.openVSCodeWindow).not.toHaveBeenCalled()
 			})
 
@@ -214,18 +203,6 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch dual terminals when Claude and DevServer both enabled', async () => {
-				const callOrder: string[] = []
-
-				mockClaudeContext.launchWithContext.mockImplementation(() => {
-					callOrder.push('claude')
-					return Promise.resolve()
-				})
-
-				vi.mocked(terminal.openTerminalWindow).mockImplementation(() => {
-					callOrder.push('terminal')
-					return Promise.resolve()
-				})
-
 				await launcher.launchHatchbox({
 					...baseOptions,
 					enableClaude: true,
@@ -233,33 +210,26 @@ describe('HatchboxLauncher', () => {
 					enableDevServer: true,
 				})
 
-				expect(callOrder).toEqual(['claude', 'terminal'])
+				// Should use dual terminal window (single call, not sequential)
+				expect(terminal.openDualTerminalWindow).toHaveBeenCalled()
+				expect(mockClaudeContext.launchWithContext).not.toHaveBeenCalled()
+				expect(terminal.openTerminalWindow).not.toHaveBeenCalled()
 			})
 
-			it('should wait before launching dev server terminal in dual mode', async () => {
-				vi.useFakeTimers()
-
-				const promise = launcher.launchHatchbox({
+			it('should not need delay when using dual terminal window', async () => {
+				// With openDualTerminalWindow, both tabs are created in a single AppleScript call
+				// No need for sequential timing or delays
+				await launcher.launchHatchbox({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: false,
 					enableDevServer: true,
 				})
 
-				// Claude should be called immediately
-				expect(mockClaudeContext.launchWithContext).toHaveBeenCalled()
-
-				// Dev server terminal should not be called yet
+				// Should use dual terminal window (single synchronous call)
+				expect(terminal.openDualTerminalWindow).toHaveBeenCalled()
+				expect(mockClaudeContext.launchWithContext).not.toHaveBeenCalled()
 				expect(terminal.openTerminalWindow).not.toHaveBeenCalled()
-
-				// Advance time by 1 second
-				await vi.advanceTimersByTimeAsync(1000)
-
-				// Now dev server terminal should be called
-				await promise
-				expect(terminal.openTerminalWindow).toHaveBeenCalled()
-
-				vi.useRealTimers()
 			})
 
 			it('should export PORT when project has web capability', async () => {

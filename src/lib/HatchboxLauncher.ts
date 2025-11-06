@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { openTerminalWindow } from '../utils/terminal.js'
+import { openTerminalWindow, openDualTerminalWindow } from '../utils/terminal.js'
 import { openVSCodeWindow } from '../utils/vscode.js'
 import { getDevServerLaunchCommand } from '../utils/dev-server.js'
 import { generateColorFromBranchName } from '../utils/color.js'
@@ -119,19 +119,61 @@ export class HatchboxLauncher {
 
 	/**
 	 * Launch dual terminals: Claude + dev server
+	 * Uses iTerm2 with tabs if available, otherwise falls back to separate Terminal.app windows
 	 */
 	private async launchDualTerminals(options: LaunchHatchboxOptions): Promise<void> {
-		// First terminal: Claude with context
-		await this.launchClaudeTerminal(options)
+		const colorData = generateColorFromBranchName(options.branchName)
+		const devServerCommand = await getDevServerLaunchCommand(
+			options.worktreePath,
+			options.port,
+			options.capabilities
+		)
+		const hasEnvFile = existsSync(join(options.worktreePath, '.env'))
 
-		// Brief pause to let first terminal initialize
-		logger.debug('Waiting 1 second before opening second terminal...')
-		// eslint-disable-next-line no-undef
-		await new Promise<void>((resolve) => setTimeout(resolve, 1000))
+		// Generate tab titles based on workflow type
+		const claudeTitle = `Claude - ${this.formatIdentifier(options.workflowType, options.identifier)}`
+		const devServerTitle = `Dev Server - ${this.formatIdentifier(options.workflowType, options.identifier)}`
 
-		// Second terminal: dev server
-		await this.launchDevServerTerminal(options)
+		// Build launch command for Claude
+		let claudeCommand = "hb ignite"
+		if (options.oneShot !== undefined && options.oneShot !== 'default') {
+			claudeCommand += ` --one-shot=${options.oneShot}`
+		}
+
+		// Launch dual terminals (iTerm2 tabs or separate Terminal.app windows)
+		await openDualTerminalWindow(
+			{
+				workspacePath: options.worktreePath,
+				command: claudeCommand,
+				backgroundColor: colorData.rgb,
+				title: claudeTitle,
+				includeEnvSetup: hasEnvFile,
+				...(options.port !== undefined && { port: options.port, includePortExport: true }),
+			},
+			{
+				workspacePath: options.worktreePath,
+				command: devServerCommand,
+				backgroundColor: colorData.rgb,
+				title: devServerTitle,
+				includeEnvSetup: hasEnvFile,
+				includePortExport: options.capabilities.includes('web'),
+				...(options.port !== undefined && { port: options.port }),
+			}
+		)
 
 		logger.info('Dual terminals opened: Claude + dev server')
+	}
+
+	/**
+	 * Format identifier for terminal tab titles
+	 */
+	private formatIdentifier(workflowType: 'issue' | 'pr' | 'regular', identifier: string | number): string {
+		if (workflowType === 'issue') {
+			return `Issue #${identifier}`
+		} else if (workflowType === 'pr') {
+			return `PR #${identifier}`
+		} else {
+			return `Branch: ${identifier}`
+		}
 	}
 }
