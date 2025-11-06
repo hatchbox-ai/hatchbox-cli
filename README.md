@@ -592,22 +592,26 @@ This is the foundation that enables hatchbox isolation and persistent context. O
 Hatchbox AI isn't the only tool that makes git worktrees more accessible. Several excellent alternatives exist, each with different trade-offs:
 
 **Editor-Integrated Solutions:**
+- [VS Code Git Worktrees](https://marketplace.visualstudio.com/items?itemName=GitWorktrees.git-worktrees) - Enhanced Git worktree support in VS Code
 - [git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim) - Neovim plugin for rapid worktree management
-- [VS Code Git Worktrees](https://marketplace.visualstudio.com/items?itemName=github.VSCode-pull-request-github) - Native VS Code PR worktree support
+
+**Apps**
+- [Crystal](https://github.com/stravu/crystal) - Run multiple Codex and Claude Code AI sessions in parallel git worktrees
+- [Conductor](https://conductor.build/) - Run a team of coding agents on your Mac
 
 **CLI Helpers:**
-- [git-worktree-helpers](https://github.com/martinwoodward/git-worktree-helpers) - Bash scripts for common worktree operations
-- Bare repository workflows - Manual git worktree setup with bare repo as central hub
+- [git-worktree-wrapper](https://github.com/lu0/git-worktree-wrapper) - Manage Git worktrees with `git checkout` and `git branch` commands.
 
 **What They Do Well:**
 - Reduce friction of git worktree CLI commands
 - Integrate tightly with your editor workflow
 - Minimal learning curve if you know git
 - Lightweight - just worktree management, nothing more
+- Conductor and Crystal help you with Agentic coding too
 
 **Where Hatchbox Differs:**
 
-Most tools focus on **making git worktrees easier to use**. Hatchbox focuses on **making multi-issue AI-assisted development sustainable**.
+Most tools focus on **making git worktrees easier to use**, some add-in Agentic coding too. Hatchbox focuses on **making multi-issue AI-assisted development sustainable**.
 
 **Beyond Worktrees:**
 - **Database isolation**: Neon branch integration for schema/data separation
