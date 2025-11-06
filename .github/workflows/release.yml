@@ -84,7 +84,7 @@ jobs:
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
-    
+
     permissions:
       id-token: write  # Required for OIDC
       contents: read
@@ -96,9 +96,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Ensure npm 11.5.1 or later for trusted publishing
-      - run: npm install -g npm@latest        
+      - name: Configure npm for user-specific global installs
+        run: |
+          npm config set prefix ~/.npm-global
+          echo "~/.npm-global/bin" >> $GITHUB_PATH
+        shell: bash
 
+      - name: Update npm to the latest version (now in a user-owned directory)
+        run: npm install -g npm@latest
+
+      - name: Verify the new npm version (optional)
+        run: npm -v
+        
       - name: Enable Corepack
         run: corepack enable
 
