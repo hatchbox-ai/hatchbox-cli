@@ -63,7 +63,28 @@ Estimate the following metrics:
    - Look for changes to data models or database structure
    - Consider data transformation requirements
 
-5. **Risk Level** (HIGH/CRITICAL = COMPLEX):
+5. **Cross-Cutting Changes** (Yes = COMPLEX):
+   - **CRITICAL**: Check for parameters, data, or configuration flowing through multiple architectural layers
+   - Keywords: "pass", "forward", "through", "argument", "parameter", "option", "config", "setting"
+   - Patterns: CLI → Manager → Service → Utility chains, interface updates across layers
+   - Examples: "pass arguments to X", "forward settings", "executable path", "runtime overrides"
+   - **Red flags**: "Any argument that is passed to X should be passed to Y", "forward all", "pass-through"
+   - **Interface chains**: Multiple TypeScript interfaces needing coordinated updates
+   - **If detected**: Automatically classify as COMPLEX regardless of file count or LOC
+
+   **Detection Process**:
+   1. Check issue description for parameter/argument flow language
+   2. Look for mentions of CLI commands calling other CLI commands
+   3. Search for words indicating data flow: "forwards", "passes", "inherits", "propagates"
+   4. Identify if change affects multiple architectural layers (CLI → Manager → Service → Utility)
+
+   **Real Example (Issue #149 - executablePath)**:
+   - Issue text: "Any argument that is passed to hb start should be passed to hb ignite"
+   - Appeared SIMPLE: ~3 files, <200 LOC, no breaking changes
+   - Actually COMPLEX: Required updating 5 TypeScript interfaces across 6 layers
+   - **This should trigger COMPLEX classification immediately**
+
+6. **Risk Level** (HIGH/CRITICAL = COMPLEX):
    - Assess based on: scope of impact, system criticality, complexity of logic
    - HIGH risks: Core functionality changes, security implications, performance impacts
    - CRITICAL risks: Data loss potential, system-wide failures, irreversible operations
@@ -74,9 +95,12 @@ Estimate the following metrics:
   - LOC < 200
   - No breaking changes
   - No database migrations
+  - No cross-cutting changes
   - Risk level ≤ MEDIUM
 
 - **COMPLEX**: ANY condition fails above criteria
+
+**IMPORTANT**: Cross-cutting changes automatically trigger COMPLEX classification regardless of other metrics. These changes appear deceptively simple but require complex coordination across multiple architectural layers.
 
 <comment_tool_info>
 IMPORTANT: You have been provided with MCP tools to create GitHub comments during this workflow.
@@ -130,6 +154,7 @@ await mcp__github_comment__update_comment({
 - Estimated lines of code: [N]
 - Breaking changes: [Yes/No]
 - Database migrations: [Yes/No]
+- Cross-cutting changes: [Yes/No]
 - Overall risk level: [Low/Medium/High]
 
 **Reasoning**: [1-2 sentence explanation of why this classification was chosen]

@@ -20,6 +20,77 @@ Please research the codebase and any 3rd party products/libraries using context7
 
 **CRITICAL CONSTRAINT**: You are only invoked for COMPLEX tasks. Focus on identifying key root causes and critical context. Target: <3 minutes to read. If your analysis exceeds this, you are being too detailed.
 
+**CRITICAL: Identify Cross-Cutting Changes**
+If the issue involves adding/modifying parameters, data, or configuration that must flow through multiple architectural layers, you MUST perform Cross-Cutting Change Analysis (see section below). This is essential for preventing incomplete implementations.
+
+## Cross-Cutting Change Analysis
+
+**WHEN TO PERFORM**: If the issue involves adding/modifying parameters, data, configuration, or state that must flow through multiple architectural layers.
+
+**EXAMPLES OF CROSS-CUTTING CHANGES:**
+- Adding a CLI parameter that needs to reach a utility function 3+ layers deep
+- Passing configuration from entry point → Manager → Service → Utility
+- Threading context/state through multiple abstraction layers
+- Adding a field that affects multiple TypeScript interfaces in a call chain
+- Modifying data that flows through dependency injection
+
+**ANALYSIS REQUIREMENTS:**
+1. **Map the Complete Data Flow**:
+   - Identify entry point (CLI command, API endpoint, etc.)
+   - Trace through EVERY layer the data must pass through
+   - Document final consumption point(s)
+   - Create explicit call chain diagram
+
+2. **Identify ALL Affected Interfaces/Types**:
+   - In TypeScript: List every interface that must be updated
+   - In other languages: List every function signature, class constructor, or data structure
+   - Note where data is extracted from one interface and passed to another
+   - Verify no layer silently drops the parameter
+
+3. **Document Integration Points**:
+   - Where data is extracted: `input.options.executablePath`
+   - Where data is forwarded: `{ executablePath: input.options?.executablePath }`
+   - Where data is consumed: `command: ${executablePath} ignite`
+
+4. **Create Call Chain Map**:
+   ```
+   Example format:
+   [ParameterName] flow:
+   EntryPoint.method() → FirstInterface.field
+     → MiddleLayer.method() [extracts and forwards]
+     → SecondInterface.field
+     → DeepLayer.method() [extracts and forwards]
+     → ThirdInterface.field
+     → FinalConsumer.method() [uses the value]
+   ```
+
+5. **Flag Implementation Complexity**:
+   - Note: "This is a cross-cutting change affecting N layers and M interfaces"
+   - Warn: "Each interface must be updated atomically to maintain type safety"
+   - Recommend: "Implementation should be done bottom-up (or top-down) to leverage TypeScript checking"
+
+**OUTPUT IN SECTION 2** (Technical Reference):
+Include a dedicated subsection:
+```markdown
+## Architectural Flow Analysis
+
+### Data Flow: [parameter/field name]
+**Entry Point**: [file:line] - [InterfaceName.field]
+**Flow Path**:
+1. [file:line] - [LayerName] extracts from [Interface1] and forwards to [Layer2]
+2. [file:line] - [LayerName] extracts from [Interface2] and forwards to [Layer3]
+[... continue for all layers ...]
+N. [file:line] - [FinalLayer] consumes value for [purpose]
+
+**Affected Interfaces** (ALL must be updated):
+- `[Interface1]` at [file:line] - Add [field/param]
+- `[Interface2]` at [file:line] - Add [field/param]
+- `[Interface3]` at [file:line] - Add [field/param]
+[... list ALL interfaces ...]
+
+**Critical Implementation Note**: This is a cross-cutting change. Missing any interface in this chain will cause silent parameter loss or TypeScript compilation errors.
+```
+
 ## If this is a web front end issue:
 - Be mindful of different responsive breakpoints
 - Analyze how the header and footer interact with the code in question
@@ -124,10 +195,16 @@ List each file with:
 - File path and line numbers
 - One-sentence description of what's affected
 - Only include code if absolutely essential (rare)
+- **For cross-cutting changes**: Note which interface/type is affected and its role in the chain
 
 Example:
 - `/src/components/Header.tsx:15-42` - Theme context usage that will be removed
 - `/src/providers/Theme/index.tsx` - Entire file for deletion (58 lines)
+
+**Cross-cutting change example:**
+- `/src/types/hatchbox.ts:25-44` - `CreateHatchboxInput` interface - Entry point for executablePath parameter
+- `/src/lib/HatchboxManager.ts:41-120` - Extracts executablePath from input and forwards to launcher
+- `/src/lib/HatchboxLauncher.ts:11-25` - `LaunchHatchboxOptions` interface - Receives and forwards to Claude context
 
 ## Integration Points (if relevant)
 
@@ -193,6 +270,7 @@ Before submitting your analysis, verify:
 - [ ] All relevant contexts and dependencies are documented
 - [ ] Findings are organized logically and easy to follow
 - [ ] You have not detailed the solution - only identified relevant parts of the code, and potential risks, edge cases to be aware of
+- [ ] **FOR CROSS-CUTTING CHANGES**: Architectural Flow Analysis section is complete with call chain map, ALL affected interfaces listed, and implementation complexity noted
 
 ## Behavioral Constraints
 
