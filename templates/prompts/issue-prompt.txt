@@ -209,10 +209,17 @@ If workflow plan determined SKIP_PLANNING AND complexity is COMPLEX:
 **Execute for both SIMPLE and COMPLEX workflows**
 
 Only execute if workflow plan determined NEEDS_IMPLEMENTATION:
-1. Execute: @agent-hatchbox-issue-implementer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.
-2. Upon completion: Mark todo #16 as completed
-3. Provide summary and links to any GitHub comments created - do not open them. All links MUST include comment-id which can be obtained from agent output.
-4. Mark todo #17 as completed
+1. Before executing implementer, extract the planning comment ID:
+   - Look back at the planning phase output (STEP 3 for COMPLEX or STEP 2-SIMPLE for SIMPLE workflows)
+   - Extract the comment ID from the GitHub comment URL that was provided
+   - The comment ID is the numeric value after "#issuecomment-" in the URL (e.g., https://github.com/org/repo/issues/123#issuecomment-456789 has comment ID 456789)
+2. Execute: @agent-hatchbox-issue-implementer ISSUE_NUMBER with these critical instructions:
+   - Add your own answers to any questions you asked in the question tables you create in your GitHub comments to document assumptions made during execution
+   - **CRITICAL**: The implementation plan in the issue comments contains exact file paths and line numbers. You MUST use these exact locations - DO NOT search for files when the plan specifies them. Extract file locations from the plan in Step 1.5 before implementing.
+   - The implementation plan is located in comment ID [COMMENT_ID] (if planning phase was executed). Read this comment first in Step 1.5 to extract file specifications.
+3. Upon completion: Mark todo #16 as completed
+4. Provide summary and links to any GitHub comments created - do not open them. All links MUST include comment-id which can be obtained from agent output.
+5. Mark todo #17 as completed
 
 If workflow plan determined SKIP_IMPLEMENTATION:
 1. Mark todos #16 and #17 as completed

@@ -71,9 +71,21 @@ You will thoroughly read GitHub issues using `gh issue view ISSUE_NUMBER --json 
 
 NOTE: If no issue number has been provided, use the current branch name to look for an issue number (i.e issue-NN). If there is a pr_NN suffix, look at both the PR and the issue (if one is also referenced in the branch name).
 
+### Step 1.5: Extract and Validate Plan Specifications
+
+Before implementing, extract and validate the implementation plan:
+1. **Locate the plan**: Search issue comments for implementation plan (look for headers containing "Implementation Plan", "Files to Modify", "Execution Order"). If you were provided a specific comment ID by the orchestrator, start by reading that comment first.
+2. **Extract file specifications**: Parse out all file paths with line ranges (e.g., `/src/lib/Foo.ts:10-25`, `src/utils/bar.ts:42`)
+3. **Validate file existence**: For each specified file path, verify the file exists using Read tool
+4. **Log validation results**: Display extracted file list and validation status to user
+5. **Handle extraction/validation failures**: If file extraction fails or plan specifies files that don't exist, immediately update your GitHub comment to notify the user of the issue but continue with implementation anyway. Do not stop the workflow or ask for clarification - proceed with implementation using your best judgment.
+
+**CRITICAL**: This step prevents wasted time searching for files when the plan already provides exact locations.
+
 ### Step 2: Implement the Solution
 
 2. **Strict Implementation Guidelines**:
+   - **FILE LOCATION ENFORCEMENT**: When the implementation plan specifies exact file paths and line numbers (e.g., `/src/lib/Foo.ts:10-25`), you MUST use those exact locations. DO NOT search for files using Glob or Grep when the plan provides specific paths. Searching wastes time and tokens.
    - Implement EXACTLY what is specified in the issue and comments
    - Do NOT add features, enhancements, or optimizations not explicitly requested
    - Do NOT implement "optional features" unless the user provides explicit guidance
