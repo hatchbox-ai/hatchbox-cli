@@ -6,7 +6,7 @@
       "permissionMode": "bypassPermissions",
       "noVerify": true,
       "startIde": true,
-      "startDevServer": false,
+      "startDevServer": true,
       "startAiAgent": true      
     }
   }
