@@ -13,6 +13,7 @@ import { NeonProvider } from '../lib/providers/NeonProvider.js'
 import { IssueEnhancementService } from '../lib/IssueEnhancementService.js'
 import { branchExists, findMainWorktreePathWithSettings } from '../utils/git.js'
 import { loadEnvIntoProcess } from '../utils/env.js'
+import { extractSettingsOverrides } from '../utils/cli-overrides.js'
 import type { StartOptions } from '../types/index.js'
 
 export interface StartCommandInput {
@@ -104,7 +105,7 @@ export class StartCommand {
 			new ClaudeContextManager(),
 			new ProjectCapabilityDetector(),
 			new CLIIsolationManager(),
-			new SettingsManager(),
+			this.settingsManager,  // Use same instance with CLI overrides
 			databaseManager  // Add database manager
 		)
 
@@ -146,10 +147,16 @@ export class StartCommand {
 				}
 			}
 
-			// Step 2.8: Load workflow-specific settings
-			const settings = await this.settingsManager.loadSettings()
+			// Step 2.8: Load workflow-specific settings with CLI overrides
+			const cliOverrides = extractSettingsOverrides()
+			const settings = await this.settingsManager.loadSettings(undefined, cliOverrides)
 			const workflowType = parsed.type === 'branch' ? 'regular' : parsed.type
 			const workflowConfig = settings.workflows?.[workflowType]
+
+			// Step 2.9: Extract raw --set arguments and executable path for forwarding to ignite
+			const { extractRawSetArguments, getExecutablePath } = await import('../utils/cli-overrides.js')
+			const setArguments = extractRawSetArguments()
+			const executablePath = getExecutablePath()
 
 			// Step 3: Log success and create hatchbox
 			logger.info(`✅ Validated input: ${this.formatParsedInput(parsed)}`)
@@ -170,7 +177,7 @@ export class StartCommand {
 				enableCode,
 				enableDevServer,
 			})
-			
+
 			const hatchbox = await hatchboxManager.createHatchbox({
 				type: parsed.type,
 				identifier,
@@ -180,6 +187,8 @@ export class StartCommand {
 					enableCode,
 					enableDevServer,
 					...(input.options.oneShot && { oneShot: input.options.oneShot }),
+					...(setArguments.length > 0 && { setArguments }),
+					...(executablePath && { executablePath }),
 				},
 			})
 

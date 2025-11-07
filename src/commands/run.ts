@@ -10,6 +10,7 @@ import { openBrowser } from '../utils/browser.js'
 import { parseEnvFile, extractPort } from '../utils/env.js'
 import { calculatePortForBranch } from '../utils/port.js'
 import { logger } from '../utils/logger.js'
+import { extractSettingsOverrides } from '../utils/cli-overrides.js'
 import type { GitWorktree } from '../types/worktree.js'
 
 export interface RunCommandInput {
@@ -280,8 +281,9 @@ export class RunCommand {
 	 * Get port for workspace - reads from .env or calculates based on workspace type
 	 */
 	private async getWorkspacePort(worktreePath: string): Promise<number> {
-		// Load base port from settings
-		const settings = await this.settingsManager.loadSettings()
+		// Load base port from settings with CLI overrides
+		const cliOverrides = extractSettingsOverrides()
+		const settings = await this.settingsManager.loadSettings(undefined, cliOverrides)
 		const basePort = settings.capabilities?.web?.basePort ?? 3000
 
 		// Try to read PORT from .env file (as override)

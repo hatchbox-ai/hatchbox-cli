@@ -20,6 +20,8 @@ export interface LaunchHatchboxOptions {
 	identifier: string | number
 	title?: string
 	oneShot?: import('../types/index.js').OneShotMode
+	setArguments?: string[] // Raw --set arguments to forward
+	executablePath?: string // Executable path to use for ignite command
 }
 
 /**
@@ -28,8 +30,8 @@ export interface LaunchHatchboxOptions {
 export class HatchboxLauncher {
 	private claudeContext: ClaudeContextManager
 
-	constructor() {
-		this.claudeContext = new ClaudeContextManager()
+	constructor(claudeContext?: ClaudeContextManager) {
+		this.claudeContext = claudeContext ?? new ClaudeContextManager()
 	}
 
 	/**
@@ -91,6 +93,8 @@ export class HatchboxLauncher {
 			...(options.title && { title: options.title }),
 			...(options.port !== undefined && { port: options.port }),
 			oneShot: options.oneShot ?? 'default',
+			...(options.setArguments && { setArguments: options.setArguments }),
+			...(options.executablePath && { executablePath: options.executablePath }),
 		})
 		logger.info('Claude terminal opened')
 	}

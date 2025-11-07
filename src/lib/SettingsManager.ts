@@ -157,9 +157,13 @@ export class SettingsManager {
 	/**
 	 * Load settings from <PROJECT_ROOT>/.hatchbox/settings.json and settings.local.json
 	 * Merges settings.local.json over settings.json with priority
+	 * CLI overrides have highest priority if provided
 	 * Returns empty object if both files don't exist (not an error)
 	 */
-	async loadSettings(projectRoot?: string): Promise<HatchboxSettings> {
+	async loadSettings(
+		projectRoot?: string,
+		cliOverrides?: Partial<HatchboxSettings>,
+	): Promise<HatchboxSettings> {
 		const root = this.getProjectRoot(projectRoot)
 
 		// Load base settings from settings.json
@@ -168,8 +172,13 @@ export class SettingsManager {
 		// Load local overrides from settings.local.json
 		const localSettings = await this.loadSettingsFile(root, 'settings.local.json')
 
-		// Deep merge with priority: localSettings > baseSettings
-		const merged = this.mergeSettings(baseSettings, localSettings)
+		// Deep merge with priority: cliOverrides > localSettings > baseSettings
+		let merged = this.mergeSettings(baseSettings, localSettings)
+
+		if (cliOverrides && Object.keys(cliOverrides).length > 0) {
+			logger.debug('Applying CLI overrides:', cliOverrides)
+			merged = this.mergeSettings(merged, cliOverrides)
+		}
 
 		// Validate merged result
 		try {
@@ -177,7 +186,12 @@ export class SettingsManager {
 		} catch (error) {
 			// Show all Zod validation errors
 			if (error instanceof z.ZodError) {
-				throw this.formatAllZodErrors(error, '<merged settings>')
+				const errorMsg = this.formatAllZodErrors(error, '<merged settings>')
+				// Enhance error message if CLI overrides were applied
+				if (cliOverrides && Object.keys(cliOverrides).length > 0) {
+					throw new Error(`${errorMsg.message}\n\nNote: CLI overrides were applied. Check your --set arguments.`)
+				}
+				throw errorMsg
 			}
 			throw error
 		}

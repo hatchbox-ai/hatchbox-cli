@@ -1797,4 +1797,198 @@ describe('SettingsManager', () => {
 			expect(result).toEqual(['production', 'staging', 'main'])
 		})
 	})
+
+	describe('loadSettings with CLI overrides', () => {
+		it('should merge CLI overrides with highest priority', async () => {
+			const projectRoot = '/test/project'
+			const baseSettings = {
+				mainBranch: 'main',
+				workflows: {
+					issue: {
+						startIde: true,
+						startDevServer: true,
+					},
+				},
+			}
+
+			const error: { code?: string; message: string } = {
+				code: 'ENOENT',
+				message: 'ENOENT: no such file or directory',
+			}
+
+			vi.mocked(readFile)
+				.mockResolvedValueOnce(JSON.stringify(baseSettings)) // settings.json
+				.mockRejectedValueOnce(error) // settings.local.json
+
+			const cliOverrides = {
+				mainBranch: 'develop',
+				workflows: {
+					issue: {
+						startIde: false,
+					},
+				},
+			}
+
+			const result = await settingsManager.loadSettings(projectRoot, cliOverrides)
+			expect(result.mainBranch).toBe('develop') // CLI override
+			expect(result.workflows?.issue?.startIde).toBe(false) // CLI override
+			expect(result.workflows?.issue?.startDevServer).toBe(true) // Base setting preserved
+		})
+
+		it('should validate CLI overrides against schema', async () => {
+			const projectRoot = '/test/project'
+			const baseSettings = {
+				mainBranch: 'main',
+			}
+
+			const error: { code?: string; message: string } = {
+				code: 'ENOENT',
+				message: 'ENOENT: no such file or directory',
+			}
+
+			vi.mocked(readFile)
+				.mockResolvedValueOnce(JSON.stringify(baseSettings)) // settings.json
+				.mockRejectedValueOnce(error) // settings.local.json
+
+			// Invalid CLI overrides (invalid model name)
+			const cliOverrides = {
+				agents: {
+					'test-agent': {
+						model: 'invalid-model' as 'sonnet', // Type cast to bypass TypeScript
+					},
+				},
+			}
+
+			await expect(settingsManager.loadSettings(projectRoot, cliOverrides)).rejects.toThrow(
+				'Settings validation failed',
+			)
+		})
+
+		it('should apply CLI overrides over local settings', async () => {
+			const projectRoot = '/test/project'
+			const baseSettings = {
+				mainBranch: 'main',
+				workflows: {
+					issue: {
+						startIde: true,
+					},
+				},
+			}
+
+			const localSettings = {
+				mainBranch: 'staging',
+				workflows: {
+					issue: {
+						startIde: false,
+					},
+				},
+			}
+
+			vi.mocked(readFile)
+				.mockResolvedValueOnce(JSON.stringify(baseSettings)) // settings.json
+				.mockResolvedValueOnce(JSON.stringify(localSettings)) // settings.local.json
+
+			const cliOverrides = {
+				mainBranch: 'develop',
+			}
+
+			const result = await settingsManager.loadSettings(projectRoot, cliOverrides)
+			expect(result.mainBranch).toBe('develop') // CLI override (highest priority)
+			expect(result.workflows?.issue?.startIde).toBe(false) // Local setting (second priority)
+		})
+
+		it('should handle deep merge of CLI overrides', async () => {
+			const projectRoot = '/test/project'
+			const baseSettings = {
+				workflows: {
+					issue: {
+						startIde: true,
+						startDevServer: true,
+						startAiAgent: true,
+					},
+					pr: {
+						startIde: true,
+						startDevServer: true,
+					},
+				},
+			}
+
+			const error: { code?: string; message: string } = {
+				code: 'ENOENT',
+				message: 'ENOENT: no such file or directory',
+			}
+
+			vi.mocked(readFile)
+				.mockResolvedValueOnce(JSON.stringify(baseSettings)) // settings.json
+				.mockRejectedValueOnce(error) // settings.local.json
+
+			const cliOverrides = {
+				workflows: {
+					issue: {
+						startIde: false, // Override this one field
+					},
+				},
+			}
+
+			const result = await settingsManager.loadSettings(projectRoot, cliOverrides)
+			expect(result.workflows?.issue?.startIde).toBe(false) // Overridden
+			expect(result.workflows?.issue?.startDevServer).toBe(true) // Preserved
+			expect(result.workflows?.issue?.startAiAgent).toBe(true) // Preserved
+			expect(result.workflows?.pr?.startIde).toBe(true) // Preserved
+		})
+
+		it('should handle empty CLI overrides', async () => {
+			const projectRoot = '/test/project'
+			const baseSettings = {
+				mainBranch: 'main',
+			}
+
+			const error: { code?: string; message: string } = {
+				code: 'ENOENT',
+				message: 'ENOENT: no such file or directory',
+			}
+
+			vi.mocked(readFile)
+				.mockResolvedValueOnce(JSON.stringify(baseSettings)) // settings.json
+				.mockRejectedValueOnce(error) // settings.local.json
+
+			const result = await settingsManager.loadSettings(projectRoot, {})
+			expect(result.mainBranch).toBe('main')
+		})
+
+		it('should enhance error message when CLI overrides cause validation failure', async () => {
+			const projectRoot = '/test/project'
+			const baseSettings = {
+				mainBranch: 'main',
+			}
+
+			const error: { code?: string; message: string } = {
+				code: 'ENOENT',
+				message: 'ENOENT: no such file or directory',
+			}
+
+			vi.mocked(readFile)
+				.mockResolvedValueOnce(JSON.stringify(baseSettings)) // settings.json
+				.mockRejectedValueOnce(error) // settings.local.json
+
+			const cliOverrides = {
+				capabilities: {
+					web: {
+						basePort: 70000, // Invalid: > 65535
+					},
+				},
+			}
+
+			try {
+				await settingsManager.loadSettings(projectRoot, cliOverrides)
+				expect.fail('Should have thrown error')
+			} catch (error) {
+				expect(error).toBeInstanceOf(Error)
+				const err = error as Error
+				expect(err.message).toContain('Settings validation failed')
+				expect(err.message).toContain('CLI overrides were applied')
+				expect(err.message).toContain('Check your --set arguments')
+			}
+		})
+	})
 })

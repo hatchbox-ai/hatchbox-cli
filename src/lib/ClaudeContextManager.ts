@@ -10,13 +10,15 @@ export interface ClaudeContext {
 	port?: number
 	branchName?: string
 	oneShot?: import('../types/index.js').OneShotMode
+	setArguments?: string[] // Raw --set arguments to forward
+	executablePath?: string // Executable path to use for ignite command
 }
 
 export class ClaudeContextManager {
 	private claudeService: ClaudeService
 
-	constructor(claudeService?: ClaudeService, _promptTemplateManager?: PromptTemplateManager) {
-		this.claudeService = claudeService ?? new ClaudeService()
+	constructor(claudeService?: ClaudeService, _promptTemplateManager?: PromptTemplateManager, settingsManager?: import('./SettingsManager.js').SettingsManager) {
+		this.claudeService = claudeService ?? new ClaudeService(undefined, settingsManager)
 		// promptTemplateManager is accepted for dependency injection but not used yet
 		// Will be used in Issue #11 for .claude-context.md generation
 	}
@@ -67,6 +69,16 @@ export class ClaudeContextManager {
 		// Add optional branch name if present
 		if (context.branchName !== undefined) {
 			workflowOptions.branchName = context.branchName
+		}
+
+		// Add optional setArguments if present
+		if (context.setArguments !== undefined) {
+			workflowOptions.setArguments = context.setArguments
+		}
+
+		// Add optional executablePath if present
+		if (context.executablePath !== undefined) {
+			workflowOptions.executablePath = context.executablePath
 		}
 
 		// Set issue or PR number based on type

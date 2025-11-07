@@ -7,6 +7,7 @@ import { PromptTemplateManager, TemplateVariables } from '../lib/PromptTemplateM
 import { getRepoInfo } from '../utils/github.js'
 import { AgentManager } from '../lib/AgentManager.js'
 import { SettingsManager } from '../lib/SettingsManager.js'
+import { extractSettingsOverrides } from '../utils/cli-overrides.js'
 
 /**
  * IgniteCommand: Auto-detect workspace context and launch Claude
@@ -63,9 +64,12 @@ export class IgniteCommand {
 			// User prompt to trigger the workflow (includes one-shot bypass instructions if needed)
 			const userPrompt = this.buildUserPrompt(oneShot)
 
-			// Step 2.5: Load settings if not cached
+			// Step 2.5: Load settings if not cached with CLI overrides
 			// Settings are pre-validated at CLI startup, so no error handling needed here
-			this.settings ??= await this.settingsManager.loadSettings()
+			if (!this.settings) {
+				const cliOverrides = extractSettingsOverrides()
+				this.settings = await this.settingsManager.loadSettings(undefined, cliOverrides)
+			}
 
 			// Step 3: Determine model and permission mode based on workflow type
 			const model = this.getModelForWorkflow(context.type)

@@ -13,6 +13,8 @@ export interface ClaudeWorkflowOptions {
 	headless?: boolean
 	branchName?: string
 	oneShot?: import('../types/index.js').OneShotMode
+	setArguments?: string[] // Raw --set arguments to forward
+	executablePath?: string // Executable path to use for ignite command
 }
 
 export class ClaudeService {
@@ -76,7 +78,7 @@ export class ClaudeService {
 	 * Launch Claude for a specific workflow
 	 */
 	async launchForWorkflow(options: ClaudeWorkflowOptions): Promise<string | void> {
-		const { type, issueNumber, prNumber, title, workspacePath, port, headless = false, branchName, oneShot = 'default' } = options
+		const { type, issueNumber, prNumber, title, workspacePath, port, headless = false, branchName, oneShot = 'default', setArguments, executablePath } = options
 
 		try {
 			// Load settings if not already cached
@@ -147,6 +149,16 @@ export class ClaudeService {
 			// Add optional port for terminal window export
 			if (port !== undefined) {
 				claudeOptions.port = port
+			}
+
+			// Add optional setArguments for forwarding
+			if (setArguments !== undefined) {
+				claudeOptions.setArguments = setArguments
+			}
+
+			// Add optional executablePath for ignite command
+			if (executablePath !== undefined) {
+				claudeOptions.executablePath = executablePath
 			}
 
 			logger.debug('Launching Claude for workflow', {

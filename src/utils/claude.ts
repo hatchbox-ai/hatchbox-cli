@@ -17,6 +17,8 @@ export interface ClaudeCliOptions {
 	disallowedTools?: string[] // Tools to disallow via --disallowed-tools flag
 	agents?: Record<string, unknown> // Agent configurations for --agents flag
 	oneShot?: import('../types/index.js').OneShotMode // One-shot automation mode
+	setArguments?: string[] // Raw --set arguments to forward (e.g., ['workflows.issue.startIde=false'])
+	executablePath?: string // Executable path to use for ignite command (e.g., 'hb', 'hb-125', or '/path/to/dist/cli.js')
 }
 
 /**
@@ -160,7 +162,7 @@ export async function launchClaudeInNewTerminalWindow(
 		workspacePath: string // Required for terminal window launch
 	}
 ): Promise<void> {
-	const { workspacePath, branchName, oneShot = 'default', port } = options
+	const { workspacePath, branchName, oneShot = 'default', port, setArguments, executablePath } = options
 
 	// Verify required parameter
 	if (!workspacePath) {
@@ -171,9 +173,18 @@ export async function launchClaudeInNewTerminalWindow(
 	const { openTerminalWindow } = await import('./terminal.js')
 
 	// Build launch command with optional --one-shot flag
-	let launchCommand = "hb ignite"
+	// Use provided executable path or fallback to 'hb'
+	const executable = executablePath ?? 'hb'
+	let launchCommand = `${executable} ignite`
 	if (oneShot !== 'default') {
 		launchCommand += ` --one-shot=${oneShot}`
+	}
+
+	// Append --set arguments if provided
+	if (setArguments && setArguments.length > 0) {
+		for (const setArg of setArguments) {
+			launchCommand += ` --set ${setArg}`
+		}
 	}
 
 	// Apply terminal background color if branch name available

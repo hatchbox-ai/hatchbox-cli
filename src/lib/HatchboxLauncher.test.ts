@@ -45,7 +45,7 @@ describe('HatchboxLauncher', () => {
 		}
 		vi.mocked(ClaudeContextManager).mockImplementation(() => mockClaudeContext)
 
-		launcher = new HatchboxLauncher()
+		launcher = new HatchboxLauncher() // Uses default ClaudeContextManager for tests
 	})
 
 	describe('launchHatchbox', () => {

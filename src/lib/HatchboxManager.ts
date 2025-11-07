@@ -162,11 +162,17 @@ export class HatchboxManager {
     const enableCode = input.options?.enableCode !== false
     const enableDevServer = input.options?.enableDevServer !== false
     const oneShot = input.options?.oneShot ?? 'default'
+    const setArguments = input.options?.setArguments
+    const executablePath = input.options?.executablePath
 
     // Only launch if at least one component is enabled
     if (enableClaude || enableCode || enableDevServer) {
       const { HatchboxLauncher } = await import('./HatchboxLauncher.js')
-      const launcher = new HatchboxLauncher()
+      const { ClaudeContextManager } = await import('./ClaudeContextManager.js')
+
+      // Create ClaudeContextManager with shared SettingsManager to ensure CLI overrides work
+      const claudeContext = new ClaudeContextManager(undefined, undefined, this.settings)
+      const launcher = new HatchboxLauncher(claudeContext)
 
       await launcher.launchHatchbox({
         enableClaude,
@@ -180,6 +186,8 @@ export class HatchboxManager {
         identifier: input.identifier,
         ...(githubData?.title && { title: githubData.title }),
         oneShot,
+        ...(setArguments && { setArguments }),
+        ...(executablePath && { executablePath }),
       })
     }
 
@@ -581,11 +589,17 @@ export class HatchboxManager {
     const enableCode = input.options?.enableCode !== false
     const enableDevServer = input.options?.enableDevServer !== false
     const oneShot = input.options?.oneShot ?? 'default'
+    const setArguments = input.options?.setArguments
+    const executablePath = input.options?.executablePath
 
     if (enableClaude || enableCode || enableDevServer) {
       logger.info('Launching workspace components...')
       const { HatchboxLauncher } = await import('./HatchboxLauncher.js')
-      const launcher = new HatchboxLauncher()
+      const { ClaudeContextManager } = await import('./ClaudeContextManager.js')
+
+      // Create ClaudeContextManager with shared SettingsManager to ensure CLI overrides work
+      const claudeContext = new ClaudeContextManager(undefined, undefined, this.settings)
+      const launcher = new HatchboxLauncher(claudeContext)
 
       await launcher.launchHatchbox({
         enableClaude,
@@ -599,6 +613,8 @@ export class HatchboxManager {
         identifier: input.identifier,
         ...(githubData?.title && { title: githubData.title }),
         oneShot,
+        ...(setArguments && { setArguments }),
+        ...(executablePath && { executablePath }),
       })
     }
 
