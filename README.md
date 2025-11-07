@@ -15,8 +15,11 @@
 
 </div>
 
+#### Links to key sections
+[How It Works](#how-it-works) • [Installation](#installation) • [Commands](#commands) • [Feedback](#providing-feedback) • [Limitations](#platform--integration-support) • [Configuration](#configuration)
 
-## Built For Modern Tools
+
+## Built For Modern Tools...
 
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -26,10 +29,7 @@
 
 *These companies and projects do not endorse Hatchbox AI.*
 
-### Links to key sections
-[How It Works](#how-it-works) • [Installation](#installation) • [Commands](#commands) • [Feedback](#providing-feedback) • [Limitations](#platform--integration-support) • [Configuration](#configuration)
-
-## A Very Modern Problem
+## ...To Solve A Very Modern Problem
 
 The promise of AI-assisted development is profound: write more code, ship features faster, handle complexity at scale. But there's a hidden cost that many tools ignore.
 
