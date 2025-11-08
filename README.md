@@ -221,38 +221,51 @@ When Claude analyzes your issue and creates a comment with "### Root Cause Analy
 
 When you run `hb start 25`, Hatchbox orchestrates specialized AI agents that work through a structured analysis and planning process:
 
-**Phase 1: Enhancement (optional)**
+**Phase 1: Enhancement (optional)** - `hatchbox-issue-enhancer`
 - Checks if issue needs more detail (word count, structure, clarity)
 - Expands brief descriptions into comprehensive requirements
 - Posts enhancement as a GitHub comment
+- **Used for:** All issues that need enhancement
 
-**Phase 2: Complexity Evaluation**
+**Phase 2: Complexity Evaluation** - `hatchbox-issue-complexity-evaluator`
 - Analyzes scope, file changes, breaking changes, risks
 - Classifies as Simple or Complex
 - Posts evaluation as a GitHub comment with metrics
+- **Used for:** All issues
 
 #### For complex issues
 
-**Phase 3: Dedicated Analysis** (Complex issues only)
+**Phase 3: Dedicated Analysis** - `hatchbox-issue-analyzer`
 - Investigates root causes and technical constraints
 - Documents findings and implementation considerations
 - Posts analysis as a GitHub comment
+- **Used for:** Complex issues only
 
-**Phase 4: Dedicated Planning** (Complex issues only)
+**Phase 4: Dedicated Planning** - `hatchbox-issue-planner`
 - Creates detailed implementation roadmap
 - Breaks work into phases with validation points
 - Posts plan as a GitHub comment
+- **Used for:** Complex issues only
 
 #### For simple issues
 
-**Phase 3+4: Combined Analysis & Planning**
-- Combines analysis and planning to shorten time spent and the number of review checkpoints
+**Phase 3+4: Combined Analysis & Planning** - `hatchbox-issue-analyze-and-plan`
+- Combines analysis and planning in a single step to shorten time and reduce review checkpoints
+- Posts combined analysis and plan as a GitHub comment
+- **Used for:** Simple issues only
 
 #### For all issues
 
-**Phase 5: Implementation Tracking**
+**Phase 5: Implementation** - `hatchbox-issue-implementer`
+- Executes the implementation plan created in previous phases
 - Updates progress in a GitHub comment
 - Documents decisions and completion status
+- **Used for:** All issues
+
+**Phase 6: Review (optional)** - `hatchbox-issue-reviewer`
+- Reviews completed implementation against issue requirements
+- Posts review findings as a GitHub comment
+- **Used for:** All issues (when review is requested)
 
 All agent output is written to GitHub issue comments using markdown, making the AI's reasoning process transparent and collaborative. You can review, edit, or refine any comment before proceeding to the next phase.
 
@@ -264,7 +277,7 @@ You can [configure](#configuration) the models used by the agents:
 
 - **Default**: All agents run on the latest Sonnet model to balance capability and cost
 - **Haiku for Implementation**: The `hatchbox-issue-implementer` agent is a good candidate for the latest Haiku model for token-conscious users, as it follows detailed plans created by analysis/planning agents
-- **Maximum Power**: Override to Opus for complex architectural work (expensive, use sparingly)
+- **Maximum Power**: Override to Opus for complex architectural work (more expensive)
 
 **Available agents** (all configurable):
 - `hatchbox-issue-enhancer` - Structures issue descriptions from user perspective
@@ -394,7 +407,7 @@ This allows teams to share project defaults via `settings.json` while individual
 
 ### Key Configuration:
 
-```json
+```jsonc
 {
   "mainBranch": "main",
   "capabilities": {
@@ -412,6 +425,7 @@ This allows teams to share project defaults via `settings.json` while individual
   "agents": {
     "hatchbox-issue-enhancer": "opus",
     "hatchbox-issue-analyzer": "opus",
+    "hatchbox-issue-analyze-and-plan": "opus",
     "hatchbox-issue-implementer": "haiku"
   }
 }
