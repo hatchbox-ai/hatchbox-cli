@@ -13,22 +13,31 @@ export class ProjectCapabilityDetector {
    * @returns Project capabilities and bin entries
    */
   async detectCapabilities(worktreePath: string): Promise<ProjectCapabilities> {
-    const pkgJson = await readPackageJson(worktreePath)
-    const capabilities: ProjectCapability[] = []
+    try {
+      const pkgJson = await readPackageJson(worktreePath)
+      const capabilities: ProjectCapability[] = []
 
-    // CLI detection: has bin field
-    if (pkgJson.bin) {
-      capabilities.push('cli')
+      // CLI detection: has bin field
+      if (pkgJson.bin) {
+        capabilities.push('cli')
+      }
+
+      // Web detection: has web framework dependencies
+      if (hasWebDependencies(pkgJson)) {
+        capabilities.push('web')
+      }
+
+      // Parse bin entries for CLI projects
+      const binEntries = pkgJson.bin ? parseBinField(pkgJson.bin, pkgJson.name) : {}
+
+      return { capabilities, binEntries }
+    } catch (error) {
+      // Handle missing package.json - return empty capabilities for non-Node.js projects
+      if (error instanceof Error && error.message.includes('package.json not found')) {
+        return { capabilities: [], binEntries: {} }
+      }
+      // Re-throw other errors (invalid JSON, etc.)
+      throw error
     }
-
-    // Web detection: has web framework dependencies
-    if (hasWebDependencies(pkgJson)) {
-      capabilities.push('web')
-    }
-
-    // Parse bin entries for CLI projects
-    const binEntries = pkgJson.bin ? parseBinField(pkgJson.bin, pkgJson.name) : {}
-
-    return { capabilities, binEntries }
   }
 }

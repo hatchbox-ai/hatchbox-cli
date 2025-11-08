@@ -33,18 +33,33 @@ export class BuildRunner {
 	async runBuild(buildPath: string, options: BuildOptions = {}): Promise<BuildResult> {
 		const startTime = Date.now()
 
-		// Step 1: Check if build script exists
-		const pkgJson = await readPackageJson(buildPath)
-		const hasBuildScript = hasScript(pkgJson, 'build')
+		try {
+			// Step 1: Check if build script exists
+			const pkgJson = await readPackageJson(buildPath)
+			const hasBuildScript = hasScript(pkgJson, 'build')
 
-		if (!hasBuildScript) {
-			logger.debug('Skipping build - no build script found')
-			return {
-				success: true,
-				skipped: true,
-				reason: 'No build script found in package.json',
-				duration: Date.now() - startTime,
+			if (!hasBuildScript) {
+				logger.debug('Skipping build - no build script found')
+				return {
+					success: true,
+					skipped: true,
+					reason: 'No build script found in package.json',
+					duration: Date.now() - startTime,
+				}
 			}
+		} catch (error) {
+			// Handle missing package.json - skip build for non-Node.js projects
+			if (error instanceof Error && error.message.includes('package.json not found')) {
+				logger.debug('Skipping build - no package.json found (non-Node.js project)')
+				return {
+					success: true,
+					skipped: true,
+					reason: 'No package.json found in project',
+					duration: Date.now() - startTime,
+				}
+			}
+			// Re-throw other errors
+			throw error
 		}
 
 		// Step 2: Check if project has CLI capability (bin field)

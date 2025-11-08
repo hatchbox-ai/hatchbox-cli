@@ -697,12 +697,76 @@ describe('ValidationRunner', () => {
 
 		it('should handle package.json read errors', async () => {
 			vi.mocked(packageJson.readPackageJson).mockRejectedValue(
-				new Error('package.json not found')
+				new Error('Invalid JSON in package.json')
 			)
 
 			await expect(
 				runner.runValidations('/test/worktree')
-			).rejects.toThrow(/package.json/)
+			).rejects.toThrow(/Invalid JSON/)
+		})
+
+		it('should skip typecheck when package.json does not exist', async () => {
+			vi.mocked(packageJson.readPackageJson).mockRejectedValue(
+				new Error('package.json not found in /test/worktree')
+			)
+
+			const result = await runner.runValidations('/test/worktree', {
+				skipLint: true,
+				skipTests: true,
+			})
+
+			expect(result.success).toBe(true)
+			expect(result.steps).toHaveLength(1)
+			expect(result.steps[0]?.step).toBe('typecheck')
+			expect(result.steps[0]?.skipped).toBe(true)
+			expect(result.steps[0]?.passed).toBe(true)
+		})
+
+		it('should skip lint when package.json does not exist', async () => {
+			vi.mocked(packageJson.readPackageJson).mockRejectedValue(
+				new Error('package.json not found in /test/worktree')
+			)
+
+			const result = await runner.runValidations('/test/worktree', {
+				skipTypecheck: true,
+				skipTests: true,
+			})
+
+			expect(result.success).toBe(true)
+			expect(result.steps).toHaveLength(1)
+			expect(result.steps[0]?.step).toBe('lint')
+			expect(result.steps[0]?.skipped).toBe(true)
+			expect(result.steps[0]?.passed).toBe(true)
+		})
+
+		it('should skip tests when package.json does not exist', async () => {
+			vi.mocked(packageJson.readPackageJson).mockRejectedValue(
+				new Error('package.json not found in /test/worktree')
+			)
+
+			const result = await runner.runValidations('/test/worktree', {
+				skipTypecheck: true,
+				skipLint: true,
+			})
+
+			expect(result.success).toBe(true)
+			expect(result.steps).toHaveLength(1)
+			expect(result.steps[0]?.step).toBe('test')
+			expect(result.steps[0]?.skipped).toBe(true)
+			expect(result.steps[0]?.passed).toBe(true)
+		})
+
+		it('should skip all validations when package.json does not exist', async () => {
+			vi.mocked(packageJson.readPackageJson).mockRejectedValue(
+				new Error('package.json not found in /test/worktree')
+			)
+
+			const result = await runner.runValidations('/test/worktree')
+
+			expect(result.success).toBe(true)
+			expect(result.steps).toHaveLength(3)
+			expect(result.steps.every((s) => s.skipped)).toBe(true)
+			expect(result.steps.every((s) => s.passed)).toBe(true)
 		})
 	})
 

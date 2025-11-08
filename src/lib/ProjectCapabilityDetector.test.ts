@@ -139,6 +139,24 @@ describe('ProjectCapabilityDetector', () => {
         'my-cli'
       )
     })
+
+    it('should return empty capabilities when package.json does not exist', async () => {
+      const error = new Error('package.json not found in /test/path')
+      vi.mocked(packageJsonUtils.readPackageJson).mockRejectedValueOnce(error)
+
+      const result = await detector.detectCapabilities('/test/path')
+
+      expect(result.capabilities).toEqual([])
+      expect(result.binEntries).toEqual({})
+      expect(packageJsonUtils.readPackageJson).toHaveBeenCalledWith('/test/path')
+    })
+
+    it('should re-throw non-ENOENT errors', async () => {
+      const error = new Error('Invalid JSON in package.json')
+      vi.mocked(packageJsonUtils.readPackageJson).mockRejectedValueOnce(error)
+
+      await expect(detector.detectCapabilities('/test/path')).rejects.toThrow('Invalid JSON in package.json')
+    })
   })
 
   describe('parseBinEntries', () => {

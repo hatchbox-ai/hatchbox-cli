@@ -505,14 +505,27 @@ describe('BuildRunner', () => {
 			)
 		})
 
-		it('should handle package.json read errors', async () => {
+		it('should handle non-ENOENT package.json read errors', async () => {
 			vi.mocked(packageJson.readPackageJson).mockRejectedValue(
-				new Error('package.json not found')
+				new Error('Invalid JSON in package.json')
 			)
 
 			await expect(runner.runBuild('/test/path')).rejects.toThrow(
-				/package.json/
+				/Invalid JSON/
 			)
+		})
+
+		it('should skip build when package.json does not exist', async () => {
+			vi.mocked(packageJson.readPackageJson).mockRejectedValue(
+				new Error('package.json not found in /test/path')
+			)
+
+			const result = await runner.runBuild('/test/path')
+
+			expect(result.success).toBe(true)
+			expect(result.skipped).toBe(true)
+			expect(result.reason).toContain('No package.json found')
+			expect(packageManager.runScript).not.toHaveBeenCalled()
 		})
 	})
 

@@ -86,6 +86,18 @@ export async function installDependencies(
   cwd: string,
   frozen: boolean = true
 ): Promise<void> {
+  // Check if package.json exists before attempting installation
+  if (!cwd) {
+    logger.debug('Skipping dependency installation - no working directory provided')
+    return
+  }
+
+  const pkgPath = path.join(cwd, 'package.json')
+  if (!(await fs.pathExists(pkgPath))) {
+    logger.debug('Skipping dependency installation - no package.json found')
+    return
+  }
+
   const packageManager = await detectPackageManager(cwd)
 
   logger.info(`Installing dependencies with ${packageManager}...`)

@@ -378,7 +378,8 @@ describe('package-manager utilities', () => {
 
     it('should use npm ci for frozen installs', async () => {
       vi.mocked(fs.pathExists).mockImplementation(async (path: string) => {
-        return path.toString().endsWith('package-lock.json')
+        const pathStr = path.toString()
+        return pathStr.endsWith('package-lock.json') || pathStr.endsWith('package.json')
       })
       vi.mocked(execa).mockResolvedValueOnce({ stdout: '' } as MockExecaReturn)  // install command
 
@@ -395,7 +396,8 @@ describe('package-manager utilities', () => {
 
     it('should use npm install for non-frozen installs', async () => {
       vi.mocked(fs.pathExists).mockImplementation(async (path: string) => {
-        return path.toString().endsWith('package-lock.json')
+        const pathStr = path.toString()
+        return pathStr.endsWith('package-lock.json') || pathStr.endsWith('package.json')
       })
       vi.mocked(execa).mockResolvedValueOnce({ stdout: '' } as MockExecaReturn)  // install command
 
@@ -412,7 +414,8 @@ describe('package-manager utilities', () => {
 
     it('should use yarn with frozen lockfile', async () => {
       vi.mocked(fs.pathExists).mockImplementation(async (path: string) => {
-        return path.toString().endsWith('yarn.lock')
+        const pathStr = path.toString()
+        return pathStr.endsWith('yarn.lock') || pathStr.endsWith('package.json')
       })
       vi.mocked(execa).mockResolvedValueOnce({ stdout: '' } as MockExecaReturn)  // install command
 
@@ -477,7 +480,8 @@ describe('package-manager utilities', () => {
     it('should detect different package manager than system default', async () => {
       // Mock npm project (has package-lock.json)
       vi.mocked(fs.pathExists).mockImplementation(async (path: string) => {
-        return path.toString().endsWith('package-lock.json')
+        const pathStr = path.toString()
+        return pathStr.endsWith('package-lock.json') || pathStr.endsWith('package.json')
       })
       vi.mocked(execa).mockResolvedValueOnce({ stdout: '' } as MockExecaReturn)
 
@@ -491,6 +495,22 @@ describe('package-manager utilities', () => {
           cwd: '/worktree/path'
         })
       )
+    })
+
+    it('should skip installation when package.json does not exist', async () => {
+      vi.mocked(fs.pathExists).mockImplementation(async (path: string) => {
+        // Only return false for package.json
+        if (path.toString().endsWith('package.json')) {
+          return false
+        }
+        return false
+      })
+
+      await installDependencies('/test/path', true)
+
+      // Should not call execa to run install
+      expect(execa).not.toHaveBeenCalled()
+      expect(logger.debug).toHaveBeenCalledWith('Skipping dependency installation - no package.json found')
     })
   })
 

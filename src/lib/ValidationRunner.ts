@@ -76,18 +76,33 @@ export class ValidationRunner {
 	): Promise<ValidationStepResult> {
 		const stepStartTime = Date.now()
 
-		// Check if typecheck script exists
-		const pkgJson = await readPackageJson(worktreePath)
-		const hasTypecheckScript = hasScript(pkgJson, 'typecheck')
+		try {
+			// Check if typecheck script exists
+			const pkgJson = await readPackageJson(worktreePath)
+			const hasTypecheckScript = hasScript(pkgJson, 'typecheck')
 
-		if (!hasTypecheckScript) {
-			logger.debug('Skipping typecheck - no typecheck script found')
-			return {
-				step: 'typecheck',
-				passed: true,
-				skipped: true,
-				duration: Date.now() - stepStartTime,
+			if (!hasTypecheckScript) {
+				logger.debug('Skipping typecheck - no typecheck script found')
+				return {
+					step: 'typecheck',
+					passed: true,
+					skipped: true,
+					duration: Date.now() - stepStartTime,
+				}
 			}
+		} catch (error) {
+			// Handle missing package.json - skip validation for non-Node.js projects
+			if (error instanceof Error && error.message.includes('package.json not found')) {
+				logger.debug('Skipping typecheck - no package.json found (non-Node.js project)')
+				return {
+					step: 'typecheck',
+					passed: true,
+					skipped: true,
+					duration: Date.now() - stepStartTime,
+				}
+			}
+			// Re-throw other errors
+			throw error
 		}
 
 		const packageManager = await detectPackageManager(worktreePath)
@@ -159,18 +174,33 @@ export class ValidationRunner {
 	): Promise<ValidationStepResult> {
 		const stepStartTime = Date.now()
 
-		// Check if lint script exists
-		const pkgJson = await readPackageJson(worktreePath)
-		const hasLintScript = hasScript(pkgJson, 'lint')
+		try {
+			// Check if lint script exists
+			const pkgJson = await readPackageJson(worktreePath)
+			const hasLintScript = hasScript(pkgJson, 'lint')
 
-		if (!hasLintScript) {
-			logger.debug('Skipping lint - no lint script found')
-			return {
-				step: 'lint',
-				passed: true,
-				skipped: true,
-				duration: Date.now() - stepStartTime,
+			if (!hasLintScript) {
+				logger.debug('Skipping lint - no lint script found')
+				return {
+					step: 'lint',
+					passed: true,
+					skipped: true,
+					duration: Date.now() - stepStartTime,
+				}
 			}
+		} catch (error) {
+			// Handle missing package.json - skip validation for non-Node.js projects
+			if (error instanceof Error && error.message.includes('package.json not found')) {
+				logger.debug('Skipping lint - no package.json found (non-Node.js project)')
+				return {
+					step: 'lint',
+					passed: true,
+					skipped: true,
+					duration: Date.now() - stepStartTime,
+				}
+			}
+			// Re-throw other errors
+			throw error
 		}
 
 		const packageManager = await detectPackageManager(worktreePath)
@@ -238,18 +268,33 @@ export class ValidationRunner {
 	): Promise<ValidationStepResult> {
 		const stepStartTime = Date.now()
 
-		// Check if test script exists
-		const pkgJson = await readPackageJson(worktreePath)
-		const hasTestScript = hasScript(pkgJson, 'test')
+		try {
+			// Check if test script exists
+			const pkgJson = await readPackageJson(worktreePath)
+			const hasTestScript = hasScript(pkgJson, 'test')
 
-		if (!hasTestScript) {
-			logger.debug('Skipping tests - no test script found')
-			return {
-				step: 'test',
-				passed: true,
-				skipped: true,
-				duration: Date.now() - stepStartTime,
+			if (!hasTestScript) {
+				logger.debug('Skipping tests - no test script found')
+				return {
+					step: 'test',
+					passed: true,
+					skipped: true,
+					duration: Date.now() - stepStartTime,
+				}
 			}
+		} catch (error) {
+			// Handle missing package.json - skip validation for non-Node.js projects
+			if (error instanceof Error && error.message.includes('package.json not found')) {
+				logger.debug('Skipping tests - no package.json found (non-Node.js project)')
+				return {
+					step: 'test',
+					passed: true,
+					skipped: true,
+					duration: Date.now() - stepStartTime,
+				}
+			}
+			// Re-throw other errors
+			throw error
 		}
 
 		const packageManager = await detectPackageManager(worktreePath)
