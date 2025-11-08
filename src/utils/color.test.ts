@@ -5,6 +5,9 @@ import {
 	rgbToHex,
 	hexToRgb,
 	getColorPalette,
+	lightenColor,
+	saturateColor,
+	calculateForegroundColor,
 	type RgbColor,
 } from './color.js'
 
@@ -349,6 +352,154 @@ describe('Color utilities', () => {
 				expect(color.g).toBeGreaterThanOrEqual(220)
 				expect(color.b).toBeGreaterThanOrEqual(220)
 			})
+		})
+	})
+
+	describe('lightenColor', () => {
+		it('should make a color lighter by moving RGB values toward 255', () => {
+			const color: RgbColor = { r: 200, g: 200, b: 200 }
+			const lighter = lightenColor(color, 0.1) // 10% lighter
+
+			expect(lighter.r).toBeGreaterThan(color.r)
+			expect(lighter.g).toBeGreaterThan(color.g)
+			expect(lighter.b).toBeGreaterThan(color.b)
+		})
+
+		it('should handle amount = 0 (no change)', () => {
+			const color: RgbColor = { r: 200, g: 150, b: 100 }
+			const result = lightenColor(color, 0)
+
+			expect(result).toEqual(color)
+		})
+
+		it('should handle amount = 1 (fully white)', () => {
+			const color: RgbColor = { r: 200, g: 150, b: 100 }
+			const result = lightenColor(color, 1)
+
+			expect(result).toEqual({ r: 255, g: 255, b: 255 })
+		})
+
+		it('should clamp values to 0-255 range', () => {
+			const color: RgbColor = { r: 250, g: 250, b: 250 }
+			const result = lightenColor(color, 2) // Excessive amount
+
+			expect(result.r).toBeLessThanOrEqual(255)
+			expect(result.g).toBeLessThanOrEqual(255)
+			expect(result.b).toBeLessThanOrEqual(255)
+			expect(result.r).toBeGreaterThanOrEqual(0)
+			expect(result.g).toBeGreaterThanOrEqual(0)
+			expect(result.b).toBeGreaterThanOrEqual(0)
+		})
+
+		it('should work with subtle palette colors', () => {
+			const color: RgbColor = { r: 220, g: 235, b: 248 } // Soft blue
+			const lighter = lightenColor(color, 0.2) // 20% lighter for more visible change
+
+			// At least some channels should be lighter (ones not already near 255)
+			expect(lighter.r).toBeGreaterThan(color.r)
+			expect(lighter.g).toBeGreaterThanOrEqual(color.g)
+			expect(lighter.b).toBeGreaterThanOrEqual(color.b)
+		})
+	})
+
+	describe('saturateColor', () => {
+		it('should push colors away from grey toward dominant hue', () => {
+			const color: RgbColor = { r: 220, g: 235, b: 248 } // Soft blue (blue dominant)
+			const saturated = saturateColor(color, 0.4) // 40% more saturated
+
+			// Blue is the dominant channel, so it should increase more
+			// Red and green (lower values) should decrease
+			expect(saturated.b).toBeGreaterThan(color.b)
+		})
+
+		it('should handle amount = 0 (no change)', () => {
+			const color: RgbColor = { r: 220, g: 235, b: 248 }
+			const result = saturateColor(color, 0)
+
+			expect(result).toEqual(color)
+		})
+
+		it('should clamp values to 0-255 range', () => {
+			const color: RgbColor = { r: 100, g: 200, b: 250 }
+			const result = saturateColor(color, 5) // Excessive amount
+
+			expect(result.r).toBeLessThanOrEqual(255)
+			expect(result.g).toBeLessThanOrEqual(255)
+			expect(result.b).toBeLessThanOrEqual(255)
+			expect(result.r).toBeGreaterThanOrEqual(0)
+			expect(result.g).toBeGreaterThanOrEqual(0)
+			expect(result.b).toBeGreaterThanOrEqual(0)
+		})
+
+		it('should handle grey colors (all channels equal)', () => {
+			const grey: RgbColor = { r: 200, g: 200, b: 200 }
+			const result = saturateColor(grey, 0.5)
+
+			// For grey, all channels should remain equal
+			expect(result).toEqual(grey)
+		})
+
+		it('should make subtle colors more vivid', () => {
+			const palette = getColorPalette()
+			const softBlue = palette[0] // { r: 220, g: 235, b: 248 }
+			const saturated = saturateColor(softBlue, 0.4)
+
+			// Verify the saturated color is more vivid (further from grey)
+			const avgOriginal = (softBlue.r + softBlue.g + softBlue.b) / 3
+			const avgSaturated = (saturated.r + saturated.g + saturated.b) / 3
+
+			const distanceOriginal = Math.sqrt(
+				Math.pow(softBlue.r - avgOriginal, 2) +
+					Math.pow(softBlue.g - avgOriginal, 2) +
+					Math.pow(softBlue.b - avgOriginal, 2)
+			)
+			const distanceSaturated = Math.sqrt(
+				Math.pow(saturated.r - avgSaturated, 2) +
+					Math.pow(saturated.g - avgSaturated, 2) +
+					Math.pow(saturated.b - avgSaturated, 2)
+			)
+
+			expect(distanceSaturated).toBeGreaterThan(distanceOriginal)
+		})
+	})
+
+	describe('calculateForegroundColor', () => {
+		it('should return black (#000000) for light backgrounds', () => {
+			const lightColor: RgbColor = { r: 255, g: 255, b: 255 } // White
+			expect(calculateForegroundColor(lightColor)).toBe('#000000')
+		})
+
+		it('should return white (#ffffff) for dark backgrounds', () => {
+			const darkColor: RgbColor = { r: 0, g: 0, b: 0 } // Black
+			expect(calculateForegroundColor(darkColor)).toBe('#ffffff')
+		})
+
+		it('should return black for all subtle palette colors (light backgrounds)', () => {
+			const palette = getColorPalette()
+
+			palette.forEach((color) => {
+				// All palette colors are subtle (220-255 range), so they're all light
+				expect(calculateForegroundColor(color)).toBe('#000000')
+			})
+		})
+
+		it('should use WCAG relative luminance formula', () => {
+			// Test a medium-ish color
+			const mediumGrey: RgbColor = { r: 128, g: 128, b: 128 }
+			const result = calculateForegroundColor(mediumGrey)
+
+			// Medium grey should use white text
+			expect(result).toBe('#ffffff')
+		})
+
+		it('should handle saturated colors correctly', () => {
+			const palette = getColorPalette()
+			const softBlue = palette[0] // { r: 220, g: 235, b: 248 }
+			const saturated = saturateColor(softBlue, 0.4)
+
+			// Even saturated version should still be light enough for black text
+			const foreground = calculateForegroundColor(saturated)
+			expect(foreground).toBe('#000000')
 		})
 	})
 })

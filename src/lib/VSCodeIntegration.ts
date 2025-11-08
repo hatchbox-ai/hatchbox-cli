@@ -2,14 +2,32 @@ import fs from 'fs-extra'
 import path from 'path'
 import { parse, modify, applyEdits } from 'jsonc-parser'
 import { logger } from '../utils/logger.js'
+import {
+	hexToRgb,
+	rgbToHex,
+	lightenColor,
+	calculateForegroundColor,
+} from '../utils/color.js'
 
 /**
  * VSCode settings structure
  */
 interface VSCodeSettings {
 	'workbench.colorCustomizations'?: {
+		// Title Bar
 		'titleBar.activeBackground'?: string
+		'titleBar.inactiveBackground'?: string
 		'titleBar.activeForeground'?: string
+		'titleBar.inactiveForeground'?: string
+		// Status Bar
+		'statusBar.background'?: string
+		'statusBar.foreground'?: string
+		'statusBarItem.hoverBackground'?: string
+		'statusBarItem.remoteBackground'?: string
+		'statusBarItem.remoteForeground'?: string
+		// UI Accents
+		'sash.hoverBorder'?: string
+		'commandCenter.border'?: string
 		[key: string]: string | undefined
 	}
 	[key: string]: unknown
@@ -46,46 +64,6 @@ export class VSCodeIntegration {
 		} catch (error) {
 			throw new Error(
 				`Failed to set VSCode title bar color: ${error instanceof Error ? error.message : 'Unknown error'}`
-			)
-		}
-	}
-
-	/**
-	 * Reset VSCode title bar color (remove color customizations)
-	 *
-	 * @param workspacePath - Path to workspace directory
-	 */
-	async resetTitleBarColor(workspacePath: string): Promise<void> {
-		const settingsPath = path.join(workspacePath, '.vscode', 'settings.json')
-
-		try {
-			// Check if settings file exists
-			if (!(await fs.pathExists(settingsPath))) {
-				logger.debug('No settings.json to reset')
-				return
-			}
-
-			// Read existing settings
-			const settings = await this.readSettings(settingsPath)
-
-			// Remove title bar colors
-			if (settings['workbench.colorCustomizations']) {
-				delete settings['workbench.colorCustomizations']['titleBar.activeBackground']
-				delete settings['workbench.colorCustomizations']['titleBar.activeForeground']
-
-				// Remove empty workbench.colorCustomizations object
-				if (Object.keys(settings['workbench.colorCustomizations']).length === 0) {
-					delete settings['workbench.colorCustomizations']
-				}
-			}
-
-			// Write updated settings
-			await this.writeSettings(settingsPath, settings)
-
-			logger.debug(`Reset VSCode title bar color for ${workspacePath}`)
-		} catch (error) {
-			throw new Error(
-				`Failed to reset VSCode title bar color: ${error instanceof Error ? error.message : 'Unknown error'}`
 			)
 		}
 	}
@@ -193,7 +171,7 @@ export class VSCodeIntegration {
 	 * Merge color settings into existing settings object
 	 *
 	 * @param existing - Existing settings object
-	 * @param hexColor - Hex color to apply
+	 * @param hexColor - Hex color to apply (subtle palette color)
 	 * @returns Updated settings object with color merged
 	 */
 	private mergeColorSettings(existing: VSCodeSettings, hexColor: string): VSCodeSettings {
@@ -203,9 +181,35 @@ export class VSCodeIntegration {
 		// Initialize workbench.colorCustomizations if needed
 		updated['workbench.colorCustomizations'] ??= {}
 
-		// Set title bar colors
-		updated['workbench.colorCustomizations']['titleBar.activeBackground'] = hexColor
-		updated['workbench.colorCustomizations']['titleBar.activeForeground'] = '#000000'
+		const colors = updated['workbench.colorCustomizations']
+
+		// Convert hex to RGB for manipulation
+		const baseRgb = hexToRgb(hexColor)
+
+		// Calculate foreground color based on background luminance
+		const foreground = calculateForegroundColor(baseRgb)
+		const foregroundTransparent = foreground.replace('#', '#') + '99' // Add 60% opacity
+
+		// Create lighter variant for hover states
+		const lighterRgb = lightenColor(baseRgb, 0.05) // 5% lighter
+		const lighterHex = rgbToHex(lighterRgb.r, lighterRgb.g, lighterRgb.b)
+
+		// Title Bar - subtle top indicator
+		colors['titleBar.activeBackground'] = hexColor
+		colors['titleBar.inactiveBackground'] = hexColor + '99' // Semi-transparent when unfocused
+		colors['titleBar.activeForeground'] = foreground
+		colors['titleBar.inactiveForeground'] = foregroundTransparent
+
+		// Status Bar - constant visibility at bottom
+		colors['statusBar.background'] = hexColor
+		colors['statusBar.foreground'] = foreground
+		colors['statusBarItem.hoverBackground'] = lighterHex
+		colors['statusBarItem.remoteBackground'] = hexColor // When connected to remote
+		colors['statusBarItem.remoteForeground'] = foreground
+
+		// UI Accents - subtle hints
+		colors['sash.hoverBorder'] = hexColor // Resize borders
+		colors['commandCenter.border'] = foregroundTransparent // Search box border
 
 		return updated
 	}

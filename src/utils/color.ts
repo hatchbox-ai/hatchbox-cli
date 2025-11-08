@@ -155,3 +155,68 @@ export function generateColorFromBranchName(branchName: string): ColorData {
 		index,
 	}
 }
+
+/**
+ * Lighten a color by a given amount
+ * Useful for creating slightly lighter variants for hover states
+ *
+ * @param rgb - RGB color to lighten
+ * @param amount - Amount to lighten (0-1, where 0.1 = 10% lighter)
+ * @returns Lightened RGB color
+ */
+export function lightenColor(rgb: RgbColor, amount: number): RgbColor {
+	const clamp = (value: number): number => Math.min(255, Math.max(0, Math.round(value)))
+
+	return {
+		r: clamp(rgb.r + (255 - rgb.r) * amount),
+		g: clamp(rgb.g + (255 - rgb.g) * amount),
+		b: clamp(rgb.b + (255 - rgb.b) * amount),
+	}
+}
+
+/**
+ * Saturate a color by pushing it away from grey towards its dominant hue
+ * Makes subtle colors more vivid while maintaining their hue
+ *
+ * @param rgb - RGB color to saturate
+ * @param amount - Amount to saturate (0-1, where 0.4 = 40% more saturated)
+ * @returns Saturated RGB color
+ */
+export function saturateColor(rgb: RgbColor, amount: number): RgbColor {
+	const clamp = (value: number): number => Math.min(255, Math.max(0, Math.round(value)))
+
+	// Calculate average (grey point)
+	const avg = (rgb.r + rgb.g + rgb.b) / 3
+
+	// Push each channel away from grey
+	return {
+		r: clamp(rgb.r + (rgb.r - avg) * amount),
+		g: clamp(rgb.g + (rgb.g - avg) * amount),
+		b: clamp(rgb.b + (rgb.b - avg) * amount),
+	}
+}
+
+/**
+ * Calculate appropriate foreground color (black or white) for a given background
+ * Uses relative luminance formula from WCAG 2.0
+ *
+ * @param rgb - Background RGB color
+ * @returns '#000000' for light backgrounds, '#ffffff' for dark backgrounds
+ */
+export function calculateForegroundColor(rgb: RgbColor): string {
+	// Convert RGB to relative luminance (WCAG 2.0 formula)
+	const toLinear = (channel: number): number => {
+		const c = channel / 255
+		return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+	}
+
+	const r = toLinear(rgb.r)
+	const g = toLinear(rgb.g)
+	const b = toLinear(rgb.b)
+
+	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+	// Use black text for light backgrounds (luminance > 0.5)
+	// Use white text for dark backgrounds
+	return luminance > 0.5 ? '#000000' : '#ffffff'
+}
