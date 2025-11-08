@@ -53,17 +53,43 @@ Estimate the following metrics:
    - Consider both new code and modifications to existing code
    - Be conservative - round up when uncertain
 
-3. **Breaking Changes** (Yes = COMPLEX):
+3. **File Architecture Quality** (Poor quality in large files = COMPLEX):
+   - **File Length Assessment**: Quick LOC count of files to be modified
+     - <500 lines: Standard complexity
+     - 500-1000 lines: Elevated cognitive load
+     - >1000 lines: High complexity indicator
+   - **Quick Quality Heuristics** (2-minute scan only):
+     - Multiple distinct concerns in one file (check imports for diversity)
+     - Functions >50 lines (scroll through file for long blocks)
+     - Deeply nested conditionals (>3 levels)
+     - Unclear naming patterns or inconsistent style
+   - **God Object Detection**: Single file handling multiple unrelated responsibilities
+   - **Legacy Code Indicators**: Lack of tests, extensive comments explaining "why", TODO markers
+
+   **Quick Assessment Process**:
+   1. Identify files to be modified from issue description
+   2. Get line counts: `wc -l <filepath>`
+   3. If any file >500 LOC, open and scan for quality issues (30 seconds per file max)
+   4. Look for red flags: mixed concerns, long functions, complex nesting
+
+   **Complexity Impact**:
+   - Modifying >1000 LOC file with poor structure → Automatically COMPLEX
+   - Modifying 500-1000 LOC file with quality issues → COMPLEX if combined with other factors
+   - Well-architected files of any length → No automatic escalation
+
+   **Example**: Editing a 2000-line "UserManager.ts" that handles authentication, profile management, and billing is COMPLEX regardless of whether you're only changing 20 lines. The cognitive load of understanding the context is high.
+
+4. **Breaking Changes** (Yes = COMPLEX):
    - Check issue for keywords: "breaking", "breaking change", "API change", "public interface"
    - Look for changes that affect public interfaces or contracts
    - Consider backward compatibility impacts
 
-4. **Database Migrations** (Yes = COMPLEX):
+5. **Database Migrations** (Yes = COMPLEX):
    - Check issue for keywords: "migration", "schema", "database", "DB", "data model", "collection", "field"
    - Look for changes to data models or database structure
    - Consider data transformation requirements
 
-5. **Cross-Cutting Changes** (Yes = COMPLEX):
+6. **Cross-Cutting Changes** (Yes = COMPLEX):
    - **CRITICAL**: Check for parameters, data, or configuration flowing through multiple architectural layers
    - Keywords: "pass", "forward", "through", "argument", "parameter", "option", "config", "setting"
    - Patterns: CLI → Manager → Service → Utility chains, interface updates across layers
@@ -84,7 +110,7 @@ Estimate the following metrics:
    - Actually COMPLEX: Required updating 5 TypeScript interfaces across 6 layers
    - **This should trigger COMPLEX classification immediately**
 
-6. **Risk Level** (HIGH/CRITICAL = COMPLEX):
+7. **Risk Level** (HIGH/CRITICAL = COMPLEX):
    - Assess based on: scope of impact, system criticality, complexity of logic
    - HIGH risks: Core functionality changes, security implications, performance impacts
    - CRITICAL risks: Data loss potential, system-wide failures, irreversible operations
@@ -97,10 +123,14 @@ Estimate the following metrics:
   - No database migrations
   - No cross-cutting changes
   - Risk level ≤ MEDIUM
+  - **All modified files <500 LOC OR well-architected**
 
-- **COMPLEX**: ANY condition fails above criteria
+- **COMPLEX**: ANY condition fails above criteria, OR:
+  - Any modified file >1000 LOC
+  - Any modified file 500-1000 LOC with poor architecture quality
+  - Multiple modified files >500 LOC (cumulative cognitive load)
 
-**IMPORTANT**: Cross-cutting changes automatically trigger COMPLEX classification regardless of other metrics. These changes appear deceptively simple but require complex coordination across multiple architectural layers.
+**IMPORTANT**: Cross-cutting changes and large/poorly-architected files automatically trigger COMPLEX classification regardless of other metrics. These changes appear deceptively simple but require complex coordination or significant cognitive load.
 
 <comment_tool_info>
 IMPORTANT: You have been provided with MCP tools to create GitHub comments during this workflow.
@@ -155,6 +185,7 @@ await mcp__github_comment__update_comment({
 - Breaking changes: [Yes/No]
 - Database migrations: [Yes/No]
 - Cross-cutting changes: [Yes/No]
+- File architecture quality: [Good/Poor - include largest file size if >500 LOC]
 - Overall risk level: [Low/Medium/High]
 
 **Reasoning**: [1-2 sentence explanation of why this classification was chosen]
