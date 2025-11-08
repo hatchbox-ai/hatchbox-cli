@@ -461,7 +461,7 @@ describe('github utils', () => {
 			const name = await strategy.generate(123, 'Add authentication')
 
 			expect(name).toBe('feat/issue-123-add-authentication')
-			expect(mockGenerateBranchName).toHaveBeenCalledWith('Add authentication', 123, 'sonnet')
+			expect(mockGenerateBranchName).toHaveBeenCalledWith('Add authentication', 123, 'haiku')
 		})
 
 		it('should use custom Claude model', async () => {

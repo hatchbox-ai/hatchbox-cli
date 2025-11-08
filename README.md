@@ -262,11 +262,26 @@ Hatchbox optimizes for **building shared understanding** and **long-term efficie
 
 You can [configure](#configuration) the models used by the agents:
 
-- **Default**: All agents run on Claude Sonnet 4.5 to balance capability and cost
-- **Haiku**: Override one or more agents to use Haiku 4.5 for cost-conscious users (untested, may reduce quality)
+- **Default**: All agents run on the latest Sonnet model to balance capability and cost
+- **Haiku for Implementation**: The `hatchbox-issue-implementer` agent is a good candidate for the latest Haiku model for token-conscious users, as it follows detailed plans created by analysis/planning agents
 - **Maximum Power**: Override to Opus for complex architectural work (expensive, use sparingly)
 
-**Fun Fact**: Hatchbox originally used Opus (over Sonnet 4.5) for analysis and planning phases. As agent prompts improved, we switched entirely to Sonnet with better results at lower cost.
+**Available agents** (all configurable):
+- `hatchbox-issue-enhancer` - Structures issue descriptions from user perspective
+- `hatchbox-issue-complexity-evaluator` - Assesses scope and determines workflow approach
+- `hatchbox-issue-analyzer` - Investigates root causes (complex issues only)
+- `hatchbox-issue-planner` - Creates implementation roadmap (complex issues only)
+- `hatchbox-issue-analyze-and-plan` - Combined analysis and planning (simple issues only)
+- `hatchbox-issue-implementer` - Executes implementation plans (good candidate for Haiku)
+- `hatchbox-issue-reviewer` - Reviews completed implementations
+
+**Hard-coded model usage** (not configurable):
+- **Branch naming** - Uses the latest Haiku model to generate descriptive branch names from issue titles
+- **Commit message generation** - Uses the latest Haiku model to create commit messages
+
+Both operations use Haiku for fast, cost-effective AI assistance.
+
+**Fun Fact**: Hatchbox originally used Opus (over the latest Sonnet model) for analysis and planning phases. As agent prompts improved, we switched entirely to Sonnet with better results at lower cost.
 
 **Recommendation**: A Claude Max subscription is recommended. The theory is that token investment in structured/shared context pays dividends through reduced debugging, rework, and cognitive overhead.
 
@@ -395,11 +410,17 @@ This allows teams to share project defaults via `settings.json` while individual
     }
   },
   "agents": {
-    "issueEnhancer": "sonnet",
-    "branchNamer": "haiku"
+    "hatchbox-issue-enhancer": "opus",
+    "hatchbox-issue-analyzer": "opus",
+    "hatchbox-issue-implementer": "haiku"
   }
 }
 ```
+
+**Note on agent configuration:** All agents use the latest Sonnet model by default. The example above shows a performance-optimized configuration:
+- **Opus for analysis/enhancement** - Maximum reasoning capability for understanding requirements and planning
+- **Haiku for implementation** - Cost-effective execution of detailed plans (recommended for token-conscious users)
+- Other agents (complexity evaluator, planner, reviewer) remain on Sonnet by default
 
 **Configuration options:**
 - `mainBranch` - Primary branch for merging (default: "main")

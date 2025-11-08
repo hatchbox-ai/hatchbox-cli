@@ -221,7 +221,7 @@ export async function launchClaudeInNewTerminalWindow(
 export async function generateBranchName(
 	issueTitle: string,
 	issueNumber: number,
-	model: string = 'sonnet'
+	model: string = 'haiku'
 ): Promise<string> {
 	try {
 		// Check if Claude CLI is available

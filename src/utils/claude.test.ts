@@ -1326,7 +1326,7 @@ describe('claude utils', () => {
 			expect(result).toBe('feat/issue-123-user-authentication')
 			expect(execa).toHaveBeenCalledWith(
 				'claude',
-				['-p', '--model', 'sonnet', '--add-dir', '/tmp'],
+				['-p', '--model', 'haiku', '--add-dir', '/tmp'],
 				expect.objectContaining({
 					input: expect.stringContaining(issueTitle),
 				})
