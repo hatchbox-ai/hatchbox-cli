@@ -262,3 +262,17 @@ export interface MergeResult {
 	rebaseCompleted: boolean
 	mergeCompleted: boolean
 }
+
+// Update notification types
+export interface UpdateCheckCache {
+	lastCheck: number  // Unix timestamp
+	latestVersion: string
+}
+
+export interface UpdateCheckResult {
+	currentVersion: string
+	latestVersion: string
+	updateAvailable: boolean
+}
+
+export type InstallationMethod = 'global' | 'local' | 'linked' | 'unknown'

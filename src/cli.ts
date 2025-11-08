@@ -11,6 +11,7 @@ import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
+  name: string
   version: string
   description: string
 }
@@ -57,8 +58,25 @@ program
       process.exit(0)
     }
 
-    // Validate settings for all commands except help
+    // Check for updates before command execution for global installations
     const commandName = thisCommand.name()
+    // Skip update check for help command
+    if (commandName !== 'help' && commandName !== 'hatchbox') {
+      try {
+        const { checkAndNotifyUpdate } = await import('./utils/update-notifier.js')
+        const { detectInstallationMethod } = await import('./utils/installation-detector.js')
+
+        // Detect installation method
+        const installMethod = detectInstallationMethod(__filename)
+
+        // Check and notify (non-blocking, all errors handled internally)
+        await checkAndNotifyUpdate(packageJson.version, packageJson.name, installMethod)
+      } catch {
+        // Silently fail - update check should never break user experience
+      }
+    }
+
+    // Validate settings for all commands except help
     if (commandName !== 'help') {
       await validateSettingsForCommand()
     }
@@ -352,6 +370,20 @@ program
       await command.execute()
     } catch (error) {
       logger.error(`Failed to initialize: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('update')
+  .description('Update hatchbox-cli to the latest version')
+  .action(async () => {
+    try {
+      const { UpdateCommand } = await import('./commands/update.js')
+      const command = new UpdateCommand()
+      await command.execute()
+    } catch (error) {
+      logger.error(`Failed to update: ${error instanceof Error ? error.message : 'Unknown error'}`)
       process.exit(1)
     }
   })

@@ -344,12 +344,15 @@ hb feedback <description>
 
 Your feedback helps make Hatchbox better for everyone! Issues created through `hb feedback` are prioritized and reviewed regularly.
 
-### Setup
+### Maintenance
 
 ```bash
 hb init
 # Setup guide for shell autocomplete (will do much more soon)
-# Run once per project
+# Run this once per project
+
+hb update
+# Update hatchbox-cli to the latest version
 ```
 
 ## Configuration

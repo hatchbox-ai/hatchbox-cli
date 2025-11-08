@@ -23,6 +23,7 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly',
         global: 'readonly',
+        URL: 'readonly',
       },
     },
     plugins: {
@@ -58,6 +59,7 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly',
         global: 'readonly',
+        URL: 'readonly',
       },
     },
     plugins: {
@@ -90,6 +92,7 @@ export default [
         process: 'readonly',
         Buffer: 'readonly',
         BufferEncoding: 'readonly',
+        URL: 'readonly',
       },
     },
     plugins: {
