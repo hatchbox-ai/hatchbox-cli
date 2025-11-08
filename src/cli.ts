@@ -60,8 +60,7 @@ program
 
     // Check for updates before command execution for global installations
     const commandName = thisCommand.name()
-    // Skip update check for help command
-    if (commandName !== 'help' && commandName !== 'hatchbox') {
+    if (commandName !== 'hatchbox') {
       try {
         const { checkAndNotifyUpdate } = await import('./utils/update-notifier.js')
         const { detectInstallationMethod } = await import('./utils/installation-detector.js')
