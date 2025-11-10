@@ -59,26 +59,21 @@ program
     }
 
     // Check for updates before command execution for global installations
-    const commandName = thisCommand.name()
-    if (commandName !== 'hatchbox') {
-      try {
-        const { checkAndNotifyUpdate } = await import('./utils/update-notifier.js')
-        const { detectInstallationMethod } = await import('./utils/installation-detector.js')
+    try {
+      const { checkAndNotifyUpdate } = await import('./utils/update-notifier.js')
+      const { detectInstallationMethod } = await import('./utils/installation-detector.js')
 
-        // Detect installation method
-        const installMethod = detectInstallationMethod(__filename)
+      // Detect installation method
+      const installMethod = detectInstallationMethod(__filename)
 
-        // Check and notify (non-blocking, all errors handled internally)
-        await checkAndNotifyUpdate(packageJson.version, packageJson.name, installMethod)
-      } catch {
-        // Silently fail - update check should never break user experience
-      }
+      // Check and notify (non-blocking, all errors handled internally)
+      await checkAndNotifyUpdate(packageJson.version, packageJson.name, installMethod)
+    } catch {
+      // Silently fail - update check should never break user experience
     }
 
-    // Validate settings for all commands except help
-    if (commandName !== 'help') {
-      await validateSettingsForCommand()
-    }
+    // Validate settings for all commands
+    await validateSettingsForCommand()
   })
 
 // Helper function to validate settings at startup
@@ -376,11 +371,12 @@ program
 program
   .command('update')
   .description('Update hatchbox-cli to the latest version')
-  .action(async () => {
+  .option('--dry-run', 'Show what would be done without actually updating')
+  .action(async (options: { dryRun?: boolean }) => {
     try {
       const { UpdateCommand } = await import('./commands/update.js')
       const command = new UpdateCommand()
-      await command.execute()
+      await command.execute(options)
     } catch (error) {
       logger.error(`Failed to update: ${error instanceof Error ? error.message : 'Unknown error'}`)
       process.exit(1)
@@ -827,6 +823,29 @@ program
       }
       process.exit(1)
     }
+  })
+
+// Add custom help command in order to get preAction to run (update check handled by preAction hook)
+program
+  .command('help')
+  .description('Display help information')
+  .argument('[command]', 'Show help for specific command')
+  .action(async (command?: string) => {
+    // Show help (update check already ran in preAction)
+    if (command) {
+      // Show help for specific command
+      const subCommand = program.commands.find(cmd => cmd.name() === command)
+      if (subCommand) {
+        subCommand.outputHelp()
+      } else {
+        logger.error(`Unknown command: ${command}`)
+        program.outputHelp()
+      }
+    } else {
+      program.outputHelp()
+    }
+
+    process.exit(0)
   })
 
 // Parse CLI arguments

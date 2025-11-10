@@ -1,16 +1,19 @@
 import { spawn } from 'child_process'
 import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import fs from 'fs-extra'
 import { logger } from '../utils/logger.js'
 import { detectInstallationMethod } from '../utils/installation-detector.js'
 import { UpdateNotifier } from '../utils/update-notifier.js'
 
 const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 export class UpdateCommand {
-  async execute(): Promise<void> {
+  async execute(options: { dryRun?: boolean } = {}): Promise<void> {
     // Check installation method - only allow updates for global installations
     const installMethod = detectInstallationMethod(__filename)
+    logger.debug(`[update] Installation method detected: ${installMethod}`)
 
     if (installMethod !== 'global') {
       logger.error('Update command only works for globally installed hatchbox-cli')
@@ -34,15 +37,18 @@ export class UpdateCommand {
     }
 
     // Get current version from package.json
-    const packageJsonPath = new URL('../../package.json', import.meta.url).pathname
+    const packageJsonPath = join(__dirname, '..', 'package.json')
+    logger.debug(`[update] Reading package.json from: ${packageJsonPath}`)
     const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'))
     const currentVersion = packageJson.version
     const packageName = packageJson.name
+    logger.debug(`[update] Current version: ${currentVersion}, package: ${packageName}`)
 
     // Check for available updates
     logger.info('🔍 Checking for updates...')
     const notifier = new UpdateNotifier(currentVersion, packageName)
     const updateResult = await notifier.checkForUpdates()
+    logger.debug(`[update] Update check result: ${JSON.stringify(updateResult)}`)
 
     if (!updateResult) {
       logger.error('Failed to check for updates. Please try again later.')
@@ -56,6 +62,16 @@ export class UpdateCommand {
 
     // Show update info and proceed
     logger.info(`Update available: ${updateResult.currentVersion} → ${updateResult.latestVersion}`)
+
+    if (options.dryRun) {
+      logger.info('🔍 DRY RUN - showing what would be done:')
+      logger.info(`   Would run: npm install -g ${packageName}@latest`)
+      logger.info(`   Current version: ${currentVersion}`)
+      logger.info(`   Target version: ${updateResult.latestVersion}`)
+      logger.debug(`[update] Dry run complete, skipping actual update`)
+      return
+    }
+
     logger.info('🔄 Starting update...')
 
     // Start npm update in background and exit immediately

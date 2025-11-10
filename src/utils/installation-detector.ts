@@ -1,5 +1,6 @@
 import { dirname, join } from 'path'
-import { existsSync, lstatSync } from 'fs'
+import { existsSync, lstatSync, realpathSync } from 'fs'
+import { logger } from './logger.js'
 
 export type InstallationMethod = 'global' | 'local' | 'linked' | 'unknown'
 
@@ -11,27 +12,52 @@ export type InstallationMethod = 'global' | 'local' | 'linked' | 'unknown'
  * - unknown: Cannot determine
  */
 export function detectInstallationMethod(scriptPath: string): InstallationMethod {
+  logger.debug(`[installation-detector] Detecting installation method for: ${scriptPath}`)
+
+  if (process.env.OVERRIDE_INSTALLATION_METHOD) {
+    const overrideMethod = process.env.OVERRIDE_INSTALLATION_METHOD as InstallationMethod
+    logger.info(`[installation-detector] Override detected, returning: ${overrideMethod}`)
+    return overrideMethod
+  }
+
   try {
     // Check if the script is a symlink (npm link creates symlinks)
     try {
       const stats = lstatSync(scriptPath)
       if (stats.isSymbolicLink()) {
-        return 'linked'
+        logger.debug(`[installation-detector] Script is a symlink`)
+        // Resolve symlink to check where it actually points
+        const realPath = realpathSync(scriptPath)
+        logger.debug(`[installation-detector] Symlink resolves to: ${realPath}`)
+        // If the real path is in node_modules, it's a global install
+        // Only return 'linked' if it points outside node_modules
+        if (!realPath.includes('/node_modules/')) {
+          logger.debug(`[installation-detector] Symlink points outside node_modules, classification: linked`)
+          return 'linked'
+        }
+        logger.debug(`[installation-detector] Symlink points to node_modules, treating as potential global install`)
+        // Otherwise, continue checking with the resolved path
+        scriptPath = realPath
       }
     } catch {
       // If we can't stat it, continue to other checks
+      logger.debug(`[installation-detector] Unable to stat script file, continuing to other checks`)
     }
 
     // Check if running from source directory
     // If the file is at dist/cli.js, check if src/ exists as a sibling
     if (scriptPath.includes('/dist/') || scriptPath.includes('\\dist\\')) {
+      logger.debug(`[installation-detector] Script is in dist/ directory, checking for local development setup`)
       const distDir = dirname(scriptPath) // dist/
       const projectRoot = dirname(distDir) // project root
       const srcDir = join(projectRoot, 'src')
       const packageJsonPath = join(projectRoot, 'package.json')
+      logger.debug(`[installation-detector] Looking for src/ at: ${srcDir}`)
+      logger.debug(`[installation-detector] Looking for package.json at: ${packageJsonPath}`)
 
       // If src/ and package.json exist in parent, we're running from source
       if (existsSync(srcDir) && existsSync(packageJsonPath)) {
+        logger.debug(`[installation-detector] Found src/ and package.json, classification: local`)
         return 'local'
       }
     }
@@ -50,14 +76,18 @@ export function detectInstallationMethod(scriptPath: string): InstallationMethod
     ]
 
     const normalizedPath = scriptPath.replace(/\\/g, '/')
+    logger.debug(`[installation-detector] Checking global patterns against: ${normalizedPath}`)
     for (const pattern of globalPatterns) {
       if (normalizedPath.includes(pattern)) {
+        logger.debug(`[installation-detector] Matched global pattern '${pattern}', classification: global`)
         return 'global'
       }
     }
 
+    logger.debug(`[installation-detector] No patterns matched, classification: unknown`)
     return 'unknown'
-  } catch {
+  } catch (error) {
+    logger.debug(`[installation-detector] Error during detection: ${error}, classification: unknown`)
     return 'unknown'
   }
 }

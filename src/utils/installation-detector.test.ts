@@ -9,17 +9,42 @@ vi.mock('fs')
 describe('detectInstallationMethod', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Set default mock for realpathSync to return the input path unchanged
+    // (i.e., not a symlink by default)
+    vi.mocked(fs.realpathSync).mockImplementation((path: string | Buffer) => path as string)
   })
 
-  it('returns "linked" when the script is a symlink', () => {
+  it('returns "linked" when the script is a symlink pointing outside node_modules', () => {
     // Mock lstatSync to return isSymbolicLink: true
     const mockStats = {
       isSymbolicLink: () => true,
     } as unknown as Stats
     vi.mocked(fs.lstatSync).mockReturnValue(mockStats)
 
-    const result = detectInstallationMethod('/path/to/dist/cli.js')
+    // Mock realpathSync to return a path outside node_modules (local development)
+    vi.mocked(fs.realpathSync).mockReturnValue('/Users/dev/hatchbox-cli/dist/cli.js')
+
+    const result = detectInstallationMethod('/usr/local/bin/hb')
     expect(result).toBe('linked')
+  })
+
+  it('returns "global" when symlink points to node_modules (npm global install via NVM)', () => {
+    // Mock lstatSync to return isSymbolicLink: true
+    const mockStats = {
+      isSymbolicLink: () => true,
+    } as unknown as Stats
+    vi.mocked(fs.lstatSync).mockReturnValue(mockStats)
+
+    // Mock realpathSync to return a path in node_modules
+    vi.mocked(fs.realpathSync).mockReturnValue(
+      '/Users/user/.nvm/versions/node/v22.17.0/lib/node_modules/@hatchbox-ai/hatchbox-cli/dist/cli.js'
+    )
+
+    // Mock existsSync to return false (not source directory)
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+
+    const result = detectInstallationMethod('/Users/user/.nvm/versions/node/v22.17.0/bin/hb')
+    expect(result).toBe('global')
   })
 
   it('returns "local" when running from source directory (has src/ sibling)', () => {
