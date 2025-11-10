@@ -1,6 +1,6 @@
 {
   "name": "@hatchbox-ai/hatchbox-cli",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "AI-assisted workspace management CLI tool enabling developers to work on multiple issues simultaneously with Claude AI using isolated Git worktrees and databases",
   "keywords": [
     "ai",
