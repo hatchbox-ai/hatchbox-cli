@@ -157,6 +157,10 @@ export async function runScript(
       cwd,
       stdio: options.quiet ? 'pipe' : 'inherit',
       timeout: 600000,  // 10 minute timeout for scripts
+      env: {
+        ...process.env,
+        CI: 'true',
+      },
     })
   } catch (error) {
     const execaError = error as ExecaError

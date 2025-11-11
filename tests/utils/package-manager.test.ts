@@ -633,5 +633,26 @@ describe('package-manager utilities', () => {
         })
       )
     })
+
+    it('should set CI=true in environment when running scripts', async () => {
+      vi.mocked(fs.pathExists).mockResolvedValue(true)
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({
+        packageManager: 'pnpm@8.0.0'
+      }))
+      vi.mocked(execa).mockResolvedValueOnce({ stdout: '' } as MockExecaReturn)
+
+      await runScript('test', '/test/path')
+
+      expect(execa).toHaveBeenCalledWith(
+        'pnpm',
+        ['test'],
+        expect.objectContaining({
+          cwd: '/test/path',
+          env: expect.objectContaining({
+            CI: 'true'
+          })
+        })
+      )
+    })
   })
 })
