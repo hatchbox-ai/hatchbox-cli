@@ -10,10 +10,5 @@
       "startAiAgent": true,
       "startTerminal": true
     }
-  },
-  "agents": {
-    "hatchbox-issue-implementer": {
-      "model": "haiku"
-    }
   }
 }
