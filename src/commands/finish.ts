@@ -41,7 +41,7 @@ export class FinishCommand {
 	private commitManager: CommitManager
 	private mergeManager: MergeManager
 	private identifierParser: IdentifierParser
-	private resourceCleanup: ResourceCleanup
+	private resourceCleanup?: ResourceCleanup
 	private buildRunner: BuildRunner
 	private settingsManager: SettingsManager
 
@@ -73,28 +73,42 @@ export class FinishCommand {
 		this.mergeManager = mergeManager ?? new MergeManager()
 		this.identifierParser = identifierParser ?? new IdentifierParser(this.gitWorktreeManager)
 
-		// Initialize ResourceCleanup with DatabaseManager and CLIIsolationManager
-		if (!resourceCleanup) {
-			const environmentManager = new EnvironmentManager()
-			const neonProvider = new NeonProvider({
-				projectId: process.env.NEON_PROJECT_ID ?? '',
-				parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
-			})
-			const databaseManager = new DatabaseManager(neonProvider, environmentManager)
-			const cliIsolationManager = new CLIIsolationManager()
+		// Initialize settingsManager first (needed for ResourceCleanup)
+		this.settingsManager = settingsManager ?? new SettingsManager()
 
-			this.resourceCleanup = new ResourceCleanup(
-				this.gitWorktreeManager,
-				new ProcessManager(),
-				databaseManager,  // Add database manager
-				cliIsolationManager  // Add CLI isolation manager
-			)
-		} else {
+		// ResourceCleanup will be initialized lazily with proper configuration
+		if (resourceCleanup) {
 			this.resourceCleanup = resourceCleanup
 		}
 
 		this.buildRunner = buildRunner ?? new BuildRunner()
-		this.settingsManager = settingsManager ?? new SettingsManager()
+	}
+
+	/**
+	 * Lazy initialization of ResourceCleanup with properly configured DatabaseManager
+	 */
+	private async ensureResourceCleanup(): Promise<void> {
+		if (this.resourceCleanup) {
+			return
+		}
+
+		const settings = await this.settingsManager.loadSettings()
+		const databaseUrlEnvVarName = settings.capabilities?.database?.databaseUrlEnvVarName ?? 'DATABASE_URL'
+
+		const environmentManager = new EnvironmentManager()
+		const neonProvider = new NeonProvider({
+			projectId: process.env.NEON_PROJECT_ID ?? '',
+			parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
+		})
+		const databaseManager = new DatabaseManager(neonProvider, environmentManager, databaseUrlEnvVarName)
+		const cliIsolationManager = new CLIIsolationManager()
+
+		this.resourceCleanup = new ResourceCleanup(
+			this.gitWorktreeManager,
+			new ProcessManager(),
+			databaseManager,
+			cliIsolationManager
+		)
 	}
 
 	/**
@@ -639,6 +653,10 @@ export class FinishCommand {
 		}
 
 		try {
+			await this.ensureResourceCleanup()
+			if (!this.resourceCleanup) {
+				throw new Error('Failed to initialize ResourceCleanup')
+			}
 			const result = await this.resourceCleanup.cleanupWorktree(cleanupInput, cleanupOptions)
 
 			this.reportCleanupResults(result)
@@ -713,6 +731,10 @@ export class FinishCommand {
 		try {
 			logger.info('Starting post-merge cleanup...')
 
+			await this.ensureResourceCleanup()
+			if (!this.resourceCleanup) {
+				throw new Error('Failed to initialize ResourceCleanup')
+			}
 			const result = await this.resourceCleanup.cleanupWorktree(cleanupInput, cleanupOptions)
 
 			// Report cleanup results

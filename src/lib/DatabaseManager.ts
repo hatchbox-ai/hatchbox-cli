@@ -8,21 +8,36 @@ const logger = createLogger({ prefix: '🗂️' })
  * Database Manager - orchestrates database operations with conditional execution
  * Ports functionality from bash scripts with guard conditions:
  *   1. Database provider must be properly configured (provider.isConfigured())
- *   2. The worktree's .env file must contain DATABASE_URL or DATABASE_URI
+ *   2. The worktree's .env file must contain the configured database URL variable (default: DATABASE_URL)
  *
  * This ensures database branching only occurs for projects that actually use databases
  */
 export class DatabaseManager {
   constructor(
     private provider: DatabaseProvider,
-    private environment: EnvironmentManager
-  ) {}
+    private environment: EnvironmentManager,
+    private databaseUrlEnvVarName: string = 'DATABASE_URL'
+  ) {
+    // Debug: Show which database URL variable name is configured
+    if (databaseUrlEnvVarName !== 'DATABASE_URL') {
+      logger.debug(`🔧 DatabaseManager configured with custom variable: ${databaseUrlEnvVarName}`)
+    } else {
+      logger.debug('🔧 DatabaseManager using default variable: DATABASE_URL')
+    }
+  }
+
+  /**
+   * Get the configured database URL environment variable name
+   */
+  getConfiguredVariableName(): string {
+    return this.databaseUrlEnvVarName
+  }
 
   /**
    * Check if database branching should be used
    * Requires BOTH conditions:
    *   1. Database provider is properly configured (checked via provider.isConfigured())
-   *   2. .env file contains DATABASE_URL or DATABASE_URI
+   *   2. .env file contains the configured database URL variable
    */
   async shouldUseDatabaseBranching(envFilePath: string): Promise<boolean> {
     // Check for provider configuration
@@ -31,11 +46,11 @@ export class DatabaseManager {
       return false
     }
 
-    // Check if .env has DATABASE_URL or DATABASE_URI
+    // Check if .env has the configured database URL variable
     const hasDatabaseUrl = await this.hasDatabaseUrlInEnv(envFilePath)
     if (!hasDatabaseUrl) {
       logger.debug(
-        'Skipping database branching: DATABASE_URL/DATABASE_URI not found in .env file'
+        'Skipping database branching: configured database URL variable not found in .env file'
       )
       return false
     }
@@ -188,13 +203,55 @@ export class DatabaseManager {
   }
 
   /**
-   * Check if .env has DATABASE_URL or DATABASE_URI
+   * Check if .env has the configured database URL variable
+   * CRITICAL: If user explicitly configured a custom variable name (not default),
+   * throw an error if it's missing from .env
    */
   private async hasDatabaseUrlInEnv(envFilePath: string): Promise<boolean> {
     try {
       const envMap = await this.environment.readEnvFile(envFilePath)
-      return envMap.has('DATABASE_URL') || envMap.has('DATABASE_URI')
-    } catch {
+
+      // Debug: Show what we're looking for
+      if (this.databaseUrlEnvVarName !== 'DATABASE_URL') {
+        logger.debug(`Looking for custom database URL variable: ${this.databaseUrlEnvVarName}`)
+      } else {
+        logger.debug('Looking for default database URL variable: DATABASE_URL')
+      }
+
+      // Check configured variable first
+      if (envMap.has(this.databaseUrlEnvVarName)) {
+        if (this.databaseUrlEnvVarName !== 'DATABASE_URL') {
+          logger.debug(`✅ Found custom database URL variable: ${this.databaseUrlEnvVarName}`)
+        } else {
+          logger.debug(`✅ Found default database URL variable: DATABASE_URL`)
+        }
+        return true
+      }
+
+      // If user explicitly configured a custom variable name (not the default)
+      // and it's missing, throw an error
+      if (this.databaseUrlEnvVarName !== 'DATABASE_URL') {
+        logger.debug(`❌ Custom database URL variable '${this.databaseUrlEnvVarName}' not found in .env file`)
+        throw new Error(
+          `Configured database URL environment variable '${this.databaseUrlEnvVarName}' not found in .env file. ` +
+          `Please add it to your .env file or update your Hatchbox configuration.`
+        )
+      }
+
+      // Fall back to DATABASE_URL when using default configuration
+      const hasDefaultVar = envMap.has('DATABASE_URL')
+      if (hasDefaultVar) {
+        logger.debug('✅ Found fallback DATABASE_URL variable')
+      } else {
+        logger.debug('❌ No DATABASE_URL variable found in .env file')
+      }
+      return hasDefaultVar
+    } catch (error) {
+      // Re-throw configuration errors
+      if (error instanceof Error && error.message.includes('not found in .env')) {
+        throw error
+      }
+      // Return false for file read errors
       return false
     }
   }

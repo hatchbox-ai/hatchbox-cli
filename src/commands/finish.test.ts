@@ -227,7 +227,8 @@ describe('FinishCommand', () => {
 			expect(cmd['commitManager']).toBeInstanceOf(CommitManager)
 			expect(cmd['mergeManager']).toBeInstanceOf(MergeManager)
 			expect(cmd['identifierParser']).toBeInstanceOf(IdentifierParser)
-			expect(cmd['resourceCleanup']).toBeInstanceOf(ResourceCleanup)
+			// ResourceCleanup is now lazily initialized, so it should be undefined initially
+			expect(cmd['resourceCleanup']).toBeUndefined()
 		})
 
 		it('should load environment variables during construction', () => {
@@ -257,7 +258,7 @@ describe('FinishCommand', () => {
 			expect(mockLoadEnv).toHaveBeenCalledOnce()
 		})
 
-		it('should initialize ResourceCleanup with DatabaseManager when not provided', () => {
+		it('should lazily initialize ResourceCleanup when needed', () => {
 			// Mock environment variables
 			const originalEnv = process.env
 			process.env = {
@@ -268,22 +269,14 @@ describe('FinishCommand', () => {
 
 			const cmd = new FinishCommand()
 
-			// Verify ResourceCleanup was created
-			expect(cmd['resourceCleanup']).toBeInstanceOf(ResourceCleanup)
-
-			// Verify it was called with the right arguments (including DatabaseManager and CLIIsolationManager)
-			expect(ResourceCleanup).toHaveBeenCalledWith(
-				expect.any(GitWorktreeManager),
-				expect.any(ProcessManager),
-				expect.any(DatabaseManager),
-				expect.any(CLIIsolationManager) // CLIIsolationManager
-			)
+			// ResourceCleanup should be undefined initially (lazy initialization)
+			expect(cmd['resourceCleanup']).toBeUndefined()
 
 			// Restore environment
 			process.env = originalEnv
 		})
 
-		it('should initialize DatabaseManager with correct Neon configuration', () => {
+		it('should not initialize DatabaseManager during construction (lazy initialization)', () => {
 			// Mock environment variables
 			const originalEnv = process.env
 			process.env = {
@@ -292,19 +285,16 @@ describe('FinishCommand', () => {
 				NEON_PARENT_BRANCH: 'develop'
 			}
 
+			// Clear any previous constructor calls
+			vi.mocked(NeonProvider).mockClear()
+			vi.mocked(DatabaseManager).mockClear()
+
 			new FinishCommand()
 
-			// Verify NeonProvider was created with correct config
-			expect(NeonProvider).toHaveBeenCalledWith({
-				projectId: 'test-project-123',
-				parentBranch: 'develop'
-			})
-
-			// Verify DatabaseManager was created with NeonProvider and EnvironmentManager
-			expect(DatabaseManager).toHaveBeenCalledWith(
-				expect.any(NeonProvider),
-				expect.any(EnvironmentManager)
-			)
+			// DatabaseManager and NeonProvider should NOT be created during construction
+			// They are created lazily when needed
+			expect(NeonProvider).not.toHaveBeenCalled()
+			expect(DatabaseManager).not.toHaveBeenCalled()
 
 			// Restore environment
 			process.env = originalEnv

@@ -106,6 +106,7 @@ describe('HatchboxManager - Database Integration', () => {
       // GIVEN: Valid NEON configuration and DATABASE_URL in .env
       const connectionString = 'postgresql://neon-branch-connection-string'
       mockDatabase.createBranchIfConfigured = vi.fn().mockResolvedValue(connectionString)
+      mockDatabase.getConfiguredVariableName = vi.fn().mockReturnValue('DATABASE_URL')
 
       // Mock GitHub data fetch
       vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
@@ -255,6 +256,7 @@ describe('HatchboxManager - Database Integration', () => {
       // GIVEN: DatabaseManager returns connection string but EnvironmentManager.setEnvVar throws
       const connectionString = 'postgresql://neon-branch-connection-string'
       mockDatabase.createBranchIfConfigured = vi.fn().mockResolvedValue(connectionString)
+      mockDatabase.getConfiguredVariableName = vi.fn().mockReturnValue('DATABASE_URL')
 
       const envError = new Error('Failed to write to .env file')
       vi.mocked(mockEnvironment.setEnvVar).mockRejectedValue(envError)
@@ -373,6 +375,7 @@ describe('HatchboxManager - Database Integration', () => {
 
       const connectionString = 'postgresql://neon-pr-connection-string'
       mockDatabase.createBranchIfConfigured = vi.fn().mockResolvedValue(connectionString)
+      mockDatabase.getConfiguredVariableName = vi.fn().mockReturnValue('DATABASE_URL')
 
       vi.mocked(mockGitHub.fetchPR).mockResolvedValue({
         number: 456,
@@ -416,6 +419,7 @@ describe('HatchboxManager - Database Integration', () => {
 
       const connectionString = 'postgresql://neon-branch-connection-string'
       mockDatabase.createBranchIfConfigured = vi.fn().mockResolvedValue(connectionString)
+      mockDatabase.getConfiguredVariableName = vi.fn().mockReturnValue('DATABASE_URL')
 
       const expectedPath = '/test/worktree-feature-xyz'
       vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue(expectedPath)

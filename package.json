@@ -67,6 +67,7 @@
     "@modelcontextprotocol/sdk": "^1.0.4",
     "chalk": "^5.3.0",
     "commander": "^11.1.0",
+    "deepmerge": "^4.3.1",
     "dotenv-flow": "^4.1.0",
     "execa": "^8.0.1",
     "fs-extra": "^11.1.1",

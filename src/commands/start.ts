@@ -96,7 +96,12 @@ export class StartCommand {
 			projectId: process.env.NEON_PROJECT_ID ?? '',
 			parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
 		})
-		const databaseManager = new DatabaseManager(neonProvider, environmentManager)
+
+		// Load settings to get database URL environment variable name
+		const settings = await this.settingsManager.loadSettings()
+		const databaseUrlEnvVarName = settings.capabilities?.database?.databaseUrlEnvVarName ?? 'DATABASE_URL'
+
+		const databaseManager = new DatabaseManager(neonProvider, environmentManager, databaseUrlEnvVarName)
 
 		this.hatchboxManager = new HatchboxManager(
 			new GitWorktreeManager(mainWorktreePath),

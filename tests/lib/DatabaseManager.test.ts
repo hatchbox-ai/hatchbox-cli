@@ -84,17 +84,20 @@ describe('DatabaseManager', () => {
       expect(mockEnvironment.readEnvFile).toHaveBeenCalledWith('/path/to/.env')
     })
 
-    it('should return true when NEON env vars and DATABASE_URI are present', async () => {
+    it('should return true when NEON env vars and custom database variable are present', async () => {
       // Set up NEON environment variables
       process.env.NEON_PROJECT_ID = 'test-project-id'
       process.env.NEON_PARENT_BRANCH = 'main'
 
-      // Mock .env file with DATABASE_URI
+      // Create DatabaseManager with custom variable name
+      const customDbManager = new DatabaseManager(mockProvider, mockEnvironment, 'POSTGRES_URL')
+
+      // Mock .env file with custom variable
       vi.mocked(mockEnvironment.readEnvFile).mockResolvedValue(
-        new Map([['DATABASE_URI', 'postgresql://localhost/test']])
+        new Map([['POSTGRES_URL', 'postgresql://localhost/test']])
       )
 
-      const result = await databaseManager.shouldUseDatabaseBranching('/path/to/.env')
+      const result = await customDbManager.shouldUseDatabaseBranching('/path/to/.env')
 
       expect(result).toBe(true)
     })
@@ -131,12 +134,12 @@ describe('DatabaseManager', () => {
       expect(mockEnvironment.readEnvFile).not.toHaveBeenCalled()
     })
 
-    it('should return false when DATABASE_URL/DATABASE_URI are missing from .env', async () => {
+    it('should return false when configured database URL variable is missing from .env', async () => {
       // Set up NEON environment variables
       process.env.NEON_PROJECT_ID = 'test-project-id'
       process.env.NEON_PARENT_BRANCH = 'main'
 
-      // Mock .env file without DATABASE_URL/DATABASE_URI
+      // Mock .env file without DATABASE_URL
       vi.mocked(mockEnvironment.readEnvFile).mockResolvedValue(
         new Map([['OTHER_VAR', 'some-value']])
       )
@@ -158,6 +161,26 @@ describe('DatabaseManager', () => {
       const result = await databaseManager.shouldUseDatabaseBranching('/path/to/.env')
 
       expect(result).toBe(false)
+    })
+  })
+
+  describe('getConfiguredVariableName', () => {
+    it('should return default DATABASE_URL when no custom name provided', () => {
+      const databaseManager = new DatabaseManager(mockProvider, mockEnvironment)
+
+      expect(databaseManager.getConfiguredVariableName()).toBe('DATABASE_URL')
+    })
+
+    it('should return custom variable name when provided', () => {
+      const databaseManager = new DatabaseManager(mockProvider, mockEnvironment, 'POSTGRES_URL')
+
+      expect(databaseManager.getConfiguredVariableName()).toBe('POSTGRES_URL')
+    })
+
+    it('should return custom variable name for DATABASE_URI', () => {
+      const databaseManager = new DatabaseManager(mockProvider, mockEnvironment, 'DATABASE_URI')
+
+      expect(databaseManager.getConfiguredVariableName()).toBe('DATABASE_URI')
     })
   })
 
@@ -449,11 +472,12 @@ describe('DatabaseManager', () => {
       )
       expect(await databaseManager.shouldUseDatabaseBranching('/path/to/.env')).toBe(true)
 
-      // Test with DATABASE_URI
+      // Test with custom variable name
+      const customDbManager = new DatabaseManager(mockProvider, mockEnvironment, 'POSTGRES_URL')
       vi.mocked(mockEnvironment.readEnvFile).mockResolvedValue(
-        new Map([['DATABASE_URI', 'postgresql://localhost/test']])
+        new Map([['POSTGRES_URL', 'postgresql://localhost/test']])
       )
-      expect(await databaseManager.shouldUseDatabaseBranching('/path/to/.env')).toBe(true)
+      expect(await customDbManager.shouldUseDatabaseBranching('/path/to/.env')).toBe(true)
 
       // Test with neither
       vi.mocked(mockEnvironment.readEnvFile).mockResolvedValue(

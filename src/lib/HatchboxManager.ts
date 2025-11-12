@@ -98,7 +98,7 @@ export class HatchboxManager {
         if (connectionString) {
           await this.environment.setEnvVar(
             path.join(worktreePath, '.env'),
-            'DATABASE_URL',
+            this.database.getConfiguredVariableName(),
             connectionString
           )
           logger.success('Database branch configured')

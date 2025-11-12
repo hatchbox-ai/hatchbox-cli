@@ -6,6 +6,7 @@ import { DatabaseManager } from '../lib/DatabaseManager.js'
 import { NeonProvider } from '../lib/providers/NeonProvider.js'
 import { EnvironmentManager } from '../lib/EnvironmentManager.js'
 import { CLIIsolationManager } from '../lib/CLIIsolationManager.js'
+import { SettingsManager } from '../lib/SettingsManager.js'
 import { promptConfirmation } from '../utils/prompt.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
 import { loadEnvIntoProcess } from '../utils/env.js'
@@ -43,7 +44,7 @@ export interface ParsedCleanupInput {
  */
 export class CleanupCommand {
   private readonly gitWorktreeManager: GitWorktreeManager
-  private readonly resourceCleanup: ResourceCleanup
+  private resourceCleanup?: ResourceCleanup
   private readonly identifierParser: IdentifierParser
 
   constructor(
@@ -62,27 +63,41 @@ export class CleanupCommand {
     this.gitWorktreeManager = gitWorktreeManager ?? new GitWorktreeManager()
 
     // Initialize ResourceCleanup with DatabaseManager and CLIIsolationManager
-    if (!resourceCleanup) {
-      const environmentManager = new EnvironmentManager()
-      const neonProvider = new NeonProvider({
-        projectId: process.env.NEON_PROJECT_ID ?? '',
-        parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
-      })
-      const databaseManager = new DatabaseManager(neonProvider, environmentManager)
-      const cliIsolationManager = new CLIIsolationManager()
-
-      this.resourceCleanup = new ResourceCleanup(
-        this.gitWorktreeManager,
-        new ProcessManager(),
-        databaseManager,  // Add database manager
-        cliIsolationManager  // Add CLI isolation manager
-      )
-    } else {
+    // ResourceCleanup will be initialized lazily with proper configuration
+    if (resourceCleanup) {
       this.resourceCleanup = resourceCleanup
     }
 
     // Initialize IdentifierParser for pattern-based detection
     this.identifierParser = new IdentifierParser(this.gitWorktreeManager)
+  }
+
+  /**
+   * Lazy initialization of ResourceCleanup with properly configured DatabaseManager
+   */
+  private async ensureResourceCleanup(): Promise<void> {
+    if (this.resourceCleanup) {
+      return
+    }
+
+    const settingsManager = new SettingsManager()
+    const settings = await settingsManager.loadSettings()
+    const databaseUrlEnvVarName = settings.capabilities?.database?.databaseUrlEnvVarName ?? 'DATABASE_URL'
+
+    const environmentManager = new EnvironmentManager()
+    const neonProvider = new NeonProvider({
+      projectId: process.env.NEON_PROJECT_ID ?? '',
+      parentBranch: process.env.NEON_PARENT_BRANCH ?? '',
+    })
+    const databaseManager = new DatabaseManager(neonProvider, environmentManager, databaseUrlEnvVarName)
+    const cliIsolationManager = new CLIIsolationManager()
+
+    this.resourceCleanup = new ResourceCleanup(
+      this.gitWorktreeManager,
+      new ProcessManager(),
+      databaseManager,
+      cliIsolationManager
+    )
   }
 
   /**
@@ -287,6 +302,10 @@ export class CleanupCommand {
 
     // Step 4: Execute worktree cleanup (includes safety validation)
     // With --force, delete branch automatically; otherwise handle separately
+    await this.ensureResourceCleanup()
+    if (!this.resourceCleanup) {
+      throw new Error('Failed to initialize ResourceCleanup')
+    }
     const cleanupResult = await this.resourceCleanup.cleanupWorktree(parsedInput, {
       dryRun: dryRun ?? false,
       force: force ?? false,
@@ -321,6 +340,10 @@ export class CleanupCommand {
     options: { force?: boolean; dryRun?: boolean }
   ): Promise<void> {
     try {
+      await this.ensureResourceCleanup()
+      if (!this.resourceCleanup) {
+        throw new Error('Failed to initialize ResourceCleanup')
+      }
       await this.resourceCleanup.deleteBranch(branchName, options)
       logger.success(`Branch deleted: ${branchName}`)
     } catch (error) {
@@ -427,6 +450,10 @@ export class CleanupCommand {
         // Parse the branch name using IdentifierParser
         const parsedInput: ParsedInput = await this.identifierParser.parseForPatternDetection(target.branchName)
 
+        await this.ensureResourceCleanup()
+        if (!this.resourceCleanup) {
+          throw new Error('Failed to initialize ResourceCleanup')
+        }
         const result = await this.resourceCleanup.cleanupWorktree(parsedInput, {
           dryRun: dryRun ?? false,
           force: force ?? false,
@@ -458,6 +485,10 @@ export class CleanupCommand {
 
       // Step 6: Delete branch
       try {
+        await this.ensureResourceCleanup()
+        if (!this.resourceCleanup) {
+          throw new Error('Failed to initialize ResourceCleanup')
+        }
         await this.resourceCleanup.deleteBranch(target.branchName, {
           force: force ?? false,
           dryRun: dryRun ?? false

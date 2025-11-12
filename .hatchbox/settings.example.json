@@ -9,6 +9,9 @@
   "capabilities": {
     "web": {
       "basePort": 3000
+    },
+    "database": {
+      "databaseUrlEnvVarName": "DATABASE_URL"
     }
   },
   "agents": {

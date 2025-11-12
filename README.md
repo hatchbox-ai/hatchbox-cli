@@ -411,7 +411,8 @@ This allows teams to share project defaults via `settings.json` while individual
 {
   "mainBranch": "main",
   "capabilities": {
-    "web": { "basePort": 3000 }
+    "web": { "basePort": 3000 },
+    "database": { "databaseUrlEnvVarName": "DATABASE_URL" }
   },
   "workflows": {
     "issue": {
@@ -423,10 +424,10 @@ This allows teams to share project defaults via `settings.json` while individual
     }
   },
   "agents": {
-    "hatchbox-issue-enhancer": "opus",
-    "hatchbox-issue-analyzer": "opus",
-    "hatchbox-issue-analyze-and-plan": "opus",
-    "hatchbox-issue-implementer": "haiku"
+    "hatchbox-issue-enhancer": "sonnet",
+    "hatchbox-issue-analyzer": "sonnet",
+    "hatchbox-issue-analyze-and-plan": "sonnet",
+    "hatchbox-issue-implementer": "sonnet"
   }
 }
 ```
@@ -439,6 +440,7 @@ This allows teams to share project defaults via `settings.json` while individual
 **Configuration options:**
 - `mainBranch` - Primary branch for merging (default: "main")
 - `capabilities.web.basePort` - Base port for dev servers (default: 3000)
+- `capabilities.database.databaseUrlEnvVarName` - Name of environment variable for database connection URL (default: "DATABASE_URL")
 - `workflows` - Per-workflow Claude CLI permission modes and tool launching
 - `agents` - Claude model selection (sonnet/opus/haiku) per agent type
 

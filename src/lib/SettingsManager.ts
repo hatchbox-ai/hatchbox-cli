@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises'
 import path from 'path'
 import { z } from 'zod'
+import deepmerge from 'deepmerge'
 import { logger } from '../utils/logger.js'
 
 /**
@@ -68,6 +69,17 @@ export const CapabilitiesSettingsSchema = z
 					.max(65535, 'Base port must be <= 65535')
 					.optional()
 					.describe('Base port for web workspace port calculations (default: 3000)'),
+			})
+			.optional(),
+		database: z
+			.object({
+				databaseUrlEnvVarName: z
+					.string()
+					.min(1, 'Database URL variable name cannot be empty')
+					.regex(/^[A-Z_][A-Z0-9_]*$/, 'Must be valid env var name (uppercase, underscores)')
+					.optional()
+					.default('DATABASE_URL')
+					.describe('Name of environment variable for database connection URL'),
 			})
 			.optional(),
 	})
@@ -172,21 +184,32 @@ export class SettingsManager {
 
 		// Load base settings from settings.json
 		const baseSettings = await this.loadSettingsFile(root, 'settings.json')
+		const baseSettingsPath = path.join(root, '.hatchbox', 'settings.json')
+		logger.debug(`📄 Base settings from ${baseSettingsPath}:`, JSON.stringify(baseSettings, null, 2))
 
 		// Load local overrides from settings.local.json
 		const localSettings = await this.loadSettingsFile(root, 'settings.local.json')
+		const localSettingsPath = path.join(root, '.hatchbox', 'settings.local.json')
+		logger.debug(`📄 Local settings from ${localSettingsPath}:`, JSON.stringify(localSettings, null, 2))
 
 		// Deep merge with priority: cliOverrides > localSettings > baseSettings
 		let merged = this.mergeSettings(baseSettings, localSettings)
+		logger.debug('🔄 After merging base + local settings:', JSON.stringify(merged, null, 2))
 
 		if (cliOverrides && Object.keys(cliOverrides).length > 0) {
-			logger.debug('Applying CLI overrides:', cliOverrides)
+			logger.debug('⚙️ CLI overrides to apply:', JSON.stringify(cliOverrides, null, 2))
 			merged = this.mergeSettings(merged, cliOverrides)
+			logger.debug('🔄 After applying CLI overrides:', JSON.stringify(merged, null, 2))
 		}
 
 		// Validate merged result
 		try {
-			return HatchboxSettingsSchema.parse(merged)
+			const finalSettings = HatchboxSettingsSchema.parse(merged)
+
+			// Debug: Log final merged configuration
+			this.logFinalConfiguration(finalSettings)
+
+			return finalSettings
 		} catch (error) {
 			// Show all Zod validation errors
 			if (error instanceof z.ZodError) {
@@ -199,6 +222,13 @@ export class SettingsManager {
 			}
 			throw error
 		}
+	}
+
+	/**
+	 * Log the final merged configuration for debugging
+	 */
+	private logFinalConfiguration(settings: HatchboxSettings): void {
+		logger.debug('📋 Final merged configuration:', JSON.stringify(settings, null, 2))
 	}
 
 	/**
@@ -223,15 +253,18 @@ export class SettingsManager {
 				)
 			}
 
-			// Basic validation: ensure parsed content is an object
-			if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-				throw new Error(
-					`Settings validation failed at ${settingsPath}:\n  - root: Expected object, received ${Array.isArray(parsed) ? 'array' : typeof parsed}`,
-				)
+			// Validate individual file with strict mode to catch unknown keys
+			// Note: Schema already has all fields as optional, so no need for .partial()
+			try {
+				const validated = HatchboxSettingsSchema.strict().parse(parsed)
+				return validated
+			} catch (error) {
+				if (error instanceof z.ZodError) {
+					const errorMsg = this.formatAllZodErrors(error, filename)
+					throw errorMsg
+				}
+				throw error
 			}
-
-			// Return parsed content (detailed validation happens after merge)
-			return parsed as Partial<HatchboxSettings>
 		} catch (error) {
 			// File not found is not an error - return empty settings
 			if ((error as { code?: string }).code === 'ENOENT') {
@@ -246,64 +279,17 @@ export class SettingsManager {
 
 	/**
 	 * Deep merge two settings objects with priority to override
-	 * Arrays are replaced, not concatenated
+	 * Uses deepmerge library with array replacement strategy
 	 */
 	private mergeSettings(
 		base: Partial<HatchboxSettings>,
 		override: Partial<HatchboxSettings>,
 	): HatchboxSettings {
-		// Start with base settings
-		const merged = { ...base }
-
-		// Merge top-level primitive fields
-		if (override.mainBranch !== undefined) {
-			merged.mainBranch = override.mainBranch
-		}
-		if (override.worktreePrefix !== undefined) {
-			merged.worktreePrefix = override.worktreePrefix
-		}
-		if (override.protectedBranches !== undefined) {
-			merged.protectedBranches = override.protectedBranches
-		}
-
-		// Deep merge workflows
-		if (override.workflows !== undefined) {
-			merged.workflows = {
-				...base.workflows,
-				...override.workflows,
-				issue:
-					override.workflows.issue !== undefined
-						? { ...base.workflows?.issue, ...override.workflows.issue }
-						: base.workflows?.issue,
-				pr:
-					override.workflows.pr !== undefined
-						? { ...base.workflows?.pr, ...override.workflows.pr }
-						: base.workflows?.pr,
-				regular:
-					override.workflows.regular !== undefined
-						? { ...base.workflows?.regular, ...override.workflows.regular }
-						: base.workflows?.regular,
-			}
-		}
-
-		// Deep merge agents
-		if (override.agents !== undefined) {
-			merged.agents = { ...base.agents, ...override.agents }
-		}
-
-		// Deep merge capabilities
-		if (override.capabilities !== undefined) {
-			merged.capabilities = {
-				...base.capabilities,
-				...override.capabilities,
-				web:
-					override.capabilities.web !== undefined
-						? { ...base.capabilities?.web, ...override.capabilities.web }
-						: base.capabilities?.web,
-			}
-		}
-
-		return merged as HatchboxSettings
+		// Use deepmerge with array replacement (not concatenation)
+		return deepmerge(base, override, {
+			// Replace arrays instead of concatenating them
+			arrayMerge: (_destinationArray, sourceArray) => sourceArray,
+		}) as HatchboxSettings
 	}
 
 	/**
