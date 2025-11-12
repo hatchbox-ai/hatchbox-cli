@@ -6,7 +6,7 @@ on:
 
 jobs:
   enhance_bug_report:
-    if: github.event.label.name == 'triaged-bug'
+    if: github.event.label.name == 'cli-feedback'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -19,13 +19,50 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install GitHub CLI (for act compatibility)
+        run: |
+          # Check if gh is already installed
+          if command -v gh &> /dev/null; then
+            echo "GitHub CLI already installed: $(gh --version)"
+          else
+            echo "Installing GitHub CLI for act compatibility..."
+            # Linux installation (act runs in Linux containers)
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt update
+            sudo apt install gh -y
+            echo "GitHub CLI installed: $(gh --version)"
+          fi
+
+      - name: Check for existing enhancement
+        id: check_enhancement
+        run: |
+          # Check if issue already has an enhancement comment (multiple patterns for reliability)
+          EXISTING=$(gh issue view ${{ github.event.issue.number }} --json comments --jq '.comments[] | select(
+            (.body | contains("## Enhancement Request Analysis")) or
+            (.body | contains("**Questions for Reporter**")) or
+            (.body | contains("<!-- AUTO-ENHANCEMENT-")) or
+            (.author.login == "github-actions[bot]" and (.body | contains("Enhancement") or .body | contains("Analysis")))
+          ) | .id' | head -1)
+
+          if [ -n "$EXISTING" ]; then
+            echo "enhancement_exists=true" >> $GITHUB_OUTPUT
+            echo "Enhancement already exists (comment ID: $EXISTING), skipping to prevent duplicate"
+          else
+            echo "enhancement_exists=false" >> $GITHUB_OUTPUT
+            echo "No existing enhancement found, proceeding"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run Claude Code Bug Analysis
+        if: steps.check_enhancement.outputs.enhancement_exists == 'false'
         id: claude
         uses: acreeger/claude-code-action@main
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Custom prompt for bug analysis
+          # Custom prompt for issue enhancement
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE NUMBER: ${{ github.event.issue.number }}
@@ -33,39 +70,53 @@ jobs:
             BODY: ${{ github.event.issue.body }}
             AUTHOR: ${{ github.event.issue.user.login }}
 
-            You are a Product Manager analyzing this bug or enhancement report. Create a structured bug specification comment that enhances the original report for development teams.
+            You are an expert issue enhancement agent for Hatchbox AI. Analyze and enhance this issue report to create a comprehensive specification for development teams.
 
             Use the GitHub CLI to post a comment on this issue using:
             gh issue comment ${{ github.event.issue.number }} --body "your analysis"
 
             Structure your comment with this format:
 
-            ## 🐛 Bug Report / Enhancement Analysis
+            <!-- AUTO-ENHANCEMENT-${{ github.run_id }} -->
+            ## Enhancement Request Analysis
+
+            **Questions for Reporter**
+
+            | Question | Answer |
+            |----------|--------|
+            | [Generate 3-5 specific technical questions to clarify requirements, environment, expected behavior, etc.] | @${{ github.event.issue.user.login }} |
 
             **Problem Summary**
-            Clear, concise statement of the issue from the user's perspective
+            [Clear, concise statement of the issue from both user and technical perspectives]
 
-            **User Impact** 
-            Who is affected and how this impacts their experience
+            **User Impact**
+            [Who is affected and how this impacts their workflow/experience with Hatchbox]
 
-            <IfBugReport>
-            **Reproduction Steps**
-            Based on the report, list the steps to reproduce (ask for clarification if missing)
+            **Enhancement Goal**
+            [What the ideal solution should achieve, focusing on outcomes]
 
-            **Expected Behavior**
-            What the user expects to happen
+            **Next Steps**
+            - Reporter to answer questions above for full context
+            - [Any immediate technical considerations or investigation needed]
+            - [Suggested approach or architectural considerations if clear]
 
-            **Actual Behavior** 
-            What actually happens
-            </IfBugReport>
+            ---
 
-            **Additional Context**
-            Any relevant details from the report (browser, device, environment, etc.)
+            <details>
+            <summary>📋 Complete Context & Details (click to expand)</summary>
 
-            **Questions for Reporter** (if needed)
-            What additional information would help developers investigate?
+            **Current Behavior**
+            [Detailed description of current state/behavior]
 
-            DO NOT analyze code, make implementation suggestions, or dig into technical details. Focus only on understanding, structuring and enhancing the user's reported experience so that it can be worked on autonomously by a coding agent.
+            **Proposed Solution**
+            [Technical approach and implementation considerations]
+
+            **Benefits**
+            [Why this change/fix improves the Hatchbox experience]
+
+            </details>
+
+            IMPORTANT: Always tag the issue author (@${{ github.event.issue.user.login }}) in the Questions for Reporter table. Focus on Hatchbox-specific context and CLI workflow improvements.
                       
           claude_args: |
             --model claude-opus-4-1-20250805

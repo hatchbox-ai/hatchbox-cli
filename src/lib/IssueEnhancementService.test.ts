@@ -277,6 +277,23 @@ describe('IssueEnhancementService', () => {
 	})
 
 	describe('waitForReviewAndOpen', () => {
+		let originalCIValue: string | undefined
+
+		beforeEach(() => {
+			// Save and remove CI environment variable to test normal interactive behavior
+			originalCIValue = process.env.CI
+			delete process.env.CI
+		})
+
+		afterEach(() => {
+			// Restore original CI environment variable
+			if (originalCIValue === undefined) {
+				delete process.env.CI
+			} else {
+				process.env.CI = originalCIValue
+			}
+		})
+
 		describe('with confirm=false (default, single keypress)', () => {
 			it('should fetch issue URL using GitHubService', async () => {
 				const issueNumber = 123
@@ -441,6 +458,63 @@ describe('IssueEnhancementService', () => {
 
 				await expect(service.waitForReviewAndOpen(123, true)).rejects.toThrow('Network error')
 			})
+		})
+	})
+
+	describe('waitForReviewAndOpen CI behavior', () => {
+		let originalCIValue: string | undefined
+
+		beforeEach(() => {
+			// Save original CI environment variable
+			originalCIValue = process.env.CI
+		})
+
+		afterEach(() => {
+			// Restore original CI environment variable
+			if (originalCIValue === undefined) {
+				delete process.env.CI
+			} else {
+				process.env.CI = originalCIValue
+			}
+		})
+
+		it('should skip keypress and browser when CI=true', async () => {
+			process.env.CI = 'true'
+			const { waitForKeypress } = await import('../utils/prompt.js')
+			const { openBrowser } = await import('../utils/browser.js')
+
+			vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+			await service.waitForReviewAndOpen(123)
+
+			expect(waitForKeypress).not.toHaveBeenCalled()
+			expect(openBrowser).not.toHaveBeenCalled()
+		})
+
+		it('should perform normal flow when CI is not set', async () => {
+			delete process.env.CI
+			const { waitForKeypress } = await import('../utils/prompt.js')
+			const { openBrowser } = await import('../utils/browser.js')
+
+			vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+			await service.waitForReviewAndOpen(123)
+
+			expect(waitForKeypress).toHaveBeenCalled()
+			expect(openBrowser).toHaveBeenCalled()
+		})
+
+		it('should perform normal flow when CI is false', async () => {
+			process.env.CI = 'false'
+			const { waitForKeypress } = await import('../utils/prompt.js')
+			const { openBrowser } = await import('../utils/browser.js')
+
+			vi.mocked(mockGitHubService.getIssueUrl).mockResolvedValue('https://github.com/owner/repo/issues/123')
+
+			await service.waitForReviewAndOpen(123)
+
+			expect(waitForKeypress).toHaveBeenCalled()
+			expect(openBrowser).toHaveBeenCalled()
 		})
 	})
 })

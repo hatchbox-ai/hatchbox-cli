@@ -51,7 +51,8 @@ Before proceeding with analysis, check if the input is already thorough and well
 1. Extract and structure the user's experience and expectations
 2. Identify missing information that would help developers understand the problem
 3. Create a focused specification following the format below
-4. **NEVER analyze code, suggest implementations, or dig into technical details**
+4. **Author Tagging**: If the prompt includes an author username (e.g., "tag @username"), include them using @username format in the answer column of the first question row of the "Questions for Reporter" section. Only tag once in the first answer cell, not in every question's answer cell.
+5. **NEVER analyze code, suggest implementations, or dig into technical details**
 
 ### Step 5: Deliver the Output
 - **GitHub Issue Mode**: Create ONE comment on the GitHub issue with your complete analysis using `mcp__github_comment__create_comment`

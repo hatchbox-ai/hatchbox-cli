@@ -17,6 +17,7 @@ export interface EnhanceCommandInput {
 
 export interface EnhanceOptions {
 	noBrowser?: boolean // Skip browser opening prompt
+	author?: string // GitHub username of issue author for tagging
 }
 
 /**
@@ -50,6 +51,7 @@ export class EnhanceCommand {
 	 */
 	public async execute(input: EnhanceCommandInput): Promise<void> {
 		const { issueNumber, options } = input
+		const { author } = options
 
 		// Step 1: Validate issue number
 		this.validateIssueNumber(issueNumber)
@@ -89,7 +91,7 @@ export class EnhanceCommand {
 
 		// Step 4: Invoke Claude CLI with enhancer agent
 		logger.info('Invoking enhancer agent. This may take a moment...')
-		const prompt = this.constructPrompt(issueNumber)
+		const prompt = this.constructPrompt(issueNumber, author)
 		const response = await launchClaude(prompt, {
 			headless: true,
 			model: 'sonnet',
@@ -134,8 +136,12 @@ export class EnhanceCommand {
 	 * Construct the prompt for the orchestrating Claude instance.
 	 * This prompt is very clear about expected output format to ensure reliable parsing.
 	 */
-	private constructPrompt(issueNumber: number): string {
-		return `Execute @agent-hatchbox-issue-enhancer ${issueNumber}
+	private constructPrompt(issueNumber: number, author?: string): string {
+		const authorInstruction = author
+			? `\nIMPORTANT: When you create your analysis comment, tag @${author} in the "Questions for Reporter" section if you have questions.\n`
+			: ''
+
+		return `Execute @agent-hatchbox-issue-enhancer ${issueNumber}${authorInstruction}
 
 ## OUTPUT REQUIREMENTS
 * If the issue was not enhanced, return ONLY: "No enhancement needed"

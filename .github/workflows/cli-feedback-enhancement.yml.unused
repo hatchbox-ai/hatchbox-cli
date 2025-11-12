@@ -1,0 +1,85 @@
+name: CLI Feedback Enhancement
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to enhance'
+        required: true
+        type: string
+      author:
+        description: 'Issue author username'
+        required: true
+        type: string
+      use_linked_version:
+        description: 'Use linked local version instead of npm'
+        required: false
+        type: boolean
+        default: false #CHANGE THIS!
+
+jobs:
+  enhance_feedback:
+    if: (github.event_name == 'issues' && github.event.label.name == 'cli-feedback') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install GitHub CLI (if not present)
+        run: |
+          if ! command -v gh &> /dev/null; then
+            type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+            && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+            && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+            && sudo apt update \
+            && sudo apt install gh -y
+          fi
+
+      - name: Setup pnpm (for linked version)
+        if: inputs.use_linked_version == true
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Install dependencies and build (for linked version)
+        if: inputs.use_linked_version == true
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm link --global
+
+      - name: Install Hatchbox CLI from npm (for npm version)
+        if: inputs.use_linked_version != true
+        run: npm install -g @hatchbox-ai/hatchbox-cli
+
+      - name: Run CLI enhancement
+        env:
+          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Determine issue number and author based on trigger type
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ISSUE_NUMBER="${{ inputs.issue_number }}"
+            AUTHOR="${{ inputs.author }}"
+          else
+            ISSUE_NUMBER="${{ github.event.issue.number }}"
+            AUTHOR="${{ github.event.issue.user.login }}"
+          fi
+
+          # Run enhance command with author tagging
+          hatchbox enhance "$ISSUE_NUMBER" --author "$AUTHOR" --no-browser

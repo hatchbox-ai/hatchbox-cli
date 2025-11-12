@@ -34,10 +34,9 @@ export class FeedbackCommand {
 	/**
 	 * Execute the feedback command workflow:
 	 * 1. Validate description format
-	 * 2. Enhance description with Claude AI
-	 * 3. Create GitHub issue in hatchbox-ai/hatchbox-cli
-	 * 4. Wait for keypress and open browser for review
-	 * 5. Return issue number
+	 * 2. Create GitHub issue in hatchbox-ai/hatchbox-cli (no AI enhancement)
+	 * 3. Wait for keypress and open browser for review
+	 * 4. Return issue number
 	 */
 	public async execute(input: FeedbackCommandInput): Promise<number> {
 		const { description } = input
@@ -47,21 +46,19 @@ export class FeedbackCommand {
 			throw new Error('Description is required and must be more than 50 characters with at least 3 words')
 		}
 
-		// Step 2: Enhance description using Claude AI
-		const enhancedDescription = await this.enhancementService.enhanceDescription(description)
-
-		// Step 3: Create GitHub issue in hatchbox-cli repo with cli-feedback label
+		// Step 2: Create GitHub issue in hatchbox-cli repo with cli-feedback label
+		// Note: The description is used as both title and body - GitHub Action will enhance later
 		const result = await this.enhancementService.createEnhancedIssue(
 			description,
-			enhancedDescription,
+			description,
 			FEEDBACK_REPOSITORY,
 			['cli-feedback']
 		)
 
-		// Step 4: Wait for keypress and open issue in browser for review
+		// Step 3: Wait for keypress and open issue in browser for review
 		await this.enhancementService.waitForReviewAndOpen(result.number, false, FEEDBACK_REPOSITORY)
 
-		// Step 5: Return issue number for reference
+		// Step 4: Return issue number for reference
 		return result.number
 	}
 }

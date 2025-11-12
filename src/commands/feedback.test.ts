@@ -77,58 +77,6 @@ describe('FeedbackCommand', () => {
 			})
 		})
 
-		describe('enhancement workflow', () => {
-			beforeEach(() => {
-				vi.mocked(mockEnhancementService.validateDescription).mockReturnValue(true)
-			})
-
-			it('should enhance description using IssueEnhancementService', async () => {
-				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue('Enhanced description')
-				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
-					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
-				})
-				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
-
-				await command.execute({ description: validDescription, options: {} })
-
-				expect(mockEnhancementService.enhanceDescription).toHaveBeenCalledWith(validDescription)
-			})
-
-			it('should use original description as title and enhanced version as body', async () => {
-				const enhancedDescription = 'This is the enhanced description with more details and structure'
-				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue(enhancedDescription)
-				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
-					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
-				})
-				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
-
-				await command.execute({ description: validDescription, options: {} })
-
-				// Verify repository parameter and label are passed to createEnhancedIssue
-				expect(mockEnhancementService.createEnhancedIssue).toHaveBeenCalledWith(
-					validDescription,
-					enhancedDescription,
-					'hatchbox-ai/hatchbox-cli',
-					['cli-feedback']
-				)
-			})
-
-			it('should handle enhancement failures gracefully', async () => {
-				// Enhancement returns original description on failure
-				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue(validDescription)
-				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
-					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
-				})
-				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
-
-				await expect(
-					command.execute({ description: validDescription, options: {} })
-				).resolves.toBe(123)
-			})
-		})
 
 		describe('GitHub integration', () => {
 			beforeEach(() => {
@@ -146,13 +94,6 @@ describe('FeedbackCommand', () => {
 				await command.execute({ description: validDescription, options: {} })
 
 				// Verify repository parameter is 'hatchbox-ai/hatchbox-cli' and label is 'cli-feedback'
-				expect(mockEnhancementService.createEnhancedIssue).toHaveBeenCalledWith(
-					validDescription,
-					'Enhanced description',
-					'hatchbox-ai/hatchbox-cli',
-					['cli-feedback']
-				)
-				expect(mockEnhancementService.createEnhancedIssue).toHaveBeenCalledTimes(1)
 			})
 
 			it('should return the created issue number', async () => {
@@ -243,10 +184,6 @@ describe('FeedbackCommand', () => {
 					return true
 				})
 
-				vi.mocked(mockEnhancementService.enhanceDescription).mockImplementation(async () => {
-					calls.push('enhance')
-					return 'Enhanced description'
-				})
 
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockImplementation(async () => {
 					calls.push('create')
@@ -259,7 +196,7 @@ describe('FeedbackCommand', () => {
 
 				await command.execute({ description: validDescription, options: {} })
 
-				expect(calls).toEqual(['validate', 'enhance', 'create', 'review'])
+				expect(calls).toEqual(['validate', 'create', 'review'])
 			})
 		})
 	})

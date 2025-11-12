@@ -112,6 +112,15 @@ Your response should be the raw markdown that will become the GitHub issue body.
 	 * @param repository - Optional repository to fetch issue from (format: "owner/repo")
 	 */
 	public async waitForReviewAndOpen(issueNumber: number, confirm = false, repository?: string): Promise<void> {
+		// Check if running in CI environment
+		const isCI = process.env.CI === 'true'
+
+		if (isCI) {
+			// In CI: Skip all interactive operations
+			logger.info(`Running in CI environment - skipping interactive prompts for issue #${issueNumber}`)
+			return
+		}
+
 		// Get issue URL
 		const issueUrl = await this.gitHubService.getIssueUrl(issueNumber, repository)
 

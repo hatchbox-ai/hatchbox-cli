@@ -187,14 +187,16 @@ program
   .description('Apply enhancement agent to existing GitHub issue')
   .argument('<issue-number>', 'GitHub issue number to enhance', parseInt)
   .option('--no-browser', 'Skip browser opening prompt')
-  .action(async (issueNumber: number, options: { browser?: boolean }) => {
+  .option('--author <username>', 'GitHub username to tag in questions (for CI usage)')
+  .action(async (issueNumber: number, options: { browser?: boolean; author?: string }) => {
     try {
       const { EnhanceCommand } = await import('./commands/enhance.js')
       const command = new EnhanceCommand()
       await command.execute({
         issueNumber,
         options: {
-          noBrowser: options.browser === false
+          noBrowser: options.browser === false,
+          ...(options.author && { author: options.author })
         }
       })
       logger.success(`Enhancement process completed for issue #${issueNumber}`)

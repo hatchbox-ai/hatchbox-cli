@@ -583,4 +583,53 @@ describe('EnhanceCommand', () => {
 			expect(openBrowser).toHaveBeenCalledWith(commentUrl)
 		})
 	})
+
+	describe('author parameter support', () => {
+		beforeEach(() => {
+			const mockIssue: Issue = {
+				number: 42,
+				title: 'Test Issue',
+				body: 'Test body',
+				state: 'open',
+				labels: [],
+				assignees: [],
+				url: 'https://github.com/owner/repo/issues/42',
+			}
+			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
+			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
+		})
+
+		it('should include author in prompt when provided', async () => {
+			const { launchClaude } = await import('../utils/claude.js')
+			vi.mocked(launchClaude).mockResolvedValue('No enhancement needed')
+
+			await command.execute({ issueNumber: 42, options: { author: 'testuser' } })
+
+			expect(launchClaude).toHaveBeenCalledWith(
+				expect.stringContaining('tag @testuser'),
+				expect.any(Object)
+			)
+		})
+
+		it('should not include author reference in prompt when not provided', async () => {
+			const { launchClaude } = await import('../utils/claude.js')
+			vi.mocked(launchClaude).mockResolvedValue('No enhancement needed')
+
+			await command.execute({ issueNumber: 42, options: {} })
+
+			const calledPrompt = vi.mocked(launchClaude).mock.calls[0][0]
+			expect(calledPrompt).not.toContain('tag @')
+		})
+
+		it('should work without author parameter for backwards compatibility', async () => {
+			const { launchClaude } = await import('../utils/claude.js')
+			vi.mocked(launchClaude).mockResolvedValue('No enhancement needed')
+
+			await expect(
+				command.execute({ issueNumber: 42, options: {} })
+			).resolves.not.toThrow()
+		})
+	})
 })
