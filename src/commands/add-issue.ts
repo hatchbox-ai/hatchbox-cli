@@ -41,7 +41,7 @@ export class AddIssueCommand {
 
 		// Step 1: Validate description format
 		if (!description || !this.enhancementService.validateDescription(description)) {
-			throw new Error('Description is required and must be more than 50 characters with at least 3 words')
+			throw new Error('Description is required and must be more than 30 characters with at least 3 words')
 		}
 
 		// Step 2: Enhance description using Claude AI

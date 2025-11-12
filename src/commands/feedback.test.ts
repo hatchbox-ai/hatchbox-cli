@@ -43,7 +43,7 @@ describe('FeedbackCommand', () => {
 			it('should throw error when description is empty or missing', async () => {
 				await expect(
 					command.execute({ description: '', options: {} })
-				).rejects.toThrow('Description is required and must be more than 50 characters with at least 3 words')
+				).rejects.toThrow('Description is required and must be more than 30 characters with at least 3 words')
 			})
 
 			it('should throw error when description is too short (<50 chars)', async () => {
@@ -51,18 +51,18 @@ describe('FeedbackCommand', () => {
 
 				await expect(
 					command.execute({ description: 'Short description', options: {} })
-				).rejects.toThrow('Description is required and must be more than 50 characters with at least 3 words')
+				).rejects.toThrow('Description is required and must be more than 30 characters with at least 3 words')
 			})
 
 			it('should throw error when description has insufficient spaces (<=2)', async () => {
 				vi.mocked(mockEnhancementService.validateDescription).mockReturnValue(false)
 
 				await expect(
-					command.execute({ description: 'This has twospacesbutmorethanfiftycharactersintotal', options: {} })
-				).rejects.toThrow('Description is required and must be more than 50 characters with at least 3 words')
+					command.execute({ description: 'This has twospacesbutmorethanthirtycharactersintotal', options: {} })
+				).rejects.toThrow('Description is required and must be more than 30 characters with at least 3 words')
 			})
 
-			it('should accept valid descriptions (>50 chars AND >2 spaces)', async () => {
+			it('should accept valid descriptions (>30 chars AND >2 spaces)', async () => {
 				vi.mocked(mockEnhancementService.validateDescription).mockReturnValue(true)
 				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue('Enhanced description')
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
@@ -84,7 +84,7 @@ describe('FeedbackCommand', () => {
 				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue('Enhanced description')
 			})
 
-			it('should call createEnhancedIssue with hatchbox-cli repository parameter and cli-feedback label', async () => {
+			it('should call createEnhancedIssue with hatchbox-cli repository parameter and no labels', async () => {
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 456,
 					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/456',
@@ -93,7 +93,13 @@ describe('FeedbackCommand', () => {
 
 				await command.execute({ description: validDescription, options: {} })
 
-				// Verify repository parameter is 'hatchbox-ai/hatchbox-cli' and label is 'cli-feedback'
+				// Verify repository parameter is 'hatchbox-ai/hatchbox-cli' and no labels are passed
+				expect(mockEnhancementService.createEnhancedIssue).toHaveBeenCalledWith(
+					validDescription,
+					expect.stringContaining('<!-- CLI GENERATED FEEDBACK'),
+					'hatchbox-ai/hatchbox-cli',
+					undefined // No labels
+				)
 			})
 
 			it('should return the created issue number', async () => {
@@ -197,6 +203,75 @@ describe('FeedbackCommand', () => {
 				await command.execute({ description: validDescription, options: {} })
 
 				expect(calls).toEqual(['validate', 'create', 'review'])
+			})
+		})
+
+		describe('diagnostic information', () => {
+			beforeEach(() => {
+				vi.mocked(mockEnhancementService.validateDescription).mockReturnValue(true)
+				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
+			})
+
+			it('should include CLI version marker in issue body', async () => {
+				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
+					number: 123,
+					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+				})
+
+				await command.execute({ description: validDescription, options: {} })
+
+				expect(mockEnhancementService.createEnhancedIssue).toHaveBeenCalledWith(
+					validDescription,
+					expect.stringContaining('<!-- CLI GENERATED FEEDBACK v'),
+					'hatchbox-ai/hatchbox-cli',
+					undefined
+				)
+			})
+
+			it('should include diagnostic information in issue body', async () => {
+				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
+					number: 123,
+					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+				})
+
+				await command.execute({ description: validDescription, options: {} })
+
+				const callArgs = vi.mocked(mockEnhancementService.createEnhancedIssue).mock.calls[0]
+				const issueBody = callArgs[1]
+
+				// Check for diagnostic section
+				expect(issueBody).toContain('Diagnostic Information')
+				expect(issueBody).toContain('CLI Version')
+				expect(issueBody).toContain('Node.js Version')
+				expect(issueBody).toContain('OS')
+				expect(issueBody).toContain('OS Version')
+				expect(issueBody).toContain('Architecture')
+			})
+
+			it('should include original description in issue body', async () => {
+				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
+					number: 123,
+					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+				})
+
+				await command.execute({ description: validDescription, options: {} })
+
+				const callArgs = vi.mocked(mockEnhancementService.createEnhancedIssue).mock.calls[0]
+				const issueBody = callArgs[1]
+
+				expect(issueBody).toContain(validDescription)
+			})
+
+			it('should handle diagnostic gathering failures gracefully', async () => {
+				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
+					number: 123,
+					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+				})
+
+				// Even if diagnostics fail, the command should still succeed
+				await expect(
+					command.execute({ description: validDescription, options: {} })
+				).resolves.toBe(123)
 			})
 		})
 	})

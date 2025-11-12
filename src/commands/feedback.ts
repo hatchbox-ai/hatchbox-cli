@@ -3,6 +3,7 @@ import { IssueEnhancementService } from '../lib/IssueEnhancementService.js'
 import { GitHubService } from '../lib/GitHubService.js'
 import { AgentManager } from '../lib/AgentManager.js'
 import { SettingsManager } from '../lib/SettingsManager.js'
+import { gatherDiagnosticInfo, formatDiagnosticsAsMarkdown } from '../utils/diagnostics.js'
 
 // Hardcoded target repository for feedback
 const FEEDBACK_REPOSITORY = 'hatchbox-ai/hatchbox-cli'
@@ -34,31 +35,41 @@ export class FeedbackCommand {
 	/**
 	 * Execute the feedback command workflow:
 	 * 1. Validate description format
-	 * 2. Create GitHub issue in hatchbox-ai/hatchbox-cli (no AI enhancement)
-	 * 3. Wait for keypress and open browser for review
-	 * 4. Return issue number
+	 * 2. Gather diagnostic information
+	 * 3. Create GitHub issue in hatchbox-ai/hatchbox-cli with CLI marker and diagnostics
+	 * 4. Wait for keypress and open browser for review
+	 * 5. Return issue number
 	 */
 	public async execute(input: FeedbackCommandInput): Promise<number> {
 		const { description } = input
 
 		// Step 1: Validate description format
 		if (!description || !this.enhancementService.validateDescription(description)) {
-			throw new Error('Description is required and must be more than 50 characters with at least 3 words')
+			throw new Error('Description is required and must be more than 30 characters with at least 3 words')
 		}
 
-		// Step 2: Create GitHub issue in hatchbox-cli repo with cli-feedback label
-		// Note: The description is used as both title and body - GitHub Action will enhance later
+		// Step 2: Gather diagnostic information
+		const diagnostics = await gatherDiagnosticInfo()
+		const diagnosticsMarkdown = formatDiagnosticsAsMarkdown(diagnostics)
+
+		// Step 3: Create enhanced issue body with marker and diagnostics
+		const enhancedBody = `${diagnosticsMarkdown}
+
+${description}`
+
+		// Step 4: Create GitHub issue in hatchbox-cli repo (no label needed)
+		// The GitHub Action workflow will detect the CLI marker and enhance the issue
 		const result = await this.enhancementService.createEnhancedIssue(
 			description,
-			description,
+			enhancedBody,
 			FEEDBACK_REPOSITORY,
-			['cli-feedback']
+			undefined // No labels needed
 		)
 
-		// Step 3: Wait for keypress and open issue in browser for review
+		// Step 5: Wait for keypress and open issue in browser for review
 		await this.enhancementService.waitForReviewAndOpen(result.number, false, FEEDBACK_REPOSITORY)
 
-		// Step 4: Return issue number for reference
+		// Step 6: Return issue number for reference
 		return result.number
 	}
 }

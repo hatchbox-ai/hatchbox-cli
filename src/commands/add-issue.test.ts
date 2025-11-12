@@ -37,32 +37,32 @@ describe('AddIssueCommand', () => {
 	})
 
 	describe('execute', () => {
-		const validDescription = 'This is a valid description that has more than fifty characters and multiple spaces'
+		const validDescription = 'This is a valid description that has more than thirty characters and multiple spaces'
 
 		describe('input validation', () => {
 			it('should throw error when description is empty or missing', async () => {
 				await expect(
 					command.execute({ description: '', options: {} })
-				).rejects.toThrow('Description is required and must be more than 50 characters with at least 3 words')
+				).rejects.toThrow('Description is required and must be more than 30 characters with at least 3 words')
 			})
 
-			it('should throw error when description is too short (<50 chars)', async () => {
+			it('should throw error when description is too short (<30 chars)', async () => {
 				vi.mocked(mockEnhancementService.validateDescription).mockReturnValue(false)
 
 				await expect(
 					command.execute({ description: 'Short description', options: {} })
-				).rejects.toThrow('Description is required and must be more than 50 characters with at least 3 words')
+				).rejects.toThrow('Description is required and must be more than 30 characters with at least 3 words')
 			})
 
 			it('should throw error when description has insufficient spaces (<=2)', async () => {
 				vi.mocked(mockEnhancementService.validateDescription).mockReturnValue(false)
 
 				await expect(
-					command.execute({ description: 'This has twospacesbutmorethanfiftycharactersintotal', options: {} })
-				).rejects.toThrow('Description is required and must be more than 50 characters with at least 3 words')
+					command.execute({ description: 'This has twospacesbutmorethanthirtycharactersintotal', options: {} })
+				).rejects.toThrow('Description is required and must be more than 30 characters with at least 3 words')
 			})
 
-			it('should accept valid descriptions (>50 chars AND >2 spaces)', async () => {
+			it('should accept valid descriptions (>30 chars AND >2 spaces)', async () => {
 				vi.mocked(mockEnhancementService.validateDescription).mockReturnValue(true)
 				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue('Enhanced description')
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({

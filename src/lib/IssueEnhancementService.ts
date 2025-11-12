@@ -19,13 +19,13 @@ export class IssueEnhancementService {
 
 	/**
 	 * Validates that a description meets minimum requirements.
-	 * Requirements: >50 characters AND >2 spaces
+	 * Requirements: >30 characters AND >2 spaces
 	 */
 	public validateDescription(description: string): boolean {
 		const trimmedDescription = description.trim()
 		const spaceCount = (trimmedDescription.match(/ /g) ?? []).length
 
-		return trimmedDescription.length > 50 && spaceCount > 2
+		return trimmedDescription.length > 30 && spaceCount > 2
 	}
 
 	/**
