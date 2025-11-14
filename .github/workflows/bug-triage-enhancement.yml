@@ -84,7 +84,7 @@ jobs:
 
             | Question | Answer |
             |----------|--------|
-            | [Generate 3-5 specific technical questions to clarify requirements, environment, expected behavior, etc.] | @${{ github.event.issue.user.login }} |
+            | [Generate 3-5 specific technical questions to clarify requirements, environment, expected behavior, etc.] | @${{ github.event.issue.user.login }}, to reply, please copy/paste this table into a comment on this issue |
 
             **Problem Summary**
             [Clear, concise statement of the issue from both user and technical perspectives]
@@ -116,7 +116,7 @@ jobs:
 
             </details>
 
-            IMPORTANT: Always tag the issue author (@${{ github.event.issue.user.login }}) in the answer column of the first question row of the "Questions for Reporter" section. Only tag once in the first answer cell, not in every question's answer cell. In the other cells add "<!-- Place answer here -->" instead. Focus on Hatchbox-specific context and CLI workflow improvements.
+            IMPORTANT: Always tag the issue author (@${{ github.event.issue.user.login }}) in the answer column of the first question row of the "Questions for Reporter" section. Only tag once in the first answer cell, not in every question's answer cell, using the text "@${{ github.event.issue.user.login }}, to reply, please copy/paste this table into a comment on this issue". In the other cells add "<!-- Place answer here -->" instead. Focus on Hatchbox-specific context and CLI workflow improvements.
                       
           claude_args: |
             --model claude-opus-4-1-20250805
