@@ -63,9 +63,9 @@ jobs:
           pnpm build
           pnpm link --global
 
-      - name: Install Hatchbox CLI from npm (for npm version)
+      - name: Install iloom CLI from npm (for npm version)
         if: inputs.use_linked_version != true
-        run: npm install -g @hatchbox-ai/hatchbox-cli
+        run: npm install -g @iloom/cli
 
       - name: Run CLI enhancement
         env:
@@ -82,4 +82,4 @@ jobs:
           fi
 
           # Run enhance command with author tagging
-          hatchbox enhance "$ISSUE_NUMBER" --author "$AUTHOR" --no-browser
+          iloom enhance "$ISSUE_NUMBER" --author "$AUTHOR" --no-browser

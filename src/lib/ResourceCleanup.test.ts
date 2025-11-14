@@ -311,7 +311,7 @@ describe('ResourceCleanup', () => {
 			vi.mocked(mockProcessManager.detectDevServer).mockResolvedValueOnce({
 				pid: 99999,
 				name: 'postgres',
-				command: 'postgres: hatchbox hatchbox [local] idle',
+				command: 'postgres: iloom iloom [local] idle',
 				port: 5432,
 				isDevServer: false,
 			})
@@ -725,7 +725,7 @@ describe('ResourceCleanup', () => {
 			expect(result.blockers.length).toBeGreaterThan(0)
 			expect(result.blockers[0]).toContain('Worktree has uncommitted changes')
 			expect(result.blockers[0]).toContain('Please resolve before cleanup')
-			expect(result.blockers[0]).toContain('Force cleanup: hb cleanup issue-25 --force')
+			expect(result.blockers[0]).toContain('Force cleanup: il cleanup issue-25 --force')
 		})
 
 		it('should block cleanup of main worktree', async () => {

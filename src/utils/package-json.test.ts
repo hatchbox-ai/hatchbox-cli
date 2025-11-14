@@ -68,15 +68,15 @@ describe('readPackageJson', () => {
 describe('parseBinField', () => {
   it('should parse object bin field with multiple entries', () => {
     const binField = {
-      hb: './dist/cli.js',
-      hatchbox: './dist/cli.js'
+      il: './dist/cli.js',
+      iloom: './dist/cli.js'
     }
 
-    const result = parseBinField(binField, 'hatchbox-ai')
+    const result = parseBinField(binField, 'iloom-ai')
 
     expect(result).toEqual({
-      hb: './dist/cli.js',
-      hatchbox: './dist/cli.js'
+      il: './dist/cli.js',
+      iloom: './dist/cli.js'
     })
   })
 

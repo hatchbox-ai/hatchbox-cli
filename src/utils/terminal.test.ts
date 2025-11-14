@@ -298,7 +298,7 @@ describe('openDualTerminalWindow', () => {
 		await openDualTerminalWindow(
 			{
 				workspacePath: '/Users/test/workspace1',
-				command: 'hb ignite',
+				command: 'il ignite',
 				title: 'Claude - Issue #42',
 				backgroundColor: { r: 128, g: 77, b: 179 },
 			},
@@ -322,7 +322,7 @@ describe('openDualTerminalWindow', () => {
 		expect(applescript).toContain('create tab with default profile')
 
 		// Verify both commands are present
-		expect(applescript).toContain('hb ignite')
+		expect(applescript).toContain('il ignite')
 		expect(applescript).toContain('pnpm dev')
 
 		// Verify both paths
@@ -352,7 +352,7 @@ describe('openDualTerminalWindow', () => {
 		await openDualTerminalWindow(
 			{
 				workspacePath: '/Users/test/workspace1',
-				command: 'hb ignite',
+				command: 'il ignite',
 			},
 			{
 				workspacePath: '/Users/test/workspace2',
@@ -397,7 +397,7 @@ describe('openDualTerminalWindow', () => {
 		await openDualTerminalWindow(
 			{
 				workspacePath: '/Users/test/workspace1',
-				command: 'hb ignite',
+				command: 'il ignite',
 				includeEnvSetup: true,
 			},
 			{

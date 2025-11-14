@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { HatchboxManager } from '../../src/lib/HatchboxManager.js'
+import { LoomManager } from '../../src/lib/LoomManager.js'
 import { GitWorktreeManager } from '../../src/lib/GitWorktreeManager.js'
 import { GitHubService } from '../../src/lib/GitHubService.js'
 import { EnvironmentManager } from '../../src/lib/EnvironmentManager.js'
@@ -8,7 +8,7 @@ import { ProjectCapabilityDetector } from '../../src/lib/ProjectCapabilityDetect
 import { CLIIsolationManager } from '../../src/lib/CLIIsolationManager.js'
 import { SettingsManager } from '../../src/lib/SettingsManager.js'
 import { DatabaseManager } from '../../src/lib/DatabaseManager.js'
-import type { CreateHatchboxInput } from '../../src/types/hatchbox.js'
+import type { CreateLoomInput } from '../../src/types/loom.js'
 import { createMockDatabaseManager } from '../mocks/MockDatabaseProvider.js'
 
 // Mock all dependencies
@@ -33,10 +33,10 @@ vi.mock('../../src/utils/package-manager.js', () => ({
   installDependencies: vi.fn().mockResolvedValue(undefined),
 }))
 
-// Mock HatchboxLauncher (dynamically imported)
-vi.mock('../../src/lib/HatchboxLauncher.js', () => ({
-  HatchboxLauncher: vi.fn(() => ({
-    launchHatchbox: vi.fn().mockResolvedValue(undefined),
+// Mock LoomLauncher (dynamically imported)
+vi.mock('../../src/lib/LoomLauncher.js', () => ({
+  LoomLauncher: vi.fn(() => ({
+    launchLoom: vi.fn().mockResolvedValue(undefined),
   })),
 }))
 
@@ -45,8 +45,8 @@ vi.mock('../../src/utils/vscode.js', () => ({
   openVSCodeWindow: vi.fn().mockResolvedValue(undefined),
 }))
 
-describe('HatchboxManager - Database Integration', () => {
-  let manager: HatchboxManager
+describe('LoomManager - Database Integration', () => {
+  let manager: LoomManager
   let mockGitWorktree: vi.Mocked<GitWorktreeManager>
   let mockGitHub: vi.Mocked<GitHubService>
   let mockEnvironment: vi.Mocked<EnvironmentManager>
@@ -68,7 +68,7 @@ describe('HatchboxManager - Database Integration', () => {
     // Create mock database manager with default behavior
     mockDatabase = createMockDatabaseManager()
 
-    manager = new HatchboxManager(
+    manager = new LoomManager(
       mockGitWorktree,
       mockGitHub,
       mockEnvironment,
@@ -95,8 +95,8 @@ describe('HatchboxManager - Database Integration', () => {
     vi.clearAllMocks()
   })
 
-  describe('createHatchbox with database branching', () => {
-    const baseInput: CreateHatchboxInput = {
+  describe('createIloom with database branching', () => {
+    const baseInput: CreateLoomInput = {
       type: 'issue',
       identifier: 123,
       originalInput: '123',
@@ -133,8 +133,8 @@ describe('HatchboxManager - Database Integration', () => {
       // Mock Claude launch with context
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      // WHEN: createHatchbox is called
-      const result = await manager.createHatchbox(baseInput)
+      // WHEN: createIloom is called
+      const result = await manager.createIloom(baseInput)
 
       // THEN: DatabaseManager.createBranchIfConfigured is called with correct branch name and env path
       expect(mockDatabase.createBranchIfConfigured).toHaveBeenCalledWith(
@@ -149,7 +149,7 @@ describe('HatchboxManager - Database Integration', () => {
         connectionString
       )
 
-      // THEN: Hatchbox metadata includes databaseBranch property
+      // THEN: loom metadata includes databaseBranch property
       expect(result.databaseBranch).toBe('issue-123-test')
     })
 
@@ -175,8 +175,8 @@ describe('HatchboxManager - Database Integration', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      // WHEN: createHatchbox is called
-      const result = await manager.createHatchbox(baseInput)
+      // WHEN: createIloom is called
+      const result = await manager.createIloom(baseInput)
 
       // THEN: No error is thrown
       expect(result).toBeDefined()
@@ -188,13 +188,13 @@ describe('HatchboxManager - Database Integration', () => {
         expect.anything()
       )
 
-      // THEN: Hatchbox metadata does not include databaseBranch property
+      // THEN: loom metadata does not include databaseBranch property
       expect(result.databaseBranch).toBeUndefined()
     })
 
     it('should skip database setup when skipDatabase option is true', async () => {
       // GIVEN: Valid NEON configuration but skipDatabase option is true
-      const inputWithSkipDatabase: CreateHatchboxInput = {
+      const inputWithSkipDatabase: CreateLoomInput = {
         ...baseInput,
         options: { skipDatabase: true },
       }
@@ -217,8 +217,8 @@ describe('HatchboxManager - Database Integration', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      // WHEN: createHatchbox is called with skipDatabase option
-      await manager.createHatchbox(inputWithSkipDatabase)
+      // WHEN: createIloom is called with skipDatabase option
+      await manager.createIloom(inputWithSkipDatabase)
 
       // THEN: DatabaseManager.createBranchIfConfigured is not called
       expect(mockDatabase.createBranchIfConfigured).not.toHaveBeenCalled()
@@ -246,8 +246,8 @@ describe('HatchboxManager - Database Integration', () => {
       vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
 
-      // WHEN/THEN: createHatchbox is called and error propagates
-      await expect(manager.createHatchbox(baseInput)).rejects.toThrow(
+      // WHEN/THEN: createIloom is called and error propagates
+      await expect(manager.createIloom(baseInput)).rejects.toThrow(
         'Failed to create Neon database branch'
       )
     })
@@ -278,15 +278,15 @@ describe('HatchboxManager - Database Integration', () => {
       vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
 
-      // WHEN/THEN: createHatchbox is called and error propagates with clear message
-      await expect(manager.createHatchbox(baseInput)).rejects.toThrow(
+      // WHEN/THEN: createIloom is called and error propagates with clear message
+      await expect(manager.createIloom(baseInput)).rejects.toThrow(
         'Failed to write to .env file'
       )
     })
 
     it('should work with DatabaseManager when not provided (optional parameter)', async () => {
-      // GIVEN: HatchboxManager created without DatabaseManager
-      const managerWithoutDb = new HatchboxManager(
+      // GIVEN: LoomManager created without DatabaseManager
+      const managerWithoutDb = new LoomManager(
         mockGitWorktree,
         mockGitHub,
         mockEnvironment,
@@ -315,19 +315,19 @@ describe('HatchboxManager - Database Integration', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      // WHEN: createHatchbox is called
-      const result = await managerWithoutDb.createHatchbox(baseInput)
+      // WHEN: createIloom is called
+      const result = await managerWithoutDb.createIloom(baseInput)
 
-      // THEN: No error is thrown and hatchbox is created without database branch
+      // THEN: No error is thrown and loom is created without database branch
       expect(result).toBeDefined()
       expect(result.databaseBranch).toBeUndefined()
     })
   })
 
-  describe('reuseHatchbox with database branching', () => {
+  describe('reuseIloom with database branching', () => {
     it('should not create new database branch when reusing worktree', async () => {
       // GIVEN: Existing worktree with database already configured
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -357,17 +357,17 @@ describe('HatchboxManager - Database Integration', () => {
         binEntries: {},
       })
 
-      // WHEN: createHatchbox is called for existing worktree
-      await manager.createHatchbox(input)
+      // WHEN: createIloom is called for existing worktree
+      await manager.createIloom(input)
 
       // THEN: DatabaseManager.createBranchIfConfigured is not called
       expect(mockDatabase.createBranchIfConfigured).not.toHaveBeenCalled()
     })
   })
 
-  describe('database branching for different hatchbox types', () => {
-    it('should create database branch for PR hatchbox', async () => {
-      const prInput: CreateHatchboxInput = {
+  describe('database branching for different loom types', () => {
+    it('should create database branch for PR loom', async () => {
+      const prInput: CreateLoomInput = {
         type: 'pr',
         identifier: 456,
         originalInput: 'pr/456',
@@ -396,7 +396,7 @@ describe('HatchboxManager - Database Integration', () => {
       vi.mocked(mockEnvironment.setEnvVar).mockResolvedValue()
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(prInput)
+      const result = await manager.createIloom(prInput)
 
       expect(mockDatabase.createBranchIfConfigured).toHaveBeenCalledWith(
         'feature-branch',
@@ -410,8 +410,8 @@ describe('HatchboxManager - Database Integration', () => {
       expect(result.databaseBranch).toBe('feature-branch')
     })
 
-    it('should create database branch for branch hatchbox', async () => {
-      const branchInput: CreateHatchboxInput = {
+    it('should create database branch for branch loom', async () => {
+      const branchInput: CreateLoomInput = {
         type: 'branch',
         identifier: 'feature-xyz',
         originalInput: 'feature-xyz',
@@ -428,7 +428,7 @@ describe('HatchboxManager - Database Integration', () => {
       vi.mocked(mockEnvironment.setEnvVar).mockResolvedValue()
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(branchInput)
+      const result = await manager.createIloom(branchInput)
 
       expect(mockDatabase.createBranchIfConfigured).toHaveBeenCalledWith(
         'feature-xyz',

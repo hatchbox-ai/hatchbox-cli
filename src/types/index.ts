@@ -192,8 +192,8 @@ export * from './worktree.js'
 // Environment management types
 export * from './environment.js'
 
-// Hatchbox types
-export * from './hatchbox.js'
+// Loom types
+export * from './loom.js'
 
 // Cleanup types
 export * from './cleanup.js'

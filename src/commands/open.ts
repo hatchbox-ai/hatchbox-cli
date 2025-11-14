@@ -187,7 +187,7 @@ export class OpenCommand {
 		if (!worktree) {
 			throw new Error(
 				`No worktree found for ${this.formatParsedInput(parsed)}. ` +
-					`Run 'hb start ${parsed.originalInput}' to create one.`
+					`Run 'il start ${parsed.originalInput}' to create one.`
 			)
 		}
 
@@ -326,7 +326,7 @@ export class OpenCommand {
 		if (!(await fs.pathExists(binFilePath))) {
 			throw new Error(
 				`CLI executable not found: ${binFilePath}\n` +
-					`Make sure the project is built (run 'hb start' first)`
+					`Make sure the project is built (run 'il start' first)`
 			)
 		}
 

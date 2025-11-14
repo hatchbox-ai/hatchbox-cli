@@ -1,6 +1,6 @@
 import { logger } from '../utils/logger.js'
 import { GitHubService } from '../lib/GitHubService.js'
-import { HatchboxManager } from '../lib/HatchboxManager.js'
+import { LoomManager } from '../lib/LoomManager.js'
 import { GitWorktreeManager } from '../lib/GitWorktreeManager.js'
 import { EnvironmentManager } from '../lib/EnvironmentManager.js'
 import { ClaudeContextManager } from '../lib/ClaudeContextManager.js'
@@ -30,15 +30,15 @@ export interface ParsedInput {
 
 export class StartCommand {
 	private gitHubService: GitHubService
-	private hatchboxManager: HatchboxManager | null = null
+	private loomManager: LoomManager | null = null
 	private agentManager: AgentManager
 	private settingsManager: SettingsManager
 	private enhancementService: IssueEnhancementService
-	private providedHatchboxManager: HatchboxManager | undefined
+	private providedLoomManager: LoomManager | undefined
 
 	constructor(
 		gitHubService?: GitHubService,
-		hatchboxManager?: HatchboxManager,
+		loomManager?: LoomManager,
 		agentManager?: AgentManager,
 		settingsManager?: SettingsManager
 	) {
@@ -50,8 +50,8 @@ export class StartCommand {
 			this.agentManager,
 			this.settingsManager
 		)
-		// Store provided HatchboxManager for testing, but don't initialize yet
-		this.providedHatchboxManager = hatchboxManager
+		// Store provided LoomManager for testing, but don't initialize yet
+		this.providedLoomManager = loomManager
 
 		// Load environment variables first
 		const envResult = loadEnvIntoProcess()
@@ -64,17 +64,17 @@ export class StartCommand {
 	}
 
 	/**
-	 * Initialize HatchboxManager with the main worktree path
+	 * Initialize LoomManager with the main worktree path
 	 * Uses lazy initialization to ensure we have the correct path
 	 */
-	private async initializeHatchboxManager(): Promise<HatchboxManager> {
-		if (this.hatchboxManager) {
-			return this.hatchboxManager
+	private async initializeLoomManager(): Promise<LoomManager> {
+		if (this.loomManager) {
+			return this.loomManager
 		}
 
-		if (this.providedHatchboxManager) {
-			this.hatchboxManager = this.providedHatchboxManager
-			return this.hatchboxManager
+		if (this.providedLoomManager) {
+			this.loomManager = this.providedLoomManager
+			return this.loomManager
 		}
 
 		// Find main worktree path
@@ -103,7 +103,7 @@ export class StartCommand {
 
 		const databaseManager = new DatabaseManager(neonProvider, environmentManager, databaseUrlEnvVarName)
 
-		this.hatchboxManager = new HatchboxManager(
+		this.loomManager = new LoomManager(
 			new GitWorktreeManager(mainWorktreePath),
 			this.gitHubService,
 			environmentManager,  // Reuse same instance
@@ -114,7 +114,7 @@ export class StartCommand {
 			databaseManager  // Add database manager
 		)
 
-		return this.hatchboxManager
+		return this.loomManager
 	}
 
 	/**
@@ -122,8 +122,8 @@ export class StartCommand {
 	 */
 	public async execute(input: StartCommandInput): Promise<void> {
 		try {
-			// Step 0: Initialize HatchboxManager with main worktree path
-			const hatchboxManager = await this.initializeHatchboxManager()
+			// Step 0: Initialize LoomManager with main worktree path
+			const loomManager = await this.initializeLoomManager()
 
 			// Step 1: Parse and validate input
 			const parsed = await this.parseInput(input.identifier)
@@ -163,10 +163,10 @@ export class StartCommand {
 			const setArguments = extractRawSetArguments()
 			const executablePath = getExecutablePath()
 
-			// Step 3: Log success and create hatchbox
+			// Step 3: Log success and create loom
 			logger.info(`✅ Validated input: ${this.formatParsedInput(parsed)}`)
 
-			// Step 4: Create hatchbox using HatchboxManager
+			// Step 4: Create loom using LoomManager
 			const identifier =
 				parsed.type === 'branch'
 					? parsed.branchName ?? ''
@@ -185,7 +185,7 @@ export class StartCommand {
 				enableTerminal,
 			})
 
-			const hatchbox = await hatchboxManager.createHatchbox({
+			const loom = await loomManager.createIloom({
 				type: parsed.type,
 				identifier,
 				originalInput: parsed.originalInput,
@@ -200,14 +200,14 @@ export class StartCommand {
 				},
 			})
 
-			logger.success(`✅ Created hatchbox: ${hatchbox.id} at ${hatchbox.path}`)
-			logger.info(`   Branch: ${hatchbox.branch}`)
+			logger.success(`✅ Created loom: ${loom.id} at ${loom.path}`)
+			logger.info(`   Branch: ${loom.branch}`)
 			// Only show port for web projects
-			if (hatchbox.capabilities?.includes('web')) {
-				logger.info(`   Port: ${hatchbox.port}`)
+			if (loom.capabilities?.includes('web')) {
+				logger.info(`   Port: ${loom.port}`)
 			}
-			if (hatchbox.githubData?.title) {
-				logger.info(`   Title: ${hatchbox.githubData.title}`)
+			if (loom.githubData?.title) {
+				logger.info(`   Title: ${loom.githubData.title}`)
 			}
 		} catch (error) {
 			if (error instanceof Error) {

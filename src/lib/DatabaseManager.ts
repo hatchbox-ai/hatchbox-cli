@@ -234,7 +234,7 @@ export class DatabaseManager {
         logger.debug(`❌ Custom database URL variable '${this.databaseUrlEnvVarName}' not found in .env file`)
         throw new Error(
           `Configured database URL environment variable '${this.databaseUrlEnvVarName}' not found in .env file. ` +
-          `Please add it to your .env file or update your Hatchbox configuration.`
+          `Please add it to your .env file or update your iloom configuration.`
         )
       }
 

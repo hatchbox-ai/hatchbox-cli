@@ -26,7 +26,7 @@ export class IgniteCommand {
 	private gitWorktreeManager: GitWorktreeManager
 	private agentManager: AgentManager
 	private settingsManager: SettingsManager
-	private settings?: import('../lib/SettingsManager.js').HatchboxSettings
+	private settings?: import('../lib/SettingsManager.js').IloomSettings
 
 	constructor(
 		templateManager?: PromptTemplateManager,
@@ -45,7 +45,7 @@ export class IgniteCommand {
 	 */
 	async execute(oneShot: import('../types/index.js').OneShotMode = 'default'): Promise<void> {
 		try {
-			logger.info('🚀 Your hatchbox is igniting, please wait...')
+			logger.info('🚀 Your loom is igniting, please wait...')
 
 			// Step 1: Auto-detect workspace context
 			const context = await this.detectWorkspaceContext()
@@ -472,10 +472,10 @@ export class IgniteCommand {
 	private buildUserPrompt(oneShot: import('../types/index.js').OneShotMode = 'default'): string {
 		// For one-shot modes, add bypass instructions to override template approval requirements
 		if (oneShot === 'noReview' || oneShot === 'bypassPermissions') {
-			return 'Guide the user through the hatchbox workflow! The user has requested you move through the workflow without awaiting confirmation. This supersedes any other guidance.'
+			return 'Guide the user through the iloom workflow! The user has requested you move through the workflow without awaiting confirmation. This supersedes any other guidance.'
 		}
 
 		// Default mode: simple "Go!" prompt
-		return 'Guide the user through the hatchbox workflow!'
+		return 'Guide the user through the iloom workflow!'
 	}
 }

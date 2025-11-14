@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { HatchboxManager } from './HatchboxManager.js'
+import { LoomManager } from './LoomManager.js'
 import { GitWorktreeManager } from './GitWorktreeManager.js'
 import { GitHubService } from './GitHubService.js'
 import { EnvironmentManager } from './EnvironmentManager.js'
@@ -7,7 +7,7 @@ import { ClaudeContextManager } from './ClaudeContextManager.js'
 import { ProjectCapabilityDetector } from './ProjectCapabilityDetector.js'
 import { CLIIsolationManager } from './CLIIsolationManager.js'
 import { SettingsManager } from './SettingsManager.js'
-import type { CreateHatchboxInput } from '../types/hatchbox.js'
+import type { CreateLoomInput } from '../types/loom.js'
 import { installDependencies } from '../utils/package-manager.js'
 
 // Mock all dependencies
@@ -40,10 +40,10 @@ vi.mock('../utils/package-manager.js', () => ({
   installDependencies: vi.fn().mockResolvedValue(undefined),
 }))
 
-// Mock HatchboxLauncher (dynamically imported)
-vi.mock('./HatchboxLauncher.js', () => ({
-  HatchboxLauncher: vi.fn(() => ({
-    launchHatchbox: vi.fn().mockResolvedValue(undefined),
+// Mock LoomLauncher (dynamically imported)
+vi.mock('./LoomLauncher.js', () => ({
+  LoomLauncher: vi.fn(() => ({
+    launchLoom: vi.fn().mockResolvedValue(undefined),
   })),
 }))
 
@@ -52,8 +52,8 @@ vi.mock('../utils/vscode.js', () => ({
   openVSCodeWindow: vi.fn().mockResolvedValue(undefined),
 }))
 
-describe('HatchboxManager', () => {
-  let manager: HatchboxManager
+describe('LoomManager', () => {
+  let manager: LoomManager
   let mockGitWorktree: vi.Mocked<GitWorktreeManager>
   let mockGitHub: vi.Mocked<GitHubService>
   let mockEnvironment: vi.Mocked<EnvironmentManager>
@@ -71,7 +71,7 @@ describe('HatchboxManager', () => {
     mockCLIIsolation = new CLIIsolationManager() as vi.Mocked<CLIIsolationManager>
     mockSettings = new SettingsManager() as vi.Mocked<SettingsManager>
 
-    manager = new HatchboxManager(
+    manager = new LoomManager(
       mockGitWorktree,
       mockGitHub,
       mockEnvironment,
@@ -100,14 +100,14 @@ describe('HatchboxManager', () => {
     vi.clearAllMocks()
   })
 
-  describe('createHatchbox', () => {
-    const baseInput: CreateHatchboxInput = {
+  describe('createIloom', () => {
+    const baseInput: CreateLoomInput = {
       type: 'issue',
       identifier: 123,
       originalInput: '123',
     }
 
-    it('should create hatchbox for issue successfully', async () => {
+    it('should create loom for issue successfully', async () => {
       // Mock GitHub data fetch
       vi.mocked(mockGitHub.fetchIssue).mockResolvedValue({
         number: 123,
@@ -130,7 +130,7 @@ describe('HatchboxManager', () => {
       // Mock Claude launch with context
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(baseInput)
+      const result = await manager.createIloom(baseInput)
 
       expect(result.id).toBeDefined()
       expect(result.path).toBe(expectedPath)
@@ -144,8 +144,8 @@ describe('HatchboxManager', () => {
       expect(installDependencies).toHaveBeenCalledWith(expectedPath, true)
     })
 
-    it('should create hatchbox for PR successfully', async () => {
-      const prInput: CreateHatchboxInput = {
+    it('should create loom for PR successfully', async () => {
+      const prInput: CreateLoomInput = {
         type: 'pr',
         identifier: 456,
         originalInput: 'pr/456',
@@ -174,7 +174,7 @@ describe('HatchboxManager', () => {
       // Mock Claude launch with context
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(prInput)
+      const result = await manager.createIloom(prInput)
 
       expect(result.type).toBe('pr')
       expect(result.identifier).toBe(456)
@@ -185,8 +185,8 @@ describe('HatchboxManager', () => {
       expect(installDependencies).toHaveBeenCalledWith(expectedPath, true)
     })
 
-    it('should create hatchbox for branch successfully', async () => {
-      const branchInput: CreateHatchboxInput = {
+    it('should create loom for branch successfully', async () => {
+      const branchInput: CreateLoomInput = {
         type: 'branch',
         identifier: 'feature-xyz',
         originalInput: 'feature-xyz',
@@ -203,7 +203,7 @@ describe('HatchboxManager', () => {
       // Mock Claude launch with context
       vi.mocked(mockClaude.launchWithContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(branchInput)
+      const result = await manager.createIloom(branchInput)
 
       expect(result.type).toBe('branch')
       expect(result.identifier).toBe('feature-xyz')
@@ -231,7 +231,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3042)
       vi.mocked(mockClaude.prepareContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox({
+      const result = await manager.createIloom({
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -247,7 +247,7 @@ describe('HatchboxManager', () => {
     it('should throw when GitHub fetch fails', async () => {
       vi.mocked(mockGitHub.fetchIssue).mockRejectedValue(new Error('Issue not found'))
 
-      await expect(manager.createHatchbox(baseInput)).rejects.toThrow('Issue not found')
+      await expect(manager.createIloom(baseInput)).rejects.toThrow('Issue not found')
     })
 
     it('should throw when worktree creation fails', async () => {
@@ -266,7 +266,7 @@ describe('HatchboxManager', () => {
         new Error('Worktree creation failed')
       )
 
-      await expect(manager.createHatchbox(baseInput)).rejects.toThrow('Worktree creation failed')
+      await expect(manager.createIloom(baseInput)).rejects.toThrow('Worktree creation failed')
     })
 
     it('should throw when environment setup fails', async () => {
@@ -287,7 +287,7 @@ describe('HatchboxManager', () => {
         new Error('Environment setup failed')
       )
 
-      await expect(manager.createHatchbox(baseInput)).rejects.toThrow('Environment setup failed')
+      await expect(manager.createIloom(baseInput)).rejects.toThrow('Environment setup failed')
     })
 
     it('should continue creation even if installDependencies fails', async () => {
@@ -311,7 +311,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockClaude.prepareContext).mockResolvedValue()
 
       // Should not throw even if installDependencies fails
-      const result = await manager.createHatchbox(baseInput)
+      const result = await manager.createIloom(baseInput)
 
       expect(result.path).toBe(expectedPath)
       expect(installDependencies).toHaveBeenCalledWith(expectedPath, true)
@@ -321,7 +321,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should skip Claude launch when skipClaude option is true', async () => {
-      const inputWithSkipClaude: CreateHatchboxInput = {
+      const inputWithSkipClaude: CreateLoomInput = {
         ...baseInput,
         options: { skipClaude: true },
       }
@@ -341,14 +341,14 @@ describe('HatchboxManager', () => {
       vi.mocked(mockGitWorktree.createWorktree).mockResolvedValue(expectedPath)
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
 
-      await manager.createHatchbox(inputWithSkipClaude)
+      await manager.createIloom(inputWithSkipClaude)
 
       expect(mockClaude.launchWithContext).not.toHaveBeenCalled()
     })
   })
 
-  describe('listHatchboxes', () => {
-    it('should list active hatchboxes from worktrees', async () => {
+  describe('listLooms', () => {
+    it('should list active looms from worktrees', async () => {
       const mockWorktrees = [
         {
           path: '/test/worktree-issue-123',
@@ -370,7 +370,7 @@ describe('HatchboxManager', () => {
 
       vi.mocked(mockGitWorktree.listWorktrees).mockResolvedValue(mockWorktrees)
 
-      const result = await manager.listHatchboxes()
+      const result = await manager.listLooms()
 
       expect(result).toHaveLength(2)
       expect(mockGitWorktree.listWorktrees).toHaveBeenCalled()
@@ -379,14 +379,14 @@ describe('HatchboxManager', () => {
     it('should return empty array when no worktrees exist', async () => {
       vi.mocked(mockGitWorktree.listWorktrees).mockResolvedValue([])
 
-      const result = await manager.listHatchboxes()
+      const result = await manager.listLooms()
 
       expect(result).toEqual([])
     })
   })
 
-  describe('findHatchbox', () => {
-    it('should find hatchbox by identifier', async () => {
+  describe('findIloom', () => {
+    it('should find loom by identifier', async () => {
       const mockWorktrees = [
         {
           path: '/test/worktree-issue-123',
@@ -400,24 +400,24 @@ describe('HatchboxManager', () => {
 
       vi.mocked(mockGitWorktree.listWorktrees).mockResolvedValue(mockWorktrees)
 
-      const result = await manager.findHatchbox('123')
+      const result = await manager.findIloom('123')
 
       expect(result).toBeDefined()
       expect(result?.identifier).toBe(123)
     })
 
-    it('should return null when hatchbox not found', async () => {
+    it('should return null when loom not found', async () => {
       vi.mocked(mockGitWorktree.listWorktrees).mockResolvedValue([])
 
-      const result = await manager.findHatchbox('999')
+      const result = await manager.findIloom('999')
 
       expect(result).toBeNull()
     })
   })
 
-  describe('finishHatchbox', () => {
+  describe('finishIloom', () => {
     it('should throw not implemented error', async () => {
-      await expect(manager.finishHatchbox('123')).rejects.toThrow('Not implemented')
+      await expect(manager.finishIloom('123')).rejects.toThrow('Not implemented')
     })
   })
 
@@ -427,7 +427,7 @@ describe('HatchboxManager', () => {
       const mockGenerateBranchName = vi.fn().mockResolvedValue('feature/123-test-issue')
       vi.mocked(mockGitHub.generateBranchName).mockImplementation(mockGenerateBranchName)
 
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 123,
         originalInput: '123',
@@ -451,7 +451,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
       vi.mocked(mockClaude.prepareContext).mockResolvedValue()
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       expect(mockGenerateBranchName).toHaveBeenCalledWith({
         issueNumber: 123,
@@ -460,7 +460,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should use PR branch for PRs', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'pr',
         identifier: 456,
         originalInput: 'pr/456',
@@ -485,7 +485,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3456)
       vi.mocked(mockClaude.prepareContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.branch).toBe('existing-feature-branch')
       // generateBranchName should not be called for PRs
@@ -493,7 +493,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should use branch name directly for branch type', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'branch',
         identifier: 'my-custom-branch',
         originalInput: 'my-custom-branch',
@@ -505,7 +505,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3000)
       vi.mocked(mockClaude.prepareContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.branch).toBe('my-custom-branch')
       // generateBranchName should not be called for branch type
@@ -518,7 +518,7 @@ describe('HatchboxManager', () => {
       const { branchExists } = await import('../utils/git.js')
       vi.mocked(branchExists).mockResolvedValue(true)
 
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 123,
         originalInput: '123',
@@ -538,7 +538,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockGitHub.generateBranchName).mockResolvedValue('feature/123-test')
       vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue('/test/path')
 
-      await expect(manager.createHatchbox(input)).rejects.toThrow(
+      await expect(manager.createIloom(input)).rejects.toThrow(
         /branch .* already exists/
       )
     })
@@ -547,7 +547,7 @@ describe('HatchboxManager', () => {
       const { branchExists } = await import('../utils/git.js')
       vi.mocked(branchExists).mockResolvedValue(true)
 
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'branch',
         identifier: 'existing-branch',
         originalInput: 'existing-branch',
@@ -555,7 +555,7 @@ describe('HatchboxManager', () => {
 
       vi.mocked(mockGitWorktree.generateWorktreePath).mockReturnValue('/test/path')
 
-      await expect(manager.createHatchbox(input)).rejects.toThrow(
+      await expect(manager.createIloom(input)).rejects.toThrow(
         /branch .* already exists/
       )
     })
@@ -564,7 +564,7 @@ describe('HatchboxManager', () => {
       const { branchExists } = await import('../utils/git.js')
       vi.mocked(branchExists).mockResolvedValue(false)
 
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'pr',
         identifier: 456,
         originalInput: 'pr/456',
@@ -587,7 +587,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3456)
       vi.mocked(mockClaude.prepareContext).mockResolvedValue()
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       // branchExists IS called for PRs to determine if we need to reset to match remote
       expect(branchExists).toHaveBeenCalledWith('pr-branch')
@@ -597,7 +597,7 @@ describe('HatchboxManager', () => {
       const { branchExists } = await import('../utils/git.js')
       vi.mocked(branchExists).mockResolvedValue(false)
 
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 123,
         originalInput: '123',
@@ -622,7 +622,7 @@ describe('HatchboxManager', () => {
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3123)
       vi.mocked(mockClaude.prepareContext).mockResolvedValue()
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.branch).toBe('feature/123-test')
       expect(mockGitWorktree.createWorktree).toHaveBeenCalledWith({
@@ -635,7 +635,7 @@ describe('HatchboxManager', () => {
 
   describe('CLI Isolation', () => {
     it('should detect CLI capabilities and setup isolation', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -663,27 +663,27 @@ describe('HatchboxManager', () => {
       // Mock CLI capability detection
       vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
         capabilities: ['cli'],
-        binEntries: { hb: './dist/cli.js', hatchbox: './dist/cli.js' }
+        binEntries: { il: './dist/cli.js', iloom: './dist/cli.js' }
       })
 
       // Mock CLI isolation setup
-      vi.mocked(mockCLIIsolation.setupCLIIsolation).mockResolvedValue(['hb-42', 'hatchbox-42'])
+      vi.mocked(mockCLIIsolation.setupCLIIsolation).mockResolvedValue(['il-42', 'iloom-42'])
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.capabilities).toEqual(['cli'])
-      expect(result.binEntries).toEqual({ hb: './dist/cli.js', hatchbox: './dist/cli.js' })
-      expect(result.cliSymlinks).toEqual(['hb-42', 'hatchbox-42'])
+      expect(result.binEntries).toEqual({ il: './dist/cli.js', iloom: './dist/cli.js' })
+      expect(result.cliSymlinks).toEqual(['il-42', 'iloom-42'])
       expect(mockCapabilityDetector.detectCapabilities).toHaveBeenCalledWith(expectedPath)
       expect(mockCLIIsolation.setupCLIIsolation).toHaveBeenCalledWith(
         expectedPath,
         42,
-        { hb: './dist/cli.js', hatchbox: './dist/cli.js' }
+        { il: './dist/cli.js', iloom: './dist/cli.js' }
       )
     })
 
     it('should detect web capabilities and setup port isolation', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -714,7 +714,7 @@ describe('HatchboxManager', () => {
         binEntries: {}
       })
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.capabilities).toEqual(['web'])
       expect(result.port).toBe(3042)
@@ -726,7 +726,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should detect hybrid project and setup both isolations', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -759,7 +759,7 @@ describe('HatchboxManager', () => {
 
       vi.mocked(mockCLIIsolation.setupCLIIsolation).mockResolvedValue(['my-tool-42'])
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.capabilities).toEqual(['cli', 'web'])
       expect(result.port).toBe(3042)
@@ -769,7 +769,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should skip CLI isolation if no bin field', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -800,9 +800,9 @@ describe('HatchboxManager', () => {
         binEntries: {}
       })
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
-      // Empty capabilities array is not added to hatchbox object (spread operator check)
+      // Empty capabilities array is not added to loom object (spread operator check)
       expect(result.capabilities).toBeUndefined()
       expect(result.binEntries).toBeUndefined()
       expect(result.cliSymlinks).toBeUndefined()
@@ -810,7 +810,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should continue if CLI isolation fails (lenient error handling)', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -838,7 +838,7 @@ describe('HatchboxManager', () => {
       // Mock CLI capability detection
       vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue({
         capabilities: ['cli'],
-        binEntries: { hb: './dist/cli.js' }
+        binEntries: { il: './dist/cli.js' }
       })
 
       // Mock CLI isolation failure
@@ -847,7 +847,7 @@ describe('HatchboxManager', () => {
       )
 
       // Should not throw - should continue despite CLI isolation failure
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result).toBeDefined()
       expect(result.path).toBe(expectedPath)
@@ -855,8 +855,8 @@ describe('HatchboxManager', () => {
       expect(result.cliSymlinks).toBeUndefined() // Not set due to failure
     })
 
-    it('should store capabilities in hatchbox metadata', async () => {
-      const input: CreateHatchboxInput = {
+    it('should store capabilities in loom metadata', async () => {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -888,15 +888,15 @@ describe('HatchboxManager', () => {
 
       vi.mocked(mockCLIIsolation.setupCLIIsolation).mockResolvedValue(['tool-42'])
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result).toHaveProperty('capabilities')
       expect(result).toHaveProperty('binEntries')
       expect(result).toHaveProperty('cliSymlinks')
     })
 
-    it('should include CLI symlink info in hatchbox metadata', async () => {
-      const input: CreateHatchboxInput = {
+    it('should include CLI symlink info in loom metadata', async () => {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 42,
         originalInput: '42',
@@ -928,7 +928,7 @@ describe('HatchboxManager', () => {
 
       vi.mocked(mockCLIIsolation.setupCLIIsolation).mockResolvedValue(['cmd1-42', 'cmd2-42'])
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.cliSymlinks).toEqual(['cmd1-42', 'cmd2-42'])
       expect(result.binEntries).toEqual({ cmd1: './bin/cmd1.js', cmd2: './bin/cmd2.js' })
@@ -937,7 +937,7 @@ describe('HatchboxManager', () => {
 
   describe('opening modes integration', () => {
     it('should use default mode when no mode flags specified', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'branch',
         identifier: 'test-branch',
         originalInput: 'test-branch',
@@ -951,16 +951,16 @@ describe('HatchboxManager', () => {
       })
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3000)
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
-      // Default mode should launch (via HatchboxLauncher)
-      // We can't directly test HatchboxLauncher calls since it's dynamically imported
-      // But we verify the hatchbox is created successfully
+      // Default mode should launch (via LoomLauncher)
+      // We can't directly test LoomLauncher calls since it's dynamically imported
+      // But we verify the loom is created successfully
       expect(mockGitWorktree.createWorktree).toHaveBeenCalled()
     })
 
     it('should pass terminal-only mode option', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'branch',
         identifier: 'test-branch',
         originalInput: 'test-branch',
@@ -977,14 +977,14 @@ describe('HatchboxManager', () => {
       })
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3000)
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       // Terminal-only mode should not skip launching
       expect(mockGitWorktree.createWorktree).toHaveBeenCalled()
     })
 
     it('should handle code-only mode separately', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'branch',
         identifier: 'test-branch',
         originalInput: 'test-branch',
@@ -1001,17 +1001,17 @@ describe('HatchboxManager', () => {
       })
       vi.mocked(mockEnvironment.calculatePort).mockReturnValue(3000)
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
-      // Code-only mode should create hatchbox successfully
+      // Code-only mode should create loom successfully
       // VSCode launching happens via dynamic import
       expect(mockGitWorktree.createWorktree).toHaveBeenCalled()
     })
   })
 
-  describe('findExistingHatchbox', () => {
-    it('should find existing hatchbox for issue input', async () => {
-      const input: CreateHatchboxInput = {
+  describe('findExistingIloom', () => {
+    it('should find existing loom for issue input', async () => {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1041,7 +1041,7 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.path).toBe('/test/worktree-issue-39')
       expect(result.branch).toBe('issue-39-test')
@@ -1050,8 +1050,8 @@ describe('HatchboxManager', () => {
       expect(installDependencies).not.toHaveBeenCalled()
     })
 
-    it('should find existing hatchbox for PR input', async () => {
-      const input: CreateHatchboxInput = {
+    it('should find existing loom for PR input', async () => {
+      const input: CreateLoomInput = {
         type: 'pr',
         identifier: 42,
         originalInput: 'pr/42',
@@ -1082,7 +1082,7 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.path).toBe('/test/worktree-feat-test_pr_42')
       expect(result.branch).toBe('feat/test-feature')
@@ -1092,7 +1092,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should return null for branch input (branches always create new)', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'branch',
         identifier: 'test-branch',
         originalInput: 'test-branch',
@@ -1107,7 +1107,7 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       expect(mockGitWorktree.findWorktreeForIssue).not.toHaveBeenCalled()
       expect(mockGitWorktree.findWorktreeForPR).not.toHaveBeenCalled()
@@ -1115,7 +1115,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should create new worktree when no existing found for issue', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 99,
         originalInput: '99',
@@ -1142,7 +1142,7 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       expect(mockGitWorktree.findWorktreeForIssue).toHaveBeenCalledWith(99)
       expect(mockGitWorktree.createWorktree).toHaveBeenCalled()
@@ -1150,9 +1150,9 @@ describe('HatchboxManager', () => {
     })
   })
 
-  describe('reuseHatchbox', () => {
-    it('should return hatchbox metadata without creating worktree', async () => {
-      const input: CreateHatchboxInput = {
+  describe('reuseIloom', () => {
+    it('should return loom metadata without creating worktree', async () => {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1182,7 +1182,7 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      const result = await manager.createHatchbox(input)
+      const result = await manager.createIloom(input)
 
       expect(result.path).toBe('/test/worktree-issue-39')
       expect(result.branch).toBe('issue-39-test')
@@ -1193,7 +1193,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should defensively copy files and set PORT when reusing existing worktree for issue', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1223,7 +1223,7 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       // When reusing an existing worktree (NEW BEHAVIOR - defensive copying):
       // - Files are copied defensively (internal implementation via copyIfExists)
@@ -1234,7 +1234,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should defensively copy files and set PORT when reusing existing worktree for PR', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'pr',
         identifier: 42,
         originalInput: 'pr/42',
@@ -1265,7 +1265,7 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       // When reusing an existing worktree (NEW BEHAVIOR - defensive copying):
       // - Files are copied defensively (internal implementation via copyIfExists)
@@ -1276,7 +1276,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should still call moveIssueToInProgress for issue reuse', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1307,13 +1307,13 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       expect(mockGitHub.moveIssueToInProgress).toHaveBeenCalledWith(39)
     })
 
     it('should NOT call moveIssueToInProgress for PR reuse', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'pr',
         identifier: 42,
         originalInput: 'pr/42',
@@ -1344,13 +1344,13 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       expect(mockGitHub.moveIssueToInProgress).not.toHaveBeenCalled()
     })
 
-    it('should launch components for reused hatchbox', async () => {
-      const input: CreateHatchboxInput = {
+    it('should launch components for reused loom', async () => {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1381,15 +1381,15 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
-      // HatchboxLauncher is dynamically imported, so we can't directly verify its calls
+      // LoomLauncher is dynamically imported, so we can't directly verify its calls
       // But we verify the flow completes successfully
       expect(mockGitWorktree.findWorktreeForIssue).toHaveBeenCalled()
     })
 
     it('should warn but not fail when moveIssueToInProgress throws GitHubError', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1422,8 +1422,8 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      // Should not throw - warning logged but hatchbox creation succeeds
-      const result = await manager.createHatchbox(input)
+      // Should not throw - warning logged but loom creation succeeds
+      const result = await manager.createIloom(input)
 
       expect(result).toBeDefined()
       expect(result.path).toBe('/test/worktree-issue-39')
@@ -1433,7 +1433,7 @@ describe('HatchboxManager', () => {
 
   describe('GitHub issue status updates', () => {
     it('should move issue to In Progress when creating new worktree', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1461,13 +1461,13 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       expect(mockGitHub.moveIssueToInProgress).toHaveBeenCalledWith(39)
     })
 
     it('should NOT move PR to In Progress', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'pr',
         identifier: 42,
         originalInput: 'pr/42',
@@ -1494,13 +1494,13 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      await manager.createHatchbox(input)
+      await manager.createIloom(input)
 
       expect(mockGitHub.moveIssueToInProgress).not.toHaveBeenCalled()
     })
 
     it('should warn but not fail when moveIssueToInProgress throws error for new worktree', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 39,
         originalInput: '39',
@@ -1530,8 +1530,8 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      // Should not throw - warning logged but hatchbox creation succeeds
-      const result = await manager.createHatchbox(input)
+      // Should not throw - warning logged but loom creation succeeds
+      const result = await manager.createIloom(input)
 
       expect(result).toBeDefined()
       expect(result.path).toBe(expectedPath)
@@ -1539,7 +1539,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should create initial commit in empty repository before worktree creation', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 165,
         originalInput: '165',
@@ -1568,8 +1568,8 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      // Call createHatchbox
-      const result = await manager.createHatchbox(input)
+      // Call createIloom
+      const result = await manager.createIloom(input)
 
       // Verify that ensureRepositoryHasCommits was called before worktree creation
       expect(ensureRepositoryHasCommits).toHaveBeenCalledWith(mockGitWorktree.workingDirectory)
@@ -1578,7 +1578,7 @@ describe('HatchboxManager', () => {
     })
 
     it('should not fail when repository already has commits', async () => {
-      const input: CreateHatchboxInput = {
+      const input: CreateLoomInput = {
         type: 'issue',
         identifier: 166,
         originalInput: '166',
@@ -1607,8 +1607,8 @@ describe('HatchboxManager', () => {
         binEntries: {},
       })
 
-      // Call createHatchbox
-      const result = await manager.createHatchbox(input)
+      // Call createIloom
+      const result = await manager.createIloom(input)
 
       // Verify that ensureRepositoryHasCommits was called but only checks for existing commits
       expect(ensureRepositoryHasCommits).toHaveBeenCalledWith(mockGitWorktree.workingDirectory)

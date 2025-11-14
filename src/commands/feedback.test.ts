@@ -67,7 +67,7 @@ describe('FeedbackCommand', () => {
 				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue('Enhanced description')
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/123',
 				})
 				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
 
@@ -84,20 +84,20 @@ describe('FeedbackCommand', () => {
 				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue('Enhanced description')
 			})
 
-			it('should call createEnhancedIssue with hatchbox-cli repository parameter and no labels', async () => {
+			it('should call createEnhancedIssue with iloom-cli repository parameter and no labels', async () => {
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 456,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/456',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/456',
 				})
 				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
 
 				await command.execute({ description: validDescription, options: {} })
 
-				// Verify repository parameter is 'hatchbox-ai/hatchbox-cli' and no labels are passed
+				// Verify repository parameter is 'iloom-ai/iloom-cli' and no labels are passed
 				expect(mockEnhancementService.createEnhancedIssue).toHaveBeenCalledWith(
 					validDescription,
 					expect.stringContaining('<!-- CLI GENERATED FEEDBACK'),
-					'hatchbox-ai/hatchbox-cli',
+					'iloom-ai/iloom-cli',
 					undefined // No labels
 				)
 			})
@@ -106,7 +106,7 @@ describe('FeedbackCommand', () => {
 				const expectedIssueNumber = 789
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: expectedIssueNumber,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/789',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/789',
 				})
 				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockResolvedValue(undefined)
 
@@ -132,7 +132,7 @@ describe('FeedbackCommand', () => {
 				vi.mocked(mockEnhancementService.enhanceDescription).mockResolvedValue('Enhanced description')
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/123',
 				})
 			})
 
@@ -141,7 +141,7 @@ describe('FeedbackCommand', () => {
 
 				await command.execute({ description: validDescription, options: {} })
 
-				expect(mockEnhancementService.waitForReviewAndOpen).toHaveBeenCalledWith(123, false, 'hatchbox-ai/hatchbox-cli')
+				expect(mockEnhancementService.waitForReviewAndOpen).toHaveBeenCalledWith(123, false, 'iloom-ai/iloom-cli')
 				expect(mockEnhancementService.waitForReviewAndOpen).toHaveBeenCalledTimes(1)
 			})
 
@@ -150,7 +150,7 @@ describe('FeedbackCommand', () => {
 
 				await command.execute({ description: validDescription, options: {} })
 
-				expect(mockEnhancementService.waitForReviewAndOpen).toHaveBeenCalledWith(123, false, 'hatchbox-ai/hatchbox-cli')
+				expect(mockEnhancementService.waitForReviewAndOpen).toHaveBeenCalledWith(123, false, 'iloom-ai/iloom-cli')
 			})
 
 			it('should wait for review after issue creation', async () => {
@@ -158,7 +158,7 @@ describe('FeedbackCommand', () => {
 
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockImplementation(async () => {
 					calls.push('create')
-					return { number: 123, url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123' }
+					return { number: 123, url: 'https://github.com/iloom-ai/iloom-cli/issues/123' }
 				})
 
 				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockImplementation(async () => {
@@ -193,7 +193,7 @@ describe('FeedbackCommand', () => {
 
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockImplementation(async () => {
 					calls.push('create')
-					return { number: 123, url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123' }
+					return { number: 123, url: 'https://github.com/iloom-ai/iloom-cli/issues/123' }
 				})
 
 				vi.mocked(mockEnhancementService.waitForReviewAndOpen).mockImplementation(async () => {
@@ -215,7 +215,7 @@ describe('FeedbackCommand', () => {
 			it('should include CLI version marker in issue body', async () => {
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/123',
 				})
 
 				await command.execute({ description: validDescription, options: {} })
@@ -223,7 +223,7 @@ describe('FeedbackCommand', () => {
 				expect(mockEnhancementService.createEnhancedIssue).toHaveBeenCalledWith(
 					validDescription,
 					expect.stringContaining('<!-- CLI GENERATED FEEDBACK v'),
-					'hatchbox-ai/hatchbox-cli',
+					'iloom-ai/iloom-cli',
 					undefined
 				)
 			})
@@ -231,7 +231,7 @@ describe('FeedbackCommand', () => {
 			it('should include diagnostic information in issue body', async () => {
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/123',
 				})
 
 				await command.execute({ description: validDescription, options: {} })
@@ -251,7 +251,7 @@ describe('FeedbackCommand', () => {
 			it('should include original description in issue body', async () => {
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/123',
 				})
 
 				await command.execute({ description: validDescription, options: {} })
@@ -265,7 +265,7 @@ describe('FeedbackCommand', () => {
 			it('should handle diagnostic gathering failures gracefully', async () => {
 				vi.mocked(mockEnhancementService.createEnhancedIssue).mockResolvedValue({
 					number: 123,
-					url: 'https://github.com/hatchbox-ai/hatchbox-cli/issues/123',
+					url: 'https://github.com/iloom-ai/iloom-cli/issues/123',
 				})
 
 				// Even if diagnostics fail, the command should still succeed

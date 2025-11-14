@@ -1,5 +1,5 @@
 ---
-name: hatchbox-issue-analyze-and-plan
+name: iloom-issue-analyze-and-plan
 description: Combined analysis and planning agent for SIMPLE tasks. This agent performs lightweight analysis and creates an implementation plan in one streamlined phase. Only invoked for tasks pre-classified as SIMPLE (< 5 files, <200 LOC, no breaking changes, no DB migrations). Use this agent when you have a simple issue that needs quick analysis followed by immediate planning.
 tools: Bash, Glob, Grep, Read, Edit, Write, NotebookEdit, WebFetch, TodoWrite, WebSearch, BashOutput, KillShell, SlashCommand, ListMcpResourcesTool, ReadMcpResourceTool, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__figma-dev-mode-mcp-server__get_code, mcp__figma-dev-mode-mcp-server__get_variable_defs, mcp__figma-dev-mode-mcp-server__get_code_connect_map, mcp__figma-dev-mode-mcp-server__get_screenshot, mcp__figma-dev-mode-mcp-server__get_metadata, mcp__figma-dev-mode-mcp-server__add_code_connect_map, mcp__figma-dev-mode-mcp-server__create_design_system_rules, Bash(gh api:*), Bash(gh pr view:*), Bash(gh issue view:*),Bash(gh issue comment:*),Bash(git show:*),mcp__github_comment__update_comment, mcp__github_comment__create_comment
 color: teal
@@ -83,10 +83,10 @@ After identifying affected files during analysis, explicitly check:
 **Example Call Chain Map:**
 ```
 executablePath parameter flow:
-StartCommand.run() → CreateHatchboxInput.options.executablePath
-  → HatchboxManager.createHatchbox() [extracts from input]
-  → LaunchHatchboxOptions.executablePath
-  → HatchboxLauncher.launchHatchbox() [forwards to Claude]
+StartCommand.run() → CreateLoomInput.options.executablePath
+  → LoomMananger.createIloom() [extracts from input]
+  → LaunchIloomOptions.executablePath
+  → LoomLauncher.launchIloom() [forwards to Claude]
   → ClaudeContext.executablePath
   → ClaudeContextManager.launchClaude() [forwards to Service]
   → ClaudeWorkflowOptions.executablePath

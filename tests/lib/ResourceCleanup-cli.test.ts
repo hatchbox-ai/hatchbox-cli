@@ -79,7 +79,7 @@ describe('ResourceCleanup - CLI Integration', () => {
       vi.mocked(processManager.detectDevServer).mockResolvedValue(null)
       vi.mocked(gitWorktree.removeWorktree).mockResolvedValue(undefined)
       vi.mocked(database.shouldUseDatabaseBranching).mockResolvedValue(false)
-      vi.mocked(cliIsolation.cleanupVersionedExecutables).mockResolvedValue(['hb-42', 'hatchbox-42'])
+      vi.mocked(cliIsolation.cleanupVersionedExecutables).mockResolvedValue(['il-42', 'loom-42'])
 
       const result = await resourceCleanup.cleanupWorktree(parsed)
 
@@ -144,7 +144,7 @@ describe('ResourceCleanup - CLI Integration', () => {
       vi.mocked(processManager.detectDevServer).mockResolvedValue(null)
       vi.mocked(gitWorktree.removeWorktree).mockResolvedValue(undefined)
       vi.mocked(database.shouldUseDatabaseBranching).mockResolvedValue(false)
-      vi.mocked(cliIsolation.cleanupVersionedExecutables).mockResolvedValue(['hb-feat/new-feature'])
+      vi.mocked(cliIsolation.cleanupVersionedExecutables).mockResolvedValue(['il-feat/new-feature'])
 
       const result = await resourceCleanup.cleanupWorktree(parsed)
 

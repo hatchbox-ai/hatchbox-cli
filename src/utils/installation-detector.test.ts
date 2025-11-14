@@ -22,9 +22,9 @@ describe('detectInstallationMethod', () => {
     vi.mocked(fs.lstatSync).mockReturnValue(mockStats)
 
     // Mock realpathSync to return a path outside node_modules (local development)
-    vi.mocked(fs.realpathSync).mockReturnValue('/Users/dev/hatchbox-cli/dist/cli.js')
+    vi.mocked(fs.realpathSync).mockReturnValue('/Users/dev/iloom-cli/dist/cli.js')
 
-    const result = detectInstallationMethod('/usr/local/bin/hb')
+    const result = detectInstallationMethod('/usr/local/bin/il')
     expect(result).toBe('linked')
   })
 
@@ -37,13 +37,13 @@ describe('detectInstallationMethod', () => {
 
     // Mock realpathSync to return a path in node_modules
     vi.mocked(fs.realpathSync).mockReturnValue(
-      '/Users/user/.nvm/versions/node/v22.17.0/lib/node_modules/@hatchbox-ai/hatchbox-cli/dist/cli.js'
+      '/Users/user/.nvm/versions/node/v22.17.0/lib/node_modules/@iloom/cli/dist/cli.js'
     )
 
     // Mock existsSync to return false (not source directory)
     vi.mocked(fs.existsSync).mockReturnValue(false)
 
-    const result = detectInstallationMethod('/Users/user/.nvm/versions/node/v22.17.0/bin/hb')
+    const result = detectInstallationMethod('/Users/user/.nvm/versions/node/v22.17.0/bin/il')
     expect(result).toBe('global')
   })
 
@@ -60,7 +60,7 @@ describe('detectInstallationMethod', () => {
       return pathStr.includes('/src') || pathStr.includes('package.json')
     })
 
-    const result = detectInstallationMethod('/Users/dev/hatchbox/dist/cli.js')
+    const result = detectInstallationMethod('/Users/dev/iloom/dist/cli.js')
     expect(result).toBe('local')
   })
 
@@ -74,7 +74,7 @@ describe('detectInstallationMethod', () => {
     // Mock existsSync to return false (not source directory)
     vi.mocked(fs.existsSync).mockReturnValue(false)
 
-    const result = detectInstallationMethod('/usr/local/lib/node_modules/hatchbox-cli/dist/cli.js')
+    const result = detectInstallationMethod('/usr/local/lib/node_modules/iloom-cli/dist/cli.js')
     expect(result).toBe('global')
   })
 
@@ -85,7 +85,7 @@ describe('detectInstallationMethod', () => {
     vi.mocked(fs.lstatSync).mockReturnValue(mockStats)
     vi.mocked(fs.existsSync).mockReturnValue(false)
 
-    const result = detectInstallationMethod('/Users/user/.nvm/versions/node/v18.0.0/lib/node_modules/hatchbox-cli/dist/cli.js')
+    const result = detectInstallationMethod('/Users/user/.nvm/versions/node/v18.0.0/lib/node_modules/iloom-cli/dist/cli.js')
     expect(result).toBe('global')
   })
 
@@ -96,7 +96,7 @@ describe('detectInstallationMethod', () => {
     vi.mocked(fs.lstatSync).mockReturnValue(mockStats)
     vi.mocked(fs.existsSync).mockReturnValue(false)
 
-    const result = detectInstallationMethod('/opt/homebrew/lib/node_modules/hatchbox-cli/dist/cli.js')
+    const result = detectInstallationMethod('/opt/homebrew/lib/node_modules/iloom-cli/dist/cli.js')
     expect(result).toBe('global')
   })
 
@@ -107,7 +107,7 @@ describe('detectInstallationMethod', () => {
     vi.mocked(fs.lstatSync).mockReturnValue(mockStats)
     vi.mocked(fs.existsSync).mockReturnValue(false)
 
-    const result = detectInstallationMethod('C:\\Users\\user\\AppData\\Roaming\\npm\\node_modules\\hatchbox-cli\\dist\\cli.js')
+    const result = detectInstallationMethod('C:\\Users\\user\\AppData\\Roaming\\npm\\node_modules\\iloom-cli\\dist\\cli.js')
     expect(result).toBe('global')
   })
 

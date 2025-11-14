@@ -1,8 +1,8 @@
-# Claude CLI Integration in Hatchbox - Comprehensive Architecture Report
+# Claude CLI Integration in iloom - Comprehensive Architecture Report
 
 ## Executive Summary
 
-The Hatchbox CLI tool integrates Claude through a layered architecture consisting of:
+The iloom CLI tool integrates Claude through a layered architecture consisting of:
 1. **Low-level Claude execution** via `launchClaude()` utility function
 2. **Service layer** providing workflow-specific logic via `ClaudeService` class
 3. **Context management** via `ClaudeContextManager` for auto-detecting workspace context
@@ -11,7 +11,7 @@ The Hatchbox CLI tool integrates Claude through a layered architecture consistin
 Key architectural patterns:
 - **Headless mode** uses `-p` flag to Claude CLI for capturing stdout
 - **Interactive mode** uses `stdio: 'inherit'` to stream all output to current terminal
-- **Debug logging** controlled by `HATCHBOX_DEBUG` env var and `--debug` flag
+- **Debug logging** controlled by `ILOOM_DEBUG` env var and `--debug` flag
 - **JSON output** available for list command via `--json` flag (outputs raw data with no emoji formatting)
 
 ---
@@ -19,7 +19,7 @@ Key architectural patterns:
 ## 1. How Claude CLI is Currently Invoked
 
 ### Primary Entry Point: `launchClaude()` Function
-**File:** `/Users/adam/Documents/Projects/hatchbox-ai/fix-issue-165-empty-repo-start/src/utils/claude.ts`
+**File:** `/Users/adam/Documents/Projects/iloom-cli/fix-issue-165-empty-repo-start/src/utils/claude.ts`
 
 ```typescript
 export async function launchClaude(
@@ -148,7 +148,7 @@ if (headless) {
 ## 3. Current Debug/Logging Infrastructure
 
 ### Global Debug Logger
-**File:** `/Users/adam/Documents/Projects/hatchbox-ai/fix-issue-165-empty-repo-start/src/utils/logger.ts`
+**File:** `/Users/adam/Documents/Projects/iloom-cli/fix-issue-165-empty-repo-start/src/utils/logger.ts`
 
 The logger provides structured output with emoji prefixes:
 
@@ -168,7 +168,7 @@ export const logger: Logger = {
 
 **1. Environment Variable:**
 ```bash
-HATCHBOX_DEBUG=true hb start 123
+ILOOM_DEBUG=true hb start 123
 ```
 
 **2. CLI Flag:**
@@ -187,7 +187,7 @@ if (logger.isDebugEnabled()) { /* ... */ }
 1. **In CLI startup** (`src/cli.ts` lines 42-52):
    ```typescript
    .hook('preAction', async (thisCommand) => {
-     const debugEnabled = options.debug || process.env.HATCHBOX_DEBUG === 'true'
+     const debugEnabled = options.debug || process.env.ILOOM_DEBUG === 'true'
      logger.setDebug(debugEnabled)
    })
    ```
@@ -222,7 +222,7 @@ if (logger.isDebugEnabled()) { /* ... */ }
 
 **Current Implementation:** Limited to `list` command
 
-**File:** `/Users/adam/Documents/Projects/hatchbox-ai/fix-issue-165-empty-repo-start/src/cli.ts` (lines 320-340)
+**File:** `/Users/adam/Documents/Projects/iloom-cli/fix-issue-165-empty-repo-start/src/cli.ts` (lines 320-340)
 
 ```typescript
 program
@@ -278,7 +278,7 @@ The design prioritizes interactive user experience over machine consumption of C
 ## 5. Service Layer Architecture
 
 ### ClaudeService Class
-**File:** `/Users/adam/Documents/Projects/hatchbox-ai/fix-issue-165-empty-repo-start/src/lib/ClaudeService.ts`
+**File:** `/Users/adam/Documents/Projects/iloom-cli/fix-issue-165-empty-repo-start/src/lib/ClaudeService.ts`
 
 Provides workflow-specific launching:
 
@@ -304,7 +304,7 @@ async launchForWorkflow(options: ClaudeWorkflowOptions): Promise<string | void>
 ## 6. Context Management Layer
 
 ### ClaudeContextManager
-**File:** `/Users/adam/Documents/Projects/hatchbox-ai/fix-issue-165-empty-repo-start/src/lib/ClaudeContextManager.ts`
+**File:** `/Users/adam/Documents/Projects/iloom-cli/fix-issue-165-empty-repo-start/src/lib/ClaudeContextManager.ts`
 
 Bridges context preparation and Claude launching:
 
@@ -313,7 +313,7 @@ async launchWithContext(context: ClaudeContext, headless: boolean): Promise<stri
 ```
 
 ### Context Detection in IgniteCommand
-**File:** `/Users/adam/Documents/Projects/hatchbox-ai/fix-issue-165-empty-repo-start/src/commands/ignite.ts`
+**File:** `/Users/adam/Documents/Projects/iloom-cli/fix-issue-165-empty-repo-start/src/commands/ignite.ts`
 
 Auto-detects workspace context by:
 
@@ -340,8 +340,8 @@ Directory PR pattern → Directory issue pattern → Git branch pattern → Regu
 
 1. **Start Command** (`hb start <issue>`):
    - Creates worktree and environment
-   - Calls HatchboxLauncher to open terminals
-   - HatchboxLauncher → ClaudeContextManager → ClaudeService → launchClaude()
+   - Calls LoomLauncher to open terminals
+   - LoomLauncher → ClaudeContextManager → ClaudeService → launchClaude()
 
 2. **Ignite Command** (`hb ignite`):
    - Auto-detects context in current directory
@@ -364,7 +364,7 @@ Command Input (e.g., hb start 123)
     ↓
 Command Handler (StartCommand, FinishCommand, etc.)
     ↓
-HatchboxManager/HatchboxLauncher
+LoomMananger/LoomLauncher
     ↓
 ClaudeContextManager.launchWithContext()
     ↓
@@ -387,10 +387,10 @@ execa('claude', args, { stdio: 'inherit' | input })
 ## 8. Agent System Architecture
 
 ### Agent Loading
-**File:** `/Users/adam/Documents/Projects/hatchbox-ai/fix-issue-165-empty-repo-start/src/lib/AgentManager.ts`
+**File:** `/Users/adam/Documents/Projects/iloom-cli/fix-issue-165-empty-repo-start/src/lib/AgentManager.ts`
 
 ```typescript
-async loadAgents(settings?: HatchboxSettings): Promise<AgentConfigs>
+async loadAgents(settings?: IloomSettings): Promise<AgentConfigs>
 ```
 
 **Process:**
@@ -404,7 +404,7 @@ async loadAgents(settings?: HatchboxSettings): Promise<AgentConfigs>
 **Agent Definition Format** (markdown with frontmatter):
 ```yaml
 ---
-name: hatchbox-issue-implementer
+name: iloom-issue-implementer
 description: Implements the solution for an issue
 model: sonnet
 tools: fetch_webpage, read_file, write_file, bash
@@ -415,13 +415,13 @@ color: blue
 ```
 
 **Current Agents:**
-- `hatchbox-issue-analyzer` - Analyzes issues
-- `hatchbox-issue-planner` - Plans implementation approach
-- `hatchbox-issue-implementer` - Writes code
-- `hatchbox-issue-reviewer` - Reviews implementation
-- `hatchbox-issue-enhancer` - Enhances issues with details
-- `hatchbox-issue-analyze-and-plan` - Combined analyzer/planner
-- `hatchbox-issue-complexity-evaluator` - Evaluates issue complexity
+- `iloom-issue-analyzer` - Analyzes issues
+- `iloom-issue-planner` - Plans implementation approach
+- `iloom-issue-implementer` - Writes code
+- `iloom-issue-reviewer` - Reviews implementation
+- `iloom-issue-enhancer` - Enhances issues with details
+- `iloom-issue-analyze-and-plan` - Combined analyzer/planner
+- `iloom-issue-complexity-evaluator` - Evaluates issue complexity
 
 ---
 
@@ -544,7 +544,7 @@ Substituted via `PromptTemplateManager`:
 ### Implemented
 ✅ Headless mode (for branch name generation, JSON output)
 ✅ Interactive mode (for user-facing workflows)
-✅ Debug logging via `HATCHBOX_DEBUG` or `--debug`
+✅ Debug logging via `ILOOM_DEBUG` or `--debug`
 ✅ JSON output for `list` command
 ✅ Agent system with custom model overrides
 ✅ MCP integration for GitHub comments

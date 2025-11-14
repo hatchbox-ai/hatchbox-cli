@@ -5,7 +5,7 @@ import { logger } from '../utils/logger.js'
 export type ShellType = 'bash' | 'zsh' | 'fish' | 'unknown'
 
 /**
- * Manages shell autocomplete functionality for the Hatchbox CLI
+ * Manages shell autocomplete functionality for the iloom CLI
  * Uses omelette to provide tab-completion for commands in bash/zsh/fish
  */
 export class ShellCompletion {
@@ -27,8 +27,8 @@ export class ShellCompletion {
 
   private detectCommandName(): string {
     // Get the actual command name used to invoke this script
-    const scriptPath = process.argv[1] ?? 'hb'
-    const baseName = scriptPath.split('/').pop() ?? 'hb'
+    const scriptPath = process.argv[1] ?? 'il'
+    const baseName = scriptPath.split('/').pop() ?? 'il'
 
     // Remove .js extension if present
     return baseName.replace(/\.js$/, '')
@@ -36,7 +36,7 @@ export class ShellCompletion {
 
   private setupHandlers(): void {
     // Handler for command-level completion
-    // When user types: hb <TAB>
+    // When user types: il <TAB>
     this.completion.on('command', ({ reply }: { reply: (suggestions: string[]) => void }) => {
       reply([
         'start',
@@ -52,7 +52,7 @@ export class ShellCompletion {
     })
 
     // Handler for argument-level completion
-    // When user types: hb <command> <TAB>
+    // When user types: il <command> <TAB>
     this.completion.on('arg', async ({ line, reply }: { line: string; reply: (suggestions: string[]) => void }) => {
       // Check if the command is 'cleanup' to provide dynamic branch suggestions
       if (line.includes('cleanup')) {
@@ -198,7 +198,7 @@ Please consult your shell's documentation for setting up custom completions.
 
   /**
    * Generate completion script and print to stdout
-   * Used by: hb --completion
+   * Used by: il --completion
    */
   printCompletionScript(shell?: ShellType): void {
     const detectedShell = shell ?? this.detectShell()

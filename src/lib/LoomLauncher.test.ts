@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { HatchboxLauncher } from './HatchboxLauncher.js'
-import type { LaunchHatchboxOptions } from './HatchboxLauncher.js'
+import { LoomLauncher } from './LoomLauncher.js'
+import type { LaunchLoomOptions } from './LoomLauncher.js'
 import * as terminal from '../utils/terminal.js'
 import * as vscode from '../utils/vscode.js'
 import * as devServer from '../utils/dev-server.js'
@@ -19,11 +19,11 @@ vi.mock('../utils/color.js', () => ({
 	})),
 }))
 
-describe('HatchboxLauncher', () => {
-	let launcher: HatchboxLauncher
+describe('LoomLauncher', () => {
+	let launcher: LoomLauncher
 	let mockClaudeContext: { launchWithContext: ReturnType<typeof vi.fn> }
 
-	const baseOptions: LaunchHatchboxOptions = {
+	const baseOptions: LaunchLoomOptions = {
 		enableClaude: true,
 		enableCode: true,
 		enableDevServer: true,
@@ -46,10 +46,10 @@ describe('HatchboxLauncher', () => {
 		}
 		vi.mocked(ClaudeContextManager).mockImplementation(() => mockClaudeContext)
 
-		launcher = new HatchboxLauncher() // Uses default ClaudeContextManager for tests
+		launcher = new LoomLauncher() // Uses default ClaudeContextManager for tests
 	})
 
-	describe('launchHatchbox', () => {
+	describe('launchLoom', () => {
 		describe('all components enabled', () => {
 			beforeEach(() => {
 				vi.mocked(devServer.getDevServerLaunchCommand).mockResolvedValue(
@@ -58,7 +58,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch all components when all are enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: true,
@@ -76,7 +76,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should handle PR workflow type', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					workflowType: 'pr',
 					enableTerminal: false,
@@ -88,7 +88,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should handle regular workflow type', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					workflowType: 'regular',
 					enableTerminal: false,
@@ -102,7 +102,7 @@ describe('HatchboxLauncher', () => {
 
 		describe('individual components', () => {
 			it('should launch only Claude when only Claude enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: false,
@@ -116,7 +116,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch only VSCode when only Code enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: true,
@@ -134,7 +134,7 @@ describe('HatchboxLauncher', () => {
 					'code . && echo Starting... && pnpm dev'
 				)
 
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: false,
@@ -148,7 +148,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch nothing when all components disabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: false,
@@ -170,7 +170,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch Claude + VSCode when both enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: true,
@@ -184,7 +184,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch Claude + DevServer when both enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: false,
@@ -200,7 +200,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch VSCode + DevServer when both enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: true,
@@ -214,7 +214,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch multiple terminals when Claude and DevServer both enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: false,
@@ -231,7 +231,7 @@ describe('HatchboxLauncher', () => {
 			it('should not need delay when using multiple terminal windows', async () => {
 				// With openMultipleTerminalWindows, all tabs are created in a single AppleScript call
 				// No need for sequential timing or delays
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: false,
@@ -246,7 +246,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should export PORT when project has web capability', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: false,
@@ -261,7 +261,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should apply background color to terminal', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: false,
@@ -281,7 +281,7 @@ describe('HatchboxLauncher', () => {
 				)
 
 				await expect(
-					launcher.launchHatchbox({
+					launcher.launchLoom({
 						...baseOptions,
 						enableClaude: false,
 						enableCode: false,
@@ -297,7 +297,7 @@ describe('HatchboxLauncher', () => {
 				)
 
 				await expect(
-					launcher.launchHatchbox({
+					launcher.launchLoom({
 						...baseOptions,
 						enableClaude: false,
 						enableCode: true,
@@ -313,7 +313,7 @@ describe('HatchboxLauncher', () => {
 				)
 
 				await expect(
-					launcher.launchHatchbox({
+					launcher.launchLoom({
 						...baseOptions,
 						enableClaude: true,
 						enableCode: false,
@@ -329,7 +329,7 @@ describe('HatchboxLauncher', () => {
 				)
 
 				await expect(
-					launcher.launchHatchbox({
+					launcher.launchLoom({
 						...baseOptions,
 						enableClaude: false,
 						enableCode: false,
@@ -346,7 +346,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch 3 tabs when Claude + DevServer + Terminal all enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: false,
@@ -368,12 +368,12 @@ describe('HatchboxLauncher', () => {
 				expect(call[1].command).toBeUndefined()
 				expect(call[2]).toMatchObject({
 					title: 'Claude - Issue #42',
-					command: 'hb ignite',
+					command: 'il ignite',
 				})
 			})
 
 			it('should launch 2 tabs when DevServer + Terminal enabled (no Claude)', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: false,
@@ -390,7 +390,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch 2 tabs when Claude + Terminal enabled (no DevServer)', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: true,
 					enableCode: false,
@@ -407,7 +407,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should launch single terminal when only Terminal enabled', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: false,
@@ -421,7 +421,7 @@ describe('HatchboxLauncher', () => {
 			})
 
 			it('should include PORT export for web projects in terminal tab', async () => {
-				await launcher.launchHatchbox({
+				await launcher.launchLoom({
 					...baseOptions,
 					enableClaude: false,
 					enableCode: false,

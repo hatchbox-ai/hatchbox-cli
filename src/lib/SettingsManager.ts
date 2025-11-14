@@ -86,9 +86,9 @@ export const CapabilitiesSettingsSchema = z
 	.optional()
 
 /**
- * Zod schema for Hatchbox settings
+ * Zod schema for iloom settings
  */
-export const HatchboxSettingsSchema = z.object({
+export const IloomSettingsSchema = z.object({
 	mainBranch: z
 		.string()
 		.min(1, "Settings 'mainBranch' cannot be empty")
@@ -126,7 +126,7 @@ export const HatchboxSettingsSchema = z.object({
 			},
 		)
 		.describe(
-			'Prefix for worktree directories. Empty string disables prefix. Defaults to <repo-name>-hatchboxes if not set.',
+			'Prefix for worktree directories. Empty string disables prefix. Defaults to <repo-name>-looms if not set.',
 		),
 	protectedBranches: z
 		.array(z.string().min(1, 'Protected branch name cannot be empty'))
@@ -162,34 +162,34 @@ export type WorkflowsSettings = z.infer<typeof WorkflowsSettingsSchema>
 export type CapabilitiesSettings = z.infer<typeof CapabilitiesSettingsSchema>
 
 /**
- * TypeScript type for Hatchbox settings derived from Zod schema
+ * TypeScript type for iloom settings derived from Zod schema
  */
-export type HatchboxSettings = z.infer<typeof HatchboxSettingsSchema>
+export type IloomSettings = z.infer<typeof IloomSettingsSchema>
 
 /**
- * Manages project-level settings from .hatchbox/settings.json
+ * Manages project-level settings from .iloom/settings.json
  */
 export class SettingsManager {
 	/**
-	 * Load settings from <PROJECT_ROOT>/.hatchbox/settings.json and settings.local.json
+	 * Load settings from <PROJECT_ROOT>/.iloom/settings.json and settings.local.json
 	 * Merges settings.local.json over settings.json with priority
 	 * CLI overrides have highest priority if provided
 	 * Returns empty object if both files don't exist (not an error)
 	 */
 	async loadSettings(
 		projectRoot?: string,
-		cliOverrides?: Partial<HatchboxSettings>,
-	): Promise<HatchboxSettings> {
+		cliOverrides?: Partial<IloomSettings>,
+	): Promise<IloomSettings> {
 		const root = this.getProjectRoot(projectRoot)
 
 		// Load base settings from settings.json
 		const baseSettings = await this.loadSettingsFile(root, 'settings.json')
-		const baseSettingsPath = path.join(root, '.hatchbox', 'settings.json')
+		const baseSettingsPath = path.join(root, '.iloom', 'settings.json')
 		logger.debug(`📄 Base settings from ${baseSettingsPath}:`, JSON.stringify(baseSettings, null, 2))
 
 		// Load local overrides from settings.local.json
 		const localSettings = await this.loadSettingsFile(root, 'settings.local.json')
-		const localSettingsPath = path.join(root, '.hatchbox', 'settings.local.json')
+		const localSettingsPath = path.join(root, '.iloom', 'settings.local.json')
 		logger.debug(`📄 Local settings from ${localSettingsPath}:`, JSON.stringify(localSettings, null, 2))
 
 		// Deep merge with priority: cliOverrides > localSettings > baseSettings
@@ -204,7 +204,7 @@ export class SettingsManager {
 
 		// Validate merged result
 		try {
-			const finalSettings = HatchboxSettingsSchema.parse(merged)
+			const finalSettings = IloomSettingsSchema.parse(merged)
 
 			// Debug: Log final merged configuration
 			this.logFinalConfiguration(finalSettings)
@@ -227,7 +227,7 @@ export class SettingsManager {
 	/**
 	 * Log the final merged configuration for debugging
 	 */
-	private logFinalConfiguration(settings: HatchboxSettings): void {
+	private logFinalConfiguration(settings: IloomSettings): void {
 		logger.debug('📋 Final merged configuration:', JSON.stringify(settings, null, 2))
 	}
 
@@ -238,8 +238,8 @@ export class SettingsManager {
 	private async loadSettingsFile(
 		projectRoot: string,
 		filename: string,
-	): Promise<Partial<HatchboxSettings>> {
-		const settingsPath = path.join(projectRoot, '.hatchbox', filename)
+	): Promise<Partial<IloomSettings>> {
+		const settingsPath = path.join(projectRoot, '.iloom', filename)
 
 		try {
 			const content = await readFile(settingsPath, 'utf-8')
@@ -256,7 +256,7 @@ export class SettingsManager {
 			// Validate individual file with strict mode to catch unknown keys
 			// Note: Schema already has all fields as optional, so no need for .partial()
 			try {
-				const validated = HatchboxSettingsSchema.strict().parse(parsed)
+				const validated = IloomSettingsSchema.strict().parse(parsed)
 				return validated
 			} catch (error) {
 				if (error instanceof z.ZodError) {
@@ -282,14 +282,14 @@ export class SettingsManager {
 	 * Uses deepmerge library with array replacement strategy
 	 */
 	private mergeSettings(
-		base: Partial<HatchboxSettings>,
-		override: Partial<HatchboxSettings>,
-	): HatchboxSettings {
+		base: Partial<IloomSettings>,
+		override: Partial<IloomSettings>,
+	): IloomSettings {
 		// Use deepmerge with array replacement (not concatenation)
 		return deepmerge(base, override, {
 			// Replace arrays instead of concatenating them
 			arrayMerge: (_destinationArray, sourceArray) => sourceArray,
-		}) as HatchboxSettings
+		}) as IloomSettings
 	}
 
 	/**
@@ -312,9 +312,9 @@ export class SettingsManager {
 	 * @internal - Only used in tests via bracket notation
 	 */
 	// @ts-expect-error - Used in tests via bracket notation, TypeScript can't detect this usage
-	private validateSettings(settings: HatchboxSettings): void {
+	private validateSettings(settings: IloomSettings): void {
 		try {
-			HatchboxSettingsSchema.parse(settings)
+			IloomSettingsSchema.parse(settings)
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				throw this.formatAllZodErrors(error, '<validation>')

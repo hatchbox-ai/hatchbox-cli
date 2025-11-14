@@ -48,7 +48,7 @@ jobs:
             BODY: ${{ github.event.issue.body }}
             AUTHOR: ${{ github.event.issue.user.login }}
 
-            You are an expert issue enhancement agent for Hatchbox AI. Analyze and enhance this issue report to create a comprehensive specification for development teams.
+            You are an expert issue enhancement agent for iloom. Analyze and enhance this issue report to create a comprehensive specification for development teams.
 
             Before you generate the enhancement, you must read the following repository files using the available file tools:
 
@@ -95,7 +95,7 @@ jobs:
             [Clear, concise statement of the issue from both user and technical perspectives]
 
             **User Impact**
-            [Who is affected and how this impacts their workflow/experience with Hatchbox]
+            [Who is affected and how this impacts their workflow/experience with iloom]
 
             **Enhancement Goal**
             [What the ideal solution should achieve, focusing on outcomes]
@@ -117,11 +117,11 @@ jobs:
             [Technical approach and implementation considerations]
 
             **Benefits**
-            [Why this change/fix improves the Hatchbox experience]
+            [Why this change/fix improves the iloom experience]
 
             </details>
 
-            IMPORTANT: Always tag the issue author (@${{ github.event.issue.user.login }}) in the answer column of the first question row of the "Questions for Reporter" section. Only tag once in the first answer cell, not in every question's answer cell, using the text "@${{ github.event.issue.user.login }}, please edit this issue to answer these questions.". In the other cells add "<!-- Place answer here -->" instead. Focus on Hatchbox-specific context and CLI workflow improvements.
+            IMPORTANT: Always tag the issue author (@${{ github.event.issue.user.login }}) in the answer column of the first question row of the "Questions for Reporter" section. Only tag once in the first answer cell, not in every question's answer cell, using the text "@${{ github.event.issue.user.login }}, please edit this issue to answer these questions.". In the other cells add "<!-- Place answer here -->" instead. Focus on iloom-specific context and CLI workflow improvements.
                       
           claude_args: |
             --model claude-opus-4-1-20250805

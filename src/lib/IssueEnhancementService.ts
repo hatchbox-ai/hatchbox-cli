@@ -42,7 +42,7 @@ export class IssueEnhancementService {
 			const agents = this.agentManager.formatForCli(loadedAgents)
 
 			// Call Claude in headless mode with issue enhancer agent
-			const prompt = `@agent-hatchbox-issue-enhancer
+			const prompt = `@agent-iloom-issue-enhancer
 
 TASK: Enhance the following issue description for GitHub.
 
@@ -135,7 +135,7 @@ Press any key to open issue for editing...`
 
 		// If confirmation required, wait for second keypress
 		if (confirm) {
-			await waitForKeypress('Press any key to continue with Hatchbox creation...')
+			await waitForKeypress('Press any key to continue with loom creation...')
 		}
 	}
 }

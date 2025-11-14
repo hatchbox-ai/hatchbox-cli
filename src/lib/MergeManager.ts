@@ -61,7 +61,7 @@ export class MergeManager {
 			throw new Error(
 				'Uncommitted changes detected. Please commit or stash changes before rebasing.\n' +
 					'Run: git status to see uncommitted changes\n' +
-					'Or: hb finish will automatically commit them for you'
+					'Or: il finish will automatically commit them for you'
 			)
 		}
 
@@ -185,7 +185,7 @@ export class MergeManager {
 					`Main HEAD:  ${mainHeadTrimmed}\n\n` +
 					'To fix this:\n' +
 					`  1. Rebase the branch on ${mainBranch}: git rebase ${mainBranch}\n` +
-					`  2. Or use: hb finish to automatically rebase and merge\n`
+					`  2. Or use: il finish to automatically rebase and merge\n`
 			)
 		}
 	}
@@ -276,7 +276,7 @@ export class MergeManager {
 					'  1. Check merge status: git status\n' +
 					'  2. Abort merge if needed: git merge --abort\n' +
 					'  3. Verify branch is rebased: git rebase main\n' +
-					'  4. Try merge again: hb finish'
+					'  4. Try merge again: il finish'
 			)
 		}
 	}
@@ -317,7 +317,7 @@ export class MergeManager {
 			'  2. Stage resolved files: git add <files>\n' +
 			'  3. Continue rebase: git rebase --continue\n' +
 			'  4. Or abort rebase: git rebase --abort\n' +
-			'  5. Then re-run: hb finish <issue-number>'
+			'  5. Then re-run: il finish <issue-number>'
 		)
 	}
 

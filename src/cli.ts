@@ -36,10 +36,10 @@ function notImplemented(
 }
 
 program
-  .name('hatchbox')
+  .name('iloom')
   .description(packageJson.description)
   .version(packageJson.version)
-  .option('--debug', 'Enable debug output (default: based on HATCHBOX_DEBUG env var)')
+  .option('--debug', 'Enable debug output (default: based on ILOOM_DEBUG env var)')
   .option('--completion', 'Output shell completion script for current shell')
   .option('--set <key=value>', 'Override any setting using dot notation (repeatable, e.g., --set workflows.issue.startIde=false)')
   .allowUnknownOption() // Allow --set to be used multiple times
@@ -47,7 +47,7 @@ program
     // Set debug mode based on flag or environment variable
     const options = thisCommand.opts()
     // Default to environment variable value, then false if not set
-    const envDebug = process.env.HATCHBOX_DEBUG === 'true'
+    const envDebug = process.env.ILOOM_DEBUG === 'true'
     const debugEnabled = options.debug !== undefined ? options.debug : envDebug
     logger.setDebug(debugEnabled)
 
@@ -87,7 +87,7 @@ async function validateSettingsForCommand(): Promise<void> {
     await settingsManager.loadSettings()
   } catch (error) {
     logger.error(`Configuration error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    logger.info('Please fix your .hatchbox/settings.json file and try again.')
+    logger.info('Please fix your .iloom/settings.json file and try again.')
     process.exit(1)
   }
 }
@@ -164,7 +164,7 @@ program
 program
   .command('feedback')
   .alias('f')
-  .description('Submit feedback/bug report to hatchbox-cli repository')
+  .description('Submit feedback/bug report to iloom-cli repository')
   .argument('<description>', 'Natural language description of feedback (>50 chars, >2 spaces)')
   .action(async (description: string) => {
     try {
@@ -174,7 +174,7 @@ program
         description,
         options: {}
       })
-      logger.success(`Feedback submitted as issue #${issueNumber} in hatchbox-cli repository`)
+      logger.success(`Feedback submitted as issue #${issueNumber} in iloom-cli repository`)
       process.exit(0)
     } catch (error) {
       logger.error(`Failed to submit feedback: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -358,7 +358,7 @@ program
 
 program
   .command('init')
-  .description('Initialize Hatchbox configuration and setup shell autocomplete')
+  .description('Initialize iloom configuration and setup shell autocomplete')
   .action(async () => {
     try {
       const { InitCommand } = await import('./commands/init.js')
@@ -372,7 +372,7 @@ program
 
 program
   .command('update')
-  .description('Update hatchbox-cli to the latest version')
+  .description('Update iloom-cli to the latest version')
   .option('--dry-run', 'Show what would be done without actually updating')
   .action(async (options: { dryRun?: boolean }) => {
     try {
@@ -678,7 +678,7 @@ program
 // Test command for Git integration
 program
   .command('test-git')
-  .description('Test Git integration - findMainWorktreePath() function (reads .hatchbox/settings.json)')
+  .description('Test Git integration - findMainWorktreePath() function (reads .iloom/settings.json)')
   .action(async () => {
     try {
       const { TestGitCommand } = await import('./commands/test-git.js')
@@ -714,7 +714,7 @@ program
 // Test command for worktree prefix configuration
 program
   .command('test-prefix')
-  .description('Test worktree prefix configuration - preview worktree paths (reads .hatchbox/settings.json)')
+  .description('Test worktree prefix configuration - preview worktree paths (reads .iloom/settings.json)')
   .action(async () => {
     try {
       const { TestPrefixCommand } = await import('./commands/test-prefix.js')

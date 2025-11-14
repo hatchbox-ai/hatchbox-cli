@@ -469,9 +469,9 @@ describe('Git Utility Functions', () => {
 
         it('should handle nested directory prefix with forward slashes', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/project', {
-            prefix: 'temp/hatchboxes'
+            prefix: 'temp/looms'
           })
-          expect(result).toBe('/Users/dev/temp/hatchboxes-issue-123')
+          expect(result).toBe('/Users/dev/temp/looms-issue-123')
         })
 
         it('should handle prefix ending with forward slash', () => {
@@ -490,50 +490,50 @@ describe('Git Utility Functions', () => {
 
         it('should handle prefix with multiple levels of nesting', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/project', {
-            prefix: 'workspace/temp/hatchboxes'
+            prefix: 'workspace/temp/looms'
           })
-          expect(result).toBe('/Users/dev/workspace/temp/hatchboxes-issue-123')
+          expect(result).toBe('/Users/dev/workspace/temp/looms-issue-123')
         })
 
         it('should handle nested directory with custom prefix separator (trailing hyphen)', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/project', {
-            prefix: 'hatchboxes/myprefix-'
+            prefix: 'looms/myprefix-'
           })
-          expect(result).toBe('/Users/dev/hatchboxes/myprefix-issue-123')
+          expect(result).toBe('/Users/dev/looms/myprefix-issue-123')
         })
 
         it('should handle nested directory with custom prefix separator (trailing underscore)', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/project', {
-            prefix: 'hatchboxes/myprefix_'
+            prefix: 'looms/myprefix_'
           })
-          expect(result).toBe('/Users/dev/hatchboxes/myprefix_issue-123')
+          expect(result).toBe('/Users/dev/looms/myprefix_issue-123')
         })
       })
 
       describe('default prefix calculation', () => {
         it('should calculate default prefix from repo basename when prefix undefined', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/my-awesome-project', {})
-          expect(result).toBe('/Users/dev/my-awesome-project-hatchboxes/issue-123')
+          expect(result).toBe('/Users/dev/my-awesome-project-looms/issue-123')
         })
 
         it('should use default when no options provided', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/my-project')
-          expect(result).toBe('/Users/dev/my-project-hatchboxes/issue-123')
+          expect(result).toBe('/Users/dev/my-project-looms/issue-123')
         })
 
         it('should handle repo names with special characters in default calculation', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/my.project-v2')
-          expect(result).toBe('/Users/dev/my.project-v2-hatchboxes/issue-123')
+          expect(result).toBe('/Users/dev/my.project-v2-looms/issue-123')
         })
 
         it('should handle single-character repo name', () => {
           const result = generateWorktreePath('issue-123', '/Users/dev/p')
-          expect(result).toBe('/Users/dev/p-hatchboxes/issue-123')
+          expect(result).toBe('/Users/dev/p-looms/issue-123')
         })
 
-        it('should fallback to "hatchboxes" when basename is empty', () => {
+        it('should fallback to "looms" when basename is empty', () => {
           const result = generateWorktreePath('issue-123', '/')
-          expect(result).toBe('/hatchboxes/issue-123')
+          expect(result).toBe('/looms/issue-123')
         })
       })
 
@@ -552,7 +552,7 @@ describe('Git Utility Functions', () => {
             isPR: true,
             prNumber: 456
           })
-          expect(result).toBe('/Users/dev/project-hatchboxes/issue-123_pr_456')
+          expect(result).toBe('/Users/dev/project-looms/issue-123_pr_456')
         })
 
         it('should handle PR suffix with empty prefix', () => {
@@ -584,7 +584,7 @@ describe('Git Utility Functions', () => {
 
         it('should sanitize branch slashes and apply default prefix', () => {
           const result = generateWorktreePath('feature/add-login', '/Users/dev/project')
-          expect(result).toBe('/Users/dev/project-hatchboxes/feature-add-login')
+          expect(result).toBe('/Users/dev/project-looms/feature-add-login')
         })
 
         it('should sanitize branch slashes with nested directory prefix', () => {

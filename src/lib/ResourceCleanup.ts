@@ -610,7 +610,7 @@ export class ResourceCleanup {
 				`Please resolve before cleanup - you have some options:\n` +
 				`  • Commit changes: cd ${worktree.path} && git commit -am "message"\n` +
 				`  • Stash changes: cd ${worktree.path} && git stash\n` +
-				`  • Force cleanup: hb cleanup ${identifier} --force (WARNING: will discard changes)`
+				`  • Force cleanup: il cleanup ${identifier} --force (WARNING: will discard changes)`
 
 			blockers.push(blockerMessage)
 		}

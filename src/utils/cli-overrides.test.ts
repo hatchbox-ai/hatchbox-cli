@@ -118,7 +118,7 @@ describe('parseDotNotation', () => {
 
 describe('extractSettingsOverrides', () => {
 	it('should extract single --set argument', () => {
-		const argv = ['node', 'hb', 'start', '123', '--set', 'mainBranch=develop']
+		const argv = ['node', 'il', 'start', '123', '--set', 'mainBranch=develop']
 		const result = extractSettingsOverrides(argv)
 		expect(result).toEqual({ mainBranch: 'develop' })
 	})
@@ -126,7 +126,7 @@ describe('extractSettingsOverrides', () => {
 	it('should extract multiple --set arguments', () => {
 		const argv = [
 			'node',
-			'hb',
+			'il',
 			'start',
 			'123',
 			'--set',
@@ -152,7 +152,7 @@ describe('extractSettingsOverrides', () => {
 	it('should merge multiple overrides into single object', () => {
 		const argv = [
 			'node',
-			'hb',
+			'il',
 			'start',
 			'--set',
 			'workflows.issue.startIde=false',
@@ -176,36 +176,36 @@ describe('extractSettingsOverrides', () => {
 	})
 
 	it('should ignore non-set arguments', () => {
-		const argv = ['node', 'hb', 'start', '123', '--debug', '--set', 'mainBranch=develop', '--no-claude']
+		const argv = ['node', 'il', 'start', '123', '--debug', '--set', 'mainBranch=develop', '--no-claude']
 		const result = extractSettingsOverrides(argv)
 		expect(result).toEqual({ mainBranch: 'develop' })
 	})
 
 	it('should return empty object when no --set arguments', () => {
-		const argv = ['node', 'hb', 'start', '123']
+		const argv = ['node', 'il', 'start', '123']
 		const result = extractSettingsOverrides(argv)
 		expect(result).toEqual({})
 	})
 
 	it('should throw error for --set without value', () => {
-		const argv = ['node', 'hb', 'start', '--set']
+		const argv = ['node', 'il', 'start', '--set']
 		expect(() => extractSettingsOverrides(argv)).toThrow('--set requires a key=value argument')
 	})
 
 	it('should throw error for malformed --set value (no equals)', () => {
-		const argv = ['node', 'hb', 'start', '--set', 'mainBranch']
+		const argv = ['node', 'il', 'start', '--set', 'mainBranch']
 		expect(() => extractSettingsOverrides(argv)).toThrow('Invalid --set format: "mainBranch". Expected key=value')
 	})
 
 	it('should throw error for --set with empty key', () => {
-		const argv = ['node', 'hb', 'start', '--set', '=value']
+		const argv = ['node', 'il', 'start', '--set', '=value']
 		expect(() => extractSettingsOverrides(argv)).toThrow(
 			'Invalid --set format: "=value". Key cannot be empty',
 		)
 	})
 
 	it('should handle --set=key=value format', () => {
-		const argv = ['node', 'hb', 'start', '123', '--set=mainBranch=develop']
+		const argv = ['node', 'il', 'start', '123', '--set=mainBranch=develop']
 		const result = extractSettingsOverrides(argv)
 		expect(result).toEqual({ mainBranch: 'develop' })
 	})
@@ -213,7 +213,7 @@ describe('extractSettingsOverrides', () => {
 	it('should handle multiple --set=key=value formats', () => {
 		const argv = [
 			'node',
-			'hb',
+			'il',
 			'start',
 			'--set=workflows.issue.startIde=false',
 			'--set=capabilities.web.basePort=4000',
@@ -236,7 +236,7 @@ describe('extractSettingsOverrides', () => {
 	it('should handle mixed --set formats', () => {
 		const argv = [
 			'node',
-			'hb',
+			'il',
 			'start',
 			'--set',
 			'workflows.issue.startIde=false',
@@ -259,7 +259,7 @@ describe('extractSettingsOverrides', () => {
 
 	it('should handle values with equals signs in them', () => {
 		// This tests that only the first = is used to split key=value
-		const argv = ['node', 'hb', 'start', '--set', 'database.connectionString=postgres://user:pass=word@host']
+		const argv = ['node', 'il', 'start', '--set', 'database.connectionString=postgres://user:pass=word@host']
 		const result = extractSettingsOverrides(argv)
 		expect(result).toEqual({
 			database: {
@@ -269,7 +269,7 @@ describe('extractSettingsOverrides', () => {
 	})
 
 	it('should allow empty values', () => {
-		const argv = ['node', 'hb', 'start', '--set', 'worktreePrefix=']
+		const argv = ['node', 'il', 'start', '--set', 'worktreePrefix=']
 		const result = extractSettingsOverrides(argv)
 		expect(result).toEqual({ worktreePrefix: '' })
 	})
@@ -277,7 +277,7 @@ describe('extractSettingsOverrides', () => {
 	it('should handle complex real-world scenario', () => {
 		const argv = [
 			'node',
-			'hb',
+			'il',
 			'start',
 			'123',
 			'--debug',
@@ -310,7 +310,7 @@ describe('extractSettingsOverrides', () => {
 	it('should preserve array values when using JSON-like format', () => {
 		// Note: This test documents current behavior - arrays would need to be passed as JSON strings
 		// For now, we just test that string values are preserved
-		const argv = ['node', 'hb', 'start', '--set', 'protectedBranches=main,develop']
+		const argv = ['node', 'il', 'start', '--set', 'protectedBranches=main,develop']
 		const result = extractSettingsOverrides(argv)
 		expect(result).toEqual({
 			protectedBranches: 'main,develop',
@@ -320,7 +320,7 @@ describe('extractSettingsOverrides', () => {
 
 describe('extractRawSetArguments', () => {
 	it('should extract single --set argument as raw string', () => {
-		const argv = ['node', 'hb', 'start', '123', '--set', 'workflows.issue.startIde=false']
+		const argv = ['node', 'il', 'start', '123', '--set', 'workflows.issue.startIde=false']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual(['workflows.issue.startIde=false'])
 	})
@@ -328,7 +328,7 @@ describe('extractRawSetArguments', () => {
 	it('should extract multiple --set arguments as raw strings', () => {
 		const argv = [
 			'node',
-			'hb',
+			'il',
 			'start',
 			'123',
 			'--set',
@@ -341,7 +341,7 @@ describe('extractRawSetArguments', () => {
 	})
 
 	it('should handle --set=key=value format', () => {
-		const argv = ['node', 'hb', 'start', '123', '--set=workflows.issue.startIde=false']
+		const argv = ['node', 'il', 'start', '123', '--set=workflows.issue.startIde=false']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual(['workflows.issue.startIde=false'])
 	})
@@ -349,7 +349,7 @@ describe('extractRawSetArguments', () => {
 	it('should handle mixed --set formats', () => {
 		const argv = [
 			'node',
-			'hb',
+			'il',
 			'start',
 			'--set',
 			'workflows.issue.startIde=false',
@@ -360,37 +360,37 @@ describe('extractRawSetArguments', () => {
 	})
 
 	it('should return empty array when no --set arguments', () => {
-		const argv = ['node', 'hb', 'start', '123', '--debug']
+		const argv = ['node', 'il', 'start', '123', '--debug']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual([])
 	})
 
 	it('should ignore non-set arguments', () => {
-		const argv = ['node', 'hb', 'start', '123', '--debug', '--set', 'mainBranch=develop', '--no-claude']
+		const argv = ['node', 'il', 'start', '123', '--debug', '--set', 'mainBranch=develop', '--no-claude']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual(['mainBranch=develop'])
 	})
 
 	it('should preserve values with equals signs', () => {
-		const argv = ['node', 'hb', 'start', '--set', 'database.connectionString=postgres://user:pass=word@host']
+		const argv = ['node', 'il', 'start', '--set', 'database.connectionString=postgres://user:pass=word@host']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual(['database.connectionString=postgres://user:pass=word@host'])
 	})
 
 	it('should handle empty value', () => {
-		const argv = ['node', 'hb', 'start', '--set', 'worktreePrefix=']
+		const argv = ['node', 'il', 'start', '--set', 'worktreePrefix=']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual(['worktreePrefix='])
 	})
 
 	it('should skip --set without following argument', () => {
-		const argv = ['node', 'hb', 'start', '--set']
+		const argv = ['node', 'il', 'start', '--set']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual([])
 	})
 
 	it('should skip --set= without value', () => {
-		const argv = ['node', 'hb', 'start', '--set=']
+		const argv = ['node', 'il', 'start', '--set=']
 		const result = extractRawSetArguments(argv)
 		expect(result).toEqual([])
 	})
@@ -410,15 +410,15 @@ describe('getExecutablePath', () => {
 	})
 
 	it('should return binary name as-is for name without slash', () => {
-		process.argv = ['node', 'hb', 'start', '123']
+		process.argv = ['node', 'il', 'start', '123']
 		const result = getExecutablePath()
-		expect(result).toBe('hb')
+		expect(result).toBe('il')
 	})
 
-	it('should return binary name with suffix (hb-125)', () => {
-		process.argv = ['node', 'hb-125', 'start', '123']
+	it('should return binary name with suffix (il-125)', () => {
+		process.argv = ['node', 'il-125', 'start', '123']
 		const result = getExecutablePath()
-		expect(result).toBe('hb-125')
+		expect(result).toBe('il-125')
 	})
 
 	it('should return absolute path for relative path with slash', () => {
@@ -438,7 +438,7 @@ describe('getExecutablePath', () => {
 	})
 
 	it('should return absolute path as-is for already absolute path', () => {
-		const absolutePath = '/usr/local/bin/hb'
+		const absolutePath = '/usr/local/bin/il'
 		process.argv = ['node', absolutePath, 'start', '123']
 		const result = getExecutablePath()
 		expect(result).toBe(absolutePath)
@@ -447,12 +447,12 @@ describe('getExecutablePath', () => {
 	it('should handle undefined process.argv[1] with fallback', () => {
 		process.argv = ['node'] // Missing argv[1]
 		const result = getExecutablePath()
-		expect(result).toBe('hb')
+		expect(result).toBe('il')
 	})
 
 	it('should handle empty string process.argv[1] with fallback', () => {
 		process.argv = ['node', '', 'start']
 		const result = getExecutablePath()
-		expect(result).toBe('hb')
+		expect(result).toBe('il')
 	})
 })

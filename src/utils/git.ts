@@ -192,9 +192,9 @@ export function generateWorktreePath(
   let prefix: string
 
   if (options?.prefix === undefined) {
-    // No prefix in options - calculate default: <basename>-hatchboxes
+    // No prefix in options - calculate default: <basename>-looms
     const mainFolderName = path.basename(rootDir)
-    prefix = mainFolderName ? `${mainFolderName}-hatchboxes/` : 'hatchboxes/'
+    prefix = mainFolderName ? `${mainFolderName}-looms/` : 'looms/'
   } else if (options.prefix === '') {
     // Empty string = no prefix mode
     prefix = ''
@@ -211,7 +211,7 @@ export function generateWorktreePath(
 
       if (!endsWithSeparator) {
         // Has nested path but no trailing separator: auto-append hyphen
-        // Example: "temp/hatchboxes" becomes "temp/hatchboxes-"
+        // Example: "temp/looms" becomes "temp/looms-"
         prefix = `${prefix}-`
       }
       // If it already ends with -, _, or /, keep as-is
@@ -231,7 +231,7 @@ export function generateWorktreePath(
     // Forward slash = nested directory, use path.join for proper handling
     return path.join(parentDir, prefix, sanitized)
   } else if (prefix.includes('/')) {
-    // Contains slash but doesn't end with slash = nested with separator (e.g., "hatchboxes/myprefix-")
+    // Contains slash but doesn't end with slash = nested with separator (e.g., "looms/myprefix-")
     // Split and handle: last part is prefix with separator, rest is directory path
     const lastSlashIndex = prefix.lastIndexOf('/')
     const dirPath = prefix.substring(0, lastSlashIndex)
@@ -368,7 +368,7 @@ export async function findMainWorktreePath(
  * Find main worktree path with automatic settings loading
  *
  * This is a convenience wrapper that:
- * 1. Loads project settings from .hatchbox/settings.json
+ * 1. Loads project settings from .iloom/settings.json
  * 2. Extracts mainBranch configuration if present
  * 3. Calls findMainWorktreePath with appropriate options
  *
@@ -607,7 +607,7 @@ export async function pushBranchToRemote(
         `   • Remote branch was deleted\n` +
         `   • Push was rejected (non-fast-forward)\n` +
         `   • Network connectivity issues\n\n` +
-        `   To retry: hb finish --pr <number>\n` +
+        `   To retry: il finish --pr <number>\n` +
         `   To force push: git push origin ${branchName} --force`
       )
     }

@@ -22,7 +22,7 @@ import {
 } from '../utils/git.js'
 
 /**
- * Manages Git worktrees for the Hatchbox AI CLI
+ * Manages Git worktrees for the iloom CLI
  * Ports functionality from bash scripts into TypeScript
  */
 export class GitWorktreeManager {

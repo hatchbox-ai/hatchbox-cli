@@ -405,7 +405,7 @@ export class TestFixtures {
     state: 'open' as const,
     labels: ['enhancement', 'auth'],
     assignees: ['acreeger'],
-    url: 'https://github.com/acreeger/hatchbox-ai/issues/25',
+    url: 'https://github.com/acreeger/iloom-cli/issues/25',
   }
 
   static readonly SAMPLE_PR = {
@@ -415,7 +415,7 @@ export class TestFixtures {
     state: 'open' as const,
     branch: 'fix/api-timeout',
     baseBranch: 'main',
-    url: 'https://github.com/acreeger/hatchbox-ai/pull/30',
+    url: 'https://github.com/acreeger/iloom-cli/pull/30',
     isDraft: false,
   }
 

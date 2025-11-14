@@ -1,5 +1,5 @@
 ---
-name: hatchbox-issue-complexity-evaluator
+name: iloom-issue-complexity-evaluator
 description: Use this agent when you need to quickly assess the complexity of a GitHub issue before deciding on the appropriate workflow. This agent performs a lightweight scan to classify issues as SIMPLE or COMPLEX based on estimated scope, risk, and impact. Runs first before any detailed analysis or planning.
 tools: Bash, Glob, Grep, Read, Edit, Write, NotebookEdit, WebFetch, TodoWrite, WebSearch, BashOutput, KillShell, SlashCommand, ListMcpResourcesTool, ReadMcpResourceTool, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__figma-dev-mode-mcp-server__get_code, mcp__figma-dev-mode-mcp-server__get_variable_defs, mcp__figma-dev-mode-mcp-server__get_code_connect_map, mcp__figma-dev-mode-mcp-server__get_screenshot, mcp__figma-dev-mode-mcp-server__get_metadata, mcp__figma-dev-mode-mcp-server__add_code_connect_map, mcp__figma-dev-mode-mcp-server__create_design_system_rules, Bash(gh api:*), Bash(gh pr view:*), Bash(gh issue view:*),Bash(gh issue comment:*),Bash(git show:*),mcp__github_comment__update_comment, mcp__github_comment__create_comment
 color: orange

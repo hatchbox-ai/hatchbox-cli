@@ -1,6 +1,6 @@
 import { detectClaudeCli, launchClaude, launchClaudeInNewTerminalWindow, ClaudeCliOptions, generateBranchName } from '../utils/claude.js'
 import { PromptTemplateManager, TemplateVariables } from './PromptTemplateManager.js'
-import { SettingsManager, HatchboxSettings } from './SettingsManager.js'
+import { SettingsManager, IloomSettings } from './SettingsManager.js'
 import { logger } from '../utils/logger.js'
 
 export interface ClaudeWorkflowOptions {
@@ -20,7 +20,7 @@ export interface ClaudeWorkflowOptions {
 export class ClaudeService {
 	private templateManager: PromptTemplateManager
 	private settingsManager: SettingsManager
-	private settings?: HatchboxSettings
+	private settings?: IloomSettings
 
 	constructor(templateManager?: PromptTemplateManager, settingsManager?: SettingsManager) {
 		this.templateManager = templateManager ?? new PromptTemplateManager()
@@ -175,7 +175,7 @@ export class ClaudeService {
 				return await launchClaude(prompt, claudeOptions)
 			} else {
 				// Interactive workflow mode: use terminal window launcher
-				// This is the "end of hb start" behavior
+				// This is the "end of il start" behavior
 				if (!claudeOptions.addDir) {
 					throw new Error('workspacePath required for interactive workflow launch')
 				}

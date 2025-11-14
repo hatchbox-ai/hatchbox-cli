@@ -1,6 +1,6 @@
 import { detectPackageManager } from './package-manager.js'
 import { logger } from './logger.js'
-import type { Capability } from '../types/hatchbox.js'
+import type { Capability } from '../types/loom.js'
 
 /**
  * Build dev server command for workspace

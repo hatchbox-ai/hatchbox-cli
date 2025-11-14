@@ -1,11 +1,11 @@
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { zodToJsonSchema } from 'zod-to-json-schema'
-import { HatchboxSettingsSchema } from '../src/lib/SettingsManager.js'
+import { IloomSettingsSchema } from '../src/lib/SettingsManager.js'
 
 async function exportSchema() {
-	const jsonSchema = zodToJsonSchema(HatchboxSettingsSchema, {
-		name: 'HatchboxSettings',
+	const jsonSchema = zodToJsonSchema(IloomSettingsSchema, {
+		name: 'IloomSettings',
 		$refStrategy: 'none', // Inline all references for simplicity
 	})
 

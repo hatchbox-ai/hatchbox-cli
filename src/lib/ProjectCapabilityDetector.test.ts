@@ -18,12 +18,12 @@ describe('ProjectCapabilityDetector', () => {
   })
 
   describe('detectCapabilities', () => {
-    it('should detect CLI-only project (hatchbox itself)', async () => {
+    it('should detect CLI-only project (iloom itself)', async () => {
       const mockPackageJson: PackageJson = {
-        name: 'hatchbox-ai',
+        name: 'iloom-ai',
         bin: {
-          hb: './dist/cli.js',
-          hatchbox: './dist/cli.js'
+          il: './dist/cli.js',
+          iloom: './dist/cli.js'
         },
         dependencies: {
           commander: '^11.0.0'
@@ -33,21 +33,21 @@ describe('ProjectCapabilityDetector', () => {
       vi.mocked(packageJsonUtils.readPackageJson).mockResolvedValueOnce(mockPackageJson)
       vi.mocked(packageJsonUtils.hasWebDependencies).mockReturnValueOnce(false)
       vi.mocked(packageJsonUtils.parseBinField).mockReturnValueOnce({
-        hb: './dist/cli.js',
-        hatchbox: './dist/cli.js'
+        il: './dist/cli.js',
+        iloom: './dist/cli.js'
       })
 
       const result = await detector.detectCapabilities('/test/path')
 
       expect(result.capabilities).toEqual(['cli'])
       expect(result.binEntries).toEqual({
-        hb: './dist/cli.js',
-        hatchbox: './dist/cli.js'
+        il: './dist/cli.js',
+        iloom: './dist/cli.js'
       })
       expect(packageJsonUtils.readPackageJson).toHaveBeenCalledWith('/test/path')
       expect(packageJsonUtils.parseBinField).toHaveBeenCalledWith(
         mockPackageJson.bin,
-        'hatchbox-ai'
+        'iloom-ai'
       )
     })
 

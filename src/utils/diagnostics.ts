@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 import { platform, release, arch } from 'os'
 import { logger } from './logger'
 import { ProjectCapabilityDetector } from '../lib/ProjectCapabilityDetector.js'
-import type { ProjectCapability } from '../types/hatchbox.js'
+import type { ProjectCapability } from '../types/loom.js'
 import { getClaudeVersion } from './claude.js'
 
 const __filename = fileURLToPath(import.meta.url)

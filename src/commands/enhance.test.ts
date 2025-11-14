@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EnhanceCommand } from './enhance.js'
 import type { GitHubService } from '../lib/GitHubService.js'
 import type { AgentManager } from '../lib/AgentManager.js'
-import type { SettingsManager, HatchboxSettings } from '../lib/SettingsManager.js'
+import type { SettingsManager, IloomSettings } from '../lib/SettingsManager.js'
 import type { Issue } from '../types/index.js'
 
 // Mock dependencies
@@ -89,7 +89,7 @@ describe('EnhanceCommand', () => {
 			}
 
 			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -115,7 +115,7 @@ describe('EnhanceCommand', () => {
 			}
 
 			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -162,7 +162,7 @@ describe('EnhanceCommand', () => {
 
 		it('should load agents using AgentManager', async () => {
 			const mockSettings = { agentPath: '/test/path' }
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue(mockSettings as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue(mockSettings as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -175,7 +175,7 @@ describe('EnhanceCommand', () => {
 		})
 
 		it('should construct correct prompt for orchestrating Claude instance', async () => {
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -185,7 +185,7 @@ describe('EnhanceCommand', () => {
 			await command.execute({ issueNumber: 42, options: {} })
 
 			expect(launchClaude).toHaveBeenCalledWith(
-				expect.stringContaining('@agent-hatchbox-issue-enhancer 42'),
+				expect.stringContaining('@agent-iloom-issue-enhancer 42'),
 				expect.objectContaining({
 					headless: true,
 					model: 'sonnet',
@@ -194,7 +194,7 @@ describe('EnhanceCommand', () => {
 		})
 
 		it('should call launchClaude with headless mode', async () => {
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -210,8 +210,8 @@ describe('EnhanceCommand', () => {
 		})
 
 		it('should pass correct agents configuration to launchClaude', async () => {
-			const mockAgents = { 'hatchbox-issue-enhancer': {} }
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			const mockAgents = { 'iloom-issue-enhancer': {} }
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue(mockAgents)
 
@@ -227,7 +227,7 @@ describe('EnhanceCommand', () => {
 		})
 
 		it('should use sonnet model for Claude CLI', async () => {
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -255,7 +255,7 @@ describe('EnhanceCommand', () => {
 				url: 'https://github.com/owner/repo/issues/42',
 			}
 			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 		})
@@ -365,7 +365,7 @@ describe('EnhanceCommand', () => {
 				url: 'https://github.com/owner/repo/issues/42',
 			}
 			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 		})
@@ -485,7 +485,7 @@ describe('EnhanceCommand', () => {
 
 			vi.mocked(mockSettingsManager.loadSettings).mockImplementation(async () => {
 				calls.push('loadSettings')
-				return {} as HatchboxSettings
+				return {} as IloomSettings
 			})
 
 			vi.mocked(mockAgentManager.loadAgents).mockImplementation(async () => {
@@ -540,7 +540,7 @@ describe('EnhanceCommand', () => {
 			}
 
 			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -567,7 +567,7 @@ describe('EnhanceCommand', () => {
 			}
 
 			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 
@@ -596,7 +596,7 @@ describe('EnhanceCommand', () => {
 				url: 'https://github.com/owner/repo/issues/42',
 			}
 			vi.mocked(mockGitHubService.fetchIssue).mockResolvedValue(mockIssue)
-			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as HatchboxSettings)
+			vi.mocked(mockSettingsManager.loadSettings).mockResolvedValue({} as IloomSettings)
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue([])
 			vi.mocked(mockAgentManager.formatForCli).mockReturnValue({})
 		})

@@ -27,14 +27,14 @@ describe('AgentManager', () => {
 		it('should load all three agent markdown files successfully', async () => {
 			// Mock readdir to return the agent filenames
 			vi.mocked(readdir).mockResolvedValueOnce([
-				'hatchbox-issue-analyzer.md',
-				'hatchbox-issue-planner.md',
-				'hatchbox-issue-implementer.md',
+				'iloom-issue-analyzer.md',
+				'iloom-issue-planner.md',
+				'iloom-issue-implementer.md',
 			] as string[])
 
 			// Mock readFile to return valid markdown for each agent
 			const mockAnalyzerMd = `---
-name: hatchbox-issue-analyzer
+name: iloom-issue-analyzer
 description: Analyzer agent
 tools: Read, Grep
 model: sonnet
@@ -44,7 +44,7 @@ color: pink
 You are an analyzer`
 
 			const mockPlannerMd = `---
-name: hatchbox-issue-planner
+name: iloom-issue-planner
 description: Planner agent
 tools: Read, Write
 model: sonnet
@@ -54,7 +54,7 @@ color: blue
 You are a planner`
 
 			const mockImplementerMd = `---
-name: hatchbox-issue-implementer
+name: iloom-issue-implementer
 description: Implementer agent
 tools: Edit, Bash
 model: sonnet
@@ -71,21 +71,21 @@ You are an implementer`
 			const result = await manager.loadAgents()
 
 			expect(Object.keys(result)).toHaveLength(3)
-			expect(result['hatchbox-issue-analyzer']).toEqual({
+			expect(result['iloom-issue-analyzer']).toEqual({
 				description: 'Analyzer agent',
 				prompt: 'You are an analyzer',
 				tools: ['Read', 'Grep'],
 				model: 'sonnet',
 				color: 'pink',
 			})
-			expect(result['hatchbox-issue-planner']).toEqual({
+			expect(result['iloom-issue-planner']).toEqual({
 				description: 'Planner agent',
 				prompt: 'You are a planner',
 				tools: ['Read', 'Write'],
 				model: 'sonnet',
 				color: 'blue',
 			})
-			expect(result['hatchbox-issue-implementer']).toEqual({
+			expect(result['iloom-issue-implementer']).toEqual({
 				description: 'Implementer agent',
 				prompt: 'You are an implementer',
 				tools: ['Edit', 'Bash'],
@@ -96,12 +96,12 @@ You are an implementer`
 
 		it('should handle missing agent files gracefully', async () => {
 			vi.mocked(readdir).mockResolvedValueOnce([
-				'hatchbox-issue-analyzer.md',
+				'iloom-issue-analyzer.md',
 			] as string[])
 			vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT: no such file'))
 
 			await expect(manager.loadAgents()).rejects.toThrow(
-				'Failed to load agent from hatchbox-issue-analyzer.md',
+				'Failed to load agent from iloom-issue-analyzer.md',
 			)
 		})
 
@@ -511,12 +511,12 @@ Prompt`
 	describe('loadAgents with settings overrides', () => {
 		it('should merge settings model overrides into agent configs', async () => {
 			vi.mocked(readdir).mockResolvedValueOnce([
-				'hatchbox-issue-analyzer.md',
-				'hatchbox-issue-planner.md',
+				'iloom-issue-analyzer.md',
+				'iloom-issue-planner.md',
 			] as string[])
 
 			const mockAnalyzerMd = `---
-name: hatchbox-issue-analyzer
+name: iloom-issue-analyzer
 description: Analyzer agent
 tools: Read
 model: sonnet
@@ -525,7 +525,7 @@ model: sonnet
 Analyzer prompt`
 
 			const mockPlannerMd = `---
-name: hatchbox-issue-planner
+name: iloom-issue-planner
 description: Planner agent
 tools: Write
 model: sonnet
@@ -539,7 +539,7 @@ Planner prompt`
 
 			const settings = {
 				agents: {
-					'hatchbox-issue-analyzer': {
+					'iloom-issue-analyzer': {
 						model: 'haiku',
 					},
 				},
@@ -548,9 +548,9 @@ Planner prompt`
 			const result = await manager.loadAgents(settings)
 
 			// Analyzer should have overridden model
-			expect(result['hatchbox-issue-analyzer'].model).toBe('haiku')
+			expect(result['iloom-issue-analyzer'].model).toBe('haiku')
 			// Planner should keep original model
-			expect(result['hatchbox-issue-planner'].model).toBe('sonnet')
+			expect(result['iloom-issue-planner'].model).toBe('sonnet')
 		})
 
 		it('should preserve template model when agent not in settings', async () => {

@@ -371,9 +371,9 @@ describe('IgniteCommand', () => {
 		})
 	})
 
-	describe('Terminal Behavior - Expected behavior for hb ignite', () => {
+	describe('Terminal Behavior - Expected behavior for il ignite', () => {
 		it('should call launchClaude directly with stdio inherit, not open new terminal window', async () => {
-			// EXPECTED BEHAVIOR for hb ignite:
+			// EXPECTED BEHAVIOR for il ignite:
 			// 1. Detect workspace context (issue/PR/regular)
 			// 2. Get prompt template with variable substitution
 			// 3. Call launchClaude() utility directly with:
@@ -519,7 +519,7 @@ describe('IgniteCommand', () => {
 		})
 	})
 
-	describe('appendSystemPrompt usage in hb ignite', () => {
+	describe('appendSystemPrompt usage in il ignite', () => {
 		it('should pass template content as appendSystemPrompt for issue workflows', async () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 
@@ -534,7 +534,7 @@ describe('IgniteCommand', () => {
 
 				// Verify launchClaude was called with appendSystemPrompt
 				expect(launchClaudeSpy).toHaveBeenCalledWith(
-					'Guide the user through the hatchbox workflow!', // User prompt
+					'Guide the user through the iloom workflow!', // User prompt
 					expect.objectContaining({
 						headless: false,
 						model: 'claude-sonnet-4-20250514',
@@ -560,7 +560,7 @@ describe('IgniteCommand', () => {
 				await command.execute()
 
 				expect(launchClaudeSpy).toHaveBeenCalledWith(
-					'Guide the user through the hatchbox workflow!',
+					'Guide the user through the iloom workflow!',
 					expect.objectContaining({
 						headless: false,
 						appendSystemPrompt: 'System instructions for PR workflow',
@@ -588,7 +588,7 @@ describe('IgniteCommand', () => {
 				await command.execute()
 
 				expect(launchClaudeSpy).toHaveBeenCalledWith(
-					'Guide the user through the hatchbox workflow!',
+					'Guide the user through the iloom workflow!',
 					expect.objectContaining({
 						headless: false,
 						appendSystemPrompt: 'System instructions for regular workflow',
@@ -1343,7 +1343,7 @@ describe('IgniteCommand', () => {
 				const userPrompt = launchClaudeCall[0]
 
 				// Should include approval bypass text to override template requirements
-				expect(userPrompt).toContain('Guide the user through the hatchbox workflow!')
+				expect(userPrompt).toContain('Guide the user through the iloom workflow!')
 				expect(userPrompt).toContain('without awaiting confirmation')
 				expect(userPrompt).toContain('This supersedes any other guidance')
 			} finally {
@@ -1367,7 +1367,7 @@ describe('IgniteCommand', () => {
 				const userPrompt = launchClaudeCall[0]
 
 				// Should include approval bypass text to override template requirements
-				expect(userPrompt).toContain('Guide the user through the hatchbox workflow!')
+				expect(userPrompt).toContain('Guide the user through the iloom workflow!')
 				expect(userPrompt).toContain('without awaiting confirmation')
 				expect(userPrompt).toContain('This supersedes any other guidance')
 			} finally {
@@ -1391,7 +1391,7 @@ describe('IgniteCommand', () => {
 				const userPrompt = launchClaudeCall[0]
 
 				// Should be simple workflow prompt without extra instructions
-				expect(userPrompt).toBe('Guide the user through the hatchbox workflow!')
+				expect(userPrompt).toBe('Guide the user through the iloom workflow!')
 				expect(userPrompt).not.toContain('Answer Table')
 				expect(userPrompt).not.toContain('one-shot mode')
 			} finally {
@@ -1415,7 +1415,7 @@ describe('IgniteCommand', () => {
 				const userPrompt = launchClaudeCall[0]
 
 				// Should be simple workflow prompt without extra instructions
-				expect(userPrompt).toBe('Guide the user through the hatchbox workflow!')
+				expect(userPrompt).toBe('Guide the user through the iloom workflow!')
 				expect(userPrompt).not.toContain('Answer Table')
 				expect(userPrompt).not.toContain('one-shot mode')
 			} finally {
@@ -1428,7 +1428,7 @@ describe('IgniteCommand', () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 
 			// Mock template manager to return content with answer table instructions
-			const mockPromptContent = `Execute: @agent-hatchbox-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
+			const mockPromptContent = `Execute: @agent-iloom-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
 			vi.mocked(mockTemplateManager.getPrompt).mockResolvedValue(mockPromptContent)
 
 			const originalCwd = process.cwd
@@ -1458,7 +1458,7 @@ describe('IgniteCommand', () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 
 			// Mock template manager to return content with answer table instructions
-			const mockPromptContent = `Execute: @agent-hatchbox-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
+			const mockPromptContent = `Execute: @agent-iloom-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
 			vi.mocked(mockTemplateManager.getPrompt).mockResolvedValue(mockPromptContent)
 
 			const originalCwd = process.cwd
@@ -1488,7 +1488,7 @@ describe('IgniteCommand', () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 
 			// Mock template manager to return content with answer table instructions
-			const mockPromptContent = `Execute: @agent-hatchbox-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
+			const mockPromptContent = `Execute: @agent-iloom-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
 			vi.mocked(mockTemplateManager.getPrompt).mockResolvedValue(mockPromptContent)
 
 			const originalCwd = process.cwd
@@ -1516,7 +1516,7 @@ describe('IgniteCommand', () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 
 			// Mock template manager to return content with answer table instructions
-			const mockPromptContent = `Execute: @agent-hatchbox-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
+			const mockPromptContent = `Execute: @agent-iloom-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
 			vi.mocked(mockTemplateManager.getPrompt).mockResolvedValue(mockPromptContent)
 
 			const originalCwd = process.cwd
@@ -1538,7 +1538,7 @@ describe('IgniteCommand', () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 
 			// Mock template manager to return content with answer table instructions
-			const mockPromptContent = `Execute: @agent-hatchbox-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
+			const mockPromptContent = `Execute: @agent-iloom-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
 			vi.mocked(mockTemplateManager.getPrompt).mockResolvedValue(mockPromptContent)
 
 			const originalCwd = process.cwd
@@ -1560,7 +1560,7 @@ describe('IgniteCommand', () => {
 			const launchClaudeSpy = vi.spyOn(claudeUtils, 'launchClaude').mockResolvedValue(undefined)
 
 			// Mock template manager to return content with answer table instructions
-			const mockPromptContent = `Execute: @agent-hatchbox-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
+			const mockPromptContent = `Execute: @agent-iloom-issue-enhancer ISSUE_NUMBER instructing them to add their own answers to any questions they asked in the question tables they create in their GitHub comments. This documents assumptions made during execution.`
 			vi.mocked(mockTemplateManager.getPrompt).mockResolvedValue(mockPromptContent)
 
 			const originalCwd = process.cwd

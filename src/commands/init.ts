@@ -7,8 +7,8 @@ import { existsSync } from 'fs'
 import path from 'path'
 
 /**
- * Initialize Hatchbox configuration and setup shell autocomplete
- * Implements the `hb init` command requested in issue #94
+ * Initialize iloom configuration and setup shell autocomplete
+ * Implements the `il init` command requested in issue #94
  */
 export class InitCommand {
   private readonly shellCompletion: ShellCompletion
@@ -23,7 +23,7 @@ export class InitCommand {
    */
   public async execute(): Promise<void> {
     try {
-      logger.info(chalk.bold('Welcome to Hatchbox AI CLI Setup'))
+      logger.info(chalk.bold('Welcome to iloom CLI Setup'))
       logger.info('')
 
       // Detect user's shell
@@ -44,7 +44,7 @@ export class InitCommand {
         await this.setupProjectConfiguration()
 
         logger.info('')
-        logger.info(chalk.green('Setup complete! Enjoy using Hatchbox AI CLI.'))
+        logger.info(chalk.green('Setup complete! Enjoy using iloom CLI.'))
         return
       }
 
@@ -78,7 +78,7 @@ export class InitCommand {
       await this.setupProjectConfiguration()
 
       logger.info('')
-      logger.info(chalk.green('Setup complete! Enjoy using Hatchbox AI CLI.'))
+      logger.info(chalk.green('Setup complete! Enjoy using iloom CLI.'))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       logger.error(`Initialization failed: ${message}`)
@@ -91,17 +91,17 @@ export class InitCommand {
    * Creates settings.local.json and updates .gitignore
    */
   private async setupProjectConfiguration(): Promise<void> {
-    // Ensure .hatchbox directory exists
-    const hatchboxDir = path.join(process.cwd(), '.hatchbox')
-    await mkdir(hatchboxDir, { recursive: true })
+    // Ensure .iloom directory exists
+    const iloomDir = path.join(process.cwd(), '.iloom')
+    await mkdir(iloomDir, { recursive: true })
 
     // Create settings.local.json if it doesn't exist
-    const settingsLocalPath = path.join(hatchboxDir, 'settings.local.json')
+    const settingsLocalPath = path.join(iloomDir, 'settings.local.json')
     if (!existsSync(settingsLocalPath)) {
       await writeFile(settingsLocalPath, '{}\n', 'utf-8')
-      logger.info('Created .hatchbox/settings.local.json')
+      logger.info('Created .iloom/settings.local.json')
     } else {
-      logger.info('.hatchbox/settings.local.json already exists, skipping creation')
+      logger.info('.iloom/settings.local.json already exists, skipping creation')
     }
 
     // Update .gitignore
@@ -113,7 +113,7 @@ export class InitCommand {
    */
   private async updateGitignore(): Promise<void> {
     const gitignorePath = path.join(process.cwd(), '.gitignore')
-    const entryToAdd = '.hatchbox/settings.local.json'
+    const entryToAdd = '.iloom/settings.local.json'
 
     // Read existing .gitignore or create empty
     let content = ''
@@ -124,15 +124,15 @@ export class InitCommand {
     // Check if entry already exists
     const lines = content.split('\n')
     if (lines.some(line => line.trim() === entryToAdd)) {
-      logger.info('.gitignore already contains .hatchbox/settings.local.json')
+      logger.info('.gitignore already contains .iloom/settings.local.json')
       return
     }
 
     // Add entry with comment
-    const commentLine = '\n# Added by Hatchbox AI CLI'
+    const commentLine = '\n# Added by iloom CLI'
     const separator = content.endsWith('\n') || content === '' ? '' : '\n'
     const newContent = content + separator + commentLine + '\n' + entryToAdd + '\n'
     await writeFile(gitignorePath, newContent, 'utf-8')
-    logger.info('Added .hatchbox/settings.local.json to .gitignore')
+    logger.info('Added .iloom/settings.local.json to .gitignore')
   }
 }
