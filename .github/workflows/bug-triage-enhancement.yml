@@ -6,7 +6,7 @@ on:
 
 jobs:
   enhance_bug_report:
-    if: contains(github.event.issue.body, '<!-- CLI GENERATED FEEDBACK')
+    if: contains(github.event.issue.body, '<!-- CLI GENERATED FEEDBACK') && contains(github.event.issue.body, '<!-- AUTO-ENHANCEMENT-') == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,29 +34,7 @@ jobs:
             echo "GitHub CLI installed: $(gh --version)"
           fi
 
-      - name: Check for existing enhancement
-        id: check_enhancement
-        run: |
-          # Check if issue already has an enhancement comment (multiple patterns for reliability)
-          EXISTING=$(gh issue view ${{ github.event.issue.number }} --json comments --jq '.comments[] | select(
-            (.body | contains("## Enhancement Request Analysis")) or
-            (.body | contains("**Questions for Reporter**")) or
-            (.body | contains("<!-- AUTO-ENHANCEMENT-")) or
-            (.author.login == "github-actions[bot]" and (.body | contains("Enhancement") or .body | contains("Analysis")))
-          ) | .id' | head -1)
-
-          if [ -n "$EXISTING" ]; then
-            echo "enhancement_exists=true" >> $GITHUB_OUTPUT
-            echo "Enhancement already exists (comment ID: $EXISTING), skipping to prevent duplicate"
-          else
-            echo "enhancement_exists=false" >> $GITHUB_OUTPUT
-            echo "No existing enhancement found, proceeding"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Run Claude Code Bug Analysis
-        if: steps.check_enhancement.outputs.enhancement_exists == 'false'
         id: claude
         uses: acreeger/claude-code-action@main
         with:
@@ -72,8 +50,18 @@ jobs:
 
             You are an expert issue enhancement agent for Hatchbox AI. Analyze and enhance this issue report to create a comprehensive specification for development teams.
 
-            Use the GitHub CLI to post a comment on this issue using the Bash tool, using a heredoc to mitigate escaping issues:
-            gh issue comment ${{ github.event.issue.number }} --body "your analysis"
+            Instead of posting a new comment, you must UPDATE THE ISSUE BODY by appending your enhancement to the end of the existing BODY provided above.
+            Construct a new full issue body that:
+            1) Starts with the original BODY text exactly as provided above
+            2) Adds a clear separator line (e.g. a line with just `---`)
+            3) Then appends your enhancement section in the format described below
+
+            Use the GitHub CLI via the Bash tool with a heredoc to avoid escaping issues. Call it in this pattern (but with your generated full body content inside the heredoc):
+
+            gh issue edit ${{ github.event.issue.number }} --body "$(cat <<'EOF'
+            [full issue body, including the original BODY plus your appended enhancement]
+            EOF
+            )"
 
             Structure your comment with this format (do not escape the auto-enhancement html comment! - write it exactly as shown):
 
@@ -120,5 +108,5 @@ jobs:
                       
           claude_args: |
             --model claude-opus-4-1-20250805
-            --allowed-tools "Bash(gh issue comment:*), Bash(cat:*)"
-            --disallowed-tools "Edit,Write,MultiEdit,NotebookEdit,Bash(git),Bash(git commit:*),Bash(git add:*),Bash(git push:*)"
+            --allowed-tools "Bash(gh issue edit:*),Bash(cat:*)"
+            --disallowed-tools "Edit,Write,MultiEdit,NotebookEdit,Bash(gh issue comment:*),Bash(git),Bash(git commit:*),Bash(git add:*),Bash(git push:*)"
