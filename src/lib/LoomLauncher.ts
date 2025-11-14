@@ -7,9 +7,9 @@ import { getDevServerLaunchCommand } from '../utils/dev-server.js'
 import { generateColorFromBranchName } from '../utils/color.js'
 import { logger } from '../utils/logger.js'
 import { ClaudeContextManager } from './ClaudeContextManager.js'
-import type { Capability } from '../types/hatchbox.js'
+import type { Capability } from '../types/loom.js'
 
-export interface LaunchHatchboxOptions {
+export interface LaunchLoomOptions {
 	enableClaude: boolean
 	enableCode: boolean
 	enableDevServer: boolean
@@ -27,9 +27,9 @@ export interface LaunchHatchboxOptions {
 }
 
 /**
- * HatchboxLauncher orchestrates opening hatchbox components
+ * LoomLauncher orchestrates opening loom components
  */
-export class HatchboxLauncher {
+export class LoomLauncher {
 	private claudeContext: ClaudeContextManager
 
 	constructor(claudeContext?: ClaudeContextManager) {
@@ -37,12 +37,12 @@ export class HatchboxLauncher {
 	}
 
 	/**
-	 * Launch hatchbox components based on individual flags
+	 * Launch loom components based on individual flags
 	 */
-	async launchHatchbox(options: LaunchHatchboxOptions): Promise<void> {
+	async launchLoom(options: LaunchLoomOptions): Promise<void> {
 		const { enableClaude, enableCode, enableDevServer, enableTerminal } = options
 
-		logger.debug(`Launching hatchbox components: Claude=${enableClaude}, Code=${enableCode}, DevServer=${enableDevServer}, Terminal=${enableTerminal}`)
+		logger.debug(`Launching loom components: Claude=${enableClaude}, Code=${enableCode}, DevServer=${enableDevServer}, Terminal=${enableTerminal}`)
 
 		const launchPromises: Promise<void>[] = []
 
@@ -105,13 +105,13 @@ export class HatchboxLauncher {
 		// Wait for all components to launch
 		await Promise.all(launchPromises)
 
-		logger.success('Hatchbox launched successfully')
+		logger.success('loom launched successfully')
 	}
 
 	/**
 	 * Launch VSCode
 	 */
-	private async launchVSCode(options: LaunchHatchboxOptions): Promise<void> {
+	private async launchVSCode(options: LaunchLoomOptions): Promise<void> {
 		await openVSCodeWindow(options.worktreePath)
 		logger.info('VSCode opened')
 	}
@@ -119,7 +119,7 @@ export class HatchboxLauncher {
 	/**
 	 * Launch Claude terminal
 	 */
-	private async launchClaudeTerminal(options: LaunchHatchboxOptions): Promise<void> {
+	private async launchClaudeTerminal(options: LaunchLoomOptions): Promise<void> {
 		await this.claudeContext.launchWithContext({
 			workspacePath: options.worktreePath,
 			type: options.workflowType,
@@ -137,7 +137,7 @@ export class HatchboxLauncher {
 	/**
 	 * Launch dev server terminal
 	 */
-	private async launchDevServerTerminal(options: LaunchHatchboxOptions): Promise<void> {
+	private async launchDevServerTerminal(options: LaunchLoomOptions): Promise<void> {
 		const colorData = generateColorFromBranchName(options.branchName)
 		const devServerCommand = await getDevServerLaunchCommand(
 			options.worktreePath,
@@ -159,7 +159,7 @@ export class HatchboxLauncher {
 	/**
 	 * Launch standalone terminal (no command, just workspace with env vars)
 	 */
-	private async launchStandaloneTerminal(options: LaunchHatchboxOptions): Promise<void> {
+	private async launchStandaloneTerminal(options: LaunchLoomOptions): Promise<void> {
 		const colorData = generateColorFromBranchName(options.branchName)
 
 		await openTerminalWindow({
@@ -176,13 +176,13 @@ export class HatchboxLauncher {
 	 * Build terminal options for Claude
 	 */
 	private async buildClaudeTerminalOptions(
-		options: LaunchHatchboxOptions
+		options: LaunchLoomOptions
 	): Promise<TerminalWindowOptions> {
 		const colorData = generateColorFromBranchName(options.branchName)
 		const hasEnvFile = existsSync(join(options.worktreePath, '.env'))
 		const claudeTitle = `Claude - ${this.formatIdentifier(options.workflowType, options.identifier)}`
 
-		let claudeCommand = 'hb ignite'
+		let claudeCommand = 'il ignite'
 		if (options.oneShot !== undefined && options.oneShot !== 'default') {
 			claudeCommand += ` --one-shot=${options.oneShot}`
 		}
@@ -201,7 +201,7 @@ export class HatchboxLauncher {
 	 * Build terminal options for dev server
 	 */
 	private async buildDevServerTerminalOptions(
-		options: LaunchHatchboxOptions
+		options: LaunchLoomOptions
 	): Promise<TerminalWindowOptions> {
 		const colorData = generateColorFromBranchName(options.branchName)
 		const devServerCommand = await getDevServerLaunchCommand(
@@ -227,7 +227,7 @@ export class HatchboxLauncher {
 	 * Build terminal options for standalone terminal (no command)
 	 */
 	private buildStandaloneTerminalOptions(
-		options: LaunchHatchboxOptions
+		options: LaunchLoomOptions
 	): TerminalWindowOptions {
 		const colorData = generateColorFromBranchName(options.branchName)
 		const hasEnvFile = existsSync(join(options.worktreePath, '.env'))
@@ -248,7 +248,7 @@ export class HatchboxLauncher {
 	 */
 	private async launchMultipleTerminals(
 		terminals: Array<{ type: string; options: TerminalWindowOptions }>,
-		_options: LaunchHatchboxOptions
+		_options: LaunchLoomOptions
 	): Promise<void> {
 		const terminalOptions = terminals.map((t) => t.options)
 

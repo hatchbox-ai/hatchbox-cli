@@ -50,17 +50,17 @@ describe('ShellCompletion', () => {
 
   describe('command name detection', () => {
     it('should detect command name from process.argv[1]', () => {
-      process.argv[1] = '/usr/local/bin/hb-94'
+      process.argv[1] = '/usr/local/bin/il-94'
       shellCompletion = new ShellCompletion()
       const instructions = shellCompletion.getSetupInstructions('bash')
-      expect(instructions).toContain('eval "$(hb-94 --completion)"')
+      expect(instructions).toContain('eval "$(il-94 --completion)"')
     })
 
     it('should handle custom command names', () => {
-      process.argv[1] = '/home/user/.local/bin/my-hatchbox'
+      process.argv[1] = '/home/user/.local/bin/my-iloom'
       shellCompletion = new ShellCompletion()
       const instructions = shellCompletion.getSetupInstructions('zsh')
-      expect(instructions).toContain('eval "$(my-hatchbox --completion)"')
+      expect(instructions).toContain('eval "$(my-iloom --completion)"')
     })
 
     it('should remove .js extension from command name', () => {
@@ -76,11 +76,11 @@ describe('ShellCompletion', () => {
       expect(instructions).toContain('eval "$(custom-command --completion)"')
     })
 
-    it('should fallback to "hb" when argv[1] is not available', () => {
+    it('should fallback to "il" when argv[1] is not available', () => {
       process.argv = ['node'] // Remove argv[1]
       shellCompletion = new ShellCompletion()
       const instructions = shellCompletion.getSetupInstructions('bash')
-      expect(instructions).toContain('eval "$(hb --completion)"')
+      expect(instructions).toContain('eval "$(il --completion)"')
     })
   })
 

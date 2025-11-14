@@ -16,7 +16,7 @@ export class UpdateCommand {
     logger.debug(`[update] Installation method detected: ${installMethod}`)
 
     if (installMethod !== 'global') {
-      logger.error('Update command only works for globally installed hatchbox-cli')
+      logger.error('Update command only works for globally installed iloom-cli')
 
       switch (installMethod) {
         case 'local':
@@ -25,11 +25,11 @@ export class UpdateCommand {
           break
         case 'linked':
           logger.info('You appear to be running from npm link.')
-          logger.info('To update: cd to your local hatchbox repo and run git pull')
+          logger.info('To update: cd to your local iloom repo and run git pull')
           break
         default:
           logger.info('Unable to determine installation method.')
-          logger.info('If globally installed, try: npm install -g @hatchbox-ai/hatchbox-cli@latest')
+          logger.info('If globally installed, try: npm install -g @iloom/cli@latest')
           break
       }
 

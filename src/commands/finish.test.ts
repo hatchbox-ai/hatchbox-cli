@@ -521,7 +521,7 @@ describe('FinishCommand', () => {
 					'  2. Stage resolved files: git add <files>\n' +
 					'  3. Continue rebase: git rebase --continue\n' +
 					'  4. Or abort rebase: git rebase --abort\n' +
-					'  5. Then re-run: hb finish <issue-number>'
+					'  5. Then re-run: il finish <issue-number>'
 				)
 
 				vi.mocked(mockMergeManager.rebaseOnMain).mockRejectedValue(conflictError)
@@ -1557,7 +1557,7 @@ describe('FinishCommand', () => {
 							identifier: '123',
 							options: {},
 						})
-					).rejects.toThrow("No worktree found for Issue #123. Use 'hb list' to see available worktrees.")
+					).rejects.toThrow("No worktree found for Issue #123. Use 'il list' to see available worktrees.")
 
 					// Verify validation failed before detecting/committing changes
 					expect(mockCommitManager.detectUncommittedChanges).not.toHaveBeenCalled()
@@ -1714,7 +1714,7 @@ describe('FinishCommand', () => {
 							identifier: 'nonexistent-branch',
 							options: {},
 						})
-					).rejects.toThrow("No worktree found for Branch 'nonexistent-branch'. Use 'hb list' to see available worktrees.")
+					).rejects.toThrow("No worktree found for Branch 'nonexistent-branch'. Use 'il list' to see available worktrees.")
 
 					// Verify validation failed before detecting/committing changes
 					expect(mockCommitManager.detectUncommittedChanges).not.toHaveBeenCalled()
@@ -2389,7 +2389,7 @@ describe('FinishCommand', () => {
 						identifier: originalInput,
 						options: {},
 					})
-				).rejects.toThrow(/Use 'hb list' to see available worktrees/)
+				).rejects.toThrow(/Use 'il list' to see available worktrees/)
 			})
 
 			it('should handle thrown strings gracefully', async () => {

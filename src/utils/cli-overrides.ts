@@ -1,10 +1,10 @@
 import { resolve } from 'node:path'
-import type { HatchboxSettings } from '../lib/SettingsManager.js'
+import type { IloomSettings } from '../lib/SettingsManager.js'
 
 /**
  * Type for parsed CLI overrides (partial settings)
  */
-export type CliOverrides = Partial<HatchboxSettings>
+export type CliOverrides = Partial<IloomSettings>
 
 /**
  * Parse CLI value string to appropriate type
@@ -183,7 +183,7 @@ export function extractSettingsOverrides(argv: string[] = process.argv): CliOver
  * This is useful when you need to forward --set arguments to another command
  *
  * Example:
- * - Input: ['node', 'hb', 'start', '123', '--set', 'workflows.issue.startIde=false', '--set', 'port=4000']
+ * - Input: ['node', 'il', 'start', '123', '--set', 'workflows.issue.startIde=false', '--set', 'port=4000']
  * - Output: ['workflows.issue.startIde=false', 'port=4000']
  */
 export function extractRawSetArguments(argv: string[] = process.argv): string[] {
@@ -219,21 +219,21 @@ export function extractRawSetArguments(argv: string[] = process.argv): string[] 
  * Rules:
  * - If process.argv[1] contains "/" (path), resolve to absolute path
  * - If process.argv[1] is just a name (no "/"), return as-is (in PATH)
- * - Fallback to 'hb' if process.argv[1] is undefined
+ * - Fallback to 'il' if process.argv[1] is undefined
  *
  * Examples:
  * - ./dist/cli.js → /full/path/to/dist/cli.js
  * - dist/cli.js → /full/path/to/dist/cli.js
- * - /usr/local/bin/hb → /usr/local/bin/hb
- * - hb → hb
- * - hb-125 → hb-125
+ * - /usr/local/bin/il → /usr/local/bin/il
+ * - il → il
+ * - il-125 → il-125
  */
 export function getExecutablePath(): string {
 	const argv1 = process.argv[1]
 
 	if (!argv1 || argv1.trim() === '') {
 		// Fallback if process.argv[1] is undefined or empty
-		return 'hb'
+		return 'il'
 	}
 
 	// If path contains "/", it's a file path - resolve to absolute

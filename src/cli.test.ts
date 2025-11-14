@@ -34,7 +34,7 @@ describe('CLI', () => {
   it('should show help when --help flag is provided', async () => {
     const { stdout, code } = await runCLI(['--help'])
     expect(code).toBe(0)
-    expect(stdout).toContain('Usage: hatchbox')
+    expect(stdout).toContain('Usage: iloom')
     expect(stdout).toContain('[options]')
     expect(stdout).toContain('[command]')
     // Check for presence of commands, not description
@@ -122,8 +122,8 @@ describe('CLI', () => {
 
 describe('Settings validation on CLI startup', () => {
   const testDir = join(process.cwd(), '.test-cli-settings')
-  const hatchboxDir = join(testDir, '.hatchbox')
-  const settingsPath = join(hatchboxDir, 'settings.json')
+  const iloomDirectory = join(testDir, '.iloom')
+  const settingsPath = join(iloomDirectory, 'settings.json')
 
   beforeEach(() => {
     // Clean up any existing test directory
@@ -132,7 +132,7 @@ describe('Settings validation on CLI startup', () => {
     }
     // Create test directory structure
     mkdirSync(testDir, { recursive: true })
-    mkdirSync(hatchboxDir, { recursive: true })
+    mkdirSync(iloomDirectory, { recursive: true })
   })
 
   afterEach(() => {
@@ -227,7 +227,7 @@ describe('Settings validation on CLI startup', () => {
     // Help should still work with invalid settings
     const { stdout, code } = await runCLI(['--help'], testDir)
     expect(code).toBe(0)
-    expect(stdout).toContain('Usage: hatchbox')
+    expect(stdout).toContain('Usage: iloom')
   })
 
   it('should validate settings for all commands except help', async () => {

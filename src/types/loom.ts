@@ -1,7 +1,7 @@
 export type ProjectCapability = 'cli' | 'web'
 export type Capability = ProjectCapability
 
-export interface Hatchbox {
+export interface Loom {
   id: string
   path: string
   branch: string
@@ -22,7 +22,7 @@ export interface Hatchbox {
   cliSymlinks?: string[]
 }
 
-export interface CreateHatchboxInput {
+export interface CreateLoomInput {
   type: 'issue' | 'pr' | 'branch'
   identifier: string | number
   originalInput: string
@@ -39,14 +39,14 @@ export interface CreateHatchboxInput {
     oneShot?: import('./index.js').OneShotMode
     // Raw --set arguments to forward to ignite
     setArguments?: string[]
-    // Executable path to use for ignite command (e.g., 'hb', 'hb-125', or '/path/to/dist/cli.js')
+    // Executable path to use for ignite command (e.g., 'il', 'il-125', or '/path/to/dist/cli.js')
     executablePath?: string
   }
 }
 
 export type LaunchMode = 'editor' | 'terminal' | 'both'
 
-export interface HatchboxSummary {
+export interface LoomSummary {
   id: string
   type: 'issue' | 'pr' | 'branch'
   identifier: string | number

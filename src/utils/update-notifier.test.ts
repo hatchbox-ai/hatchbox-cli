@@ -229,23 +229,23 @@ describe('UpdateNotifier', () => {
 
     beforeEach(() => {
       // Save original environment variable value
-      originalEnvValue = process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS
+      originalEnvValue = process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS
       // Clear for clean test slate
-      delete process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS
+      delete process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS
     })
 
     afterEach(() => {
       // Restore original environment variable
       if (originalEnvValue !== undefined) {
-        process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = originalEnvValue
+        process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = originalEnvValue
       } else {
-        delete process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS
+        delete process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS
       }
     })
 
-    it('respects custom timeout from HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS', async () => {
+    it('respects custom timeout from ILOOM_UPDATE_CACHE_TIMEOUT_MINS', async () => {
       // Set custom timeout to 60 minutes (1 hour)
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = '60'
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = '60'
 
       const notifier = new UpdateNotifier('1.2.3', '@test/package')
 
@@ -285,7 +285,7 @@ describe('UpdateNotifier', () => {
 
     it('treats cache as always stale when environment variable is invalid', async () => {
       // Test with non-numeric value
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = 'invalid'
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = 'invalid'
 
       const notifier = new UpdateNotifier('1.2.3', '@test/package')
 
@@ -309,7 +309,7 @@ describe('UpdateNotifier', () => {
       vi.clearAllMocks()
 
       // Test with empty string
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = ''
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = ''
 
       const notifier2 = new UpdateNotifier('1.2.3', '@test/package')
       vi.mocked(fs.existsSync).mockReturnValue(true)
@@ -326,7 +326,7 @@ describe('UpdateNotifier', () => {
 
     it('handles edge case timeout values', async () => {
       // Test with 0 (cache should always be stale)
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = '0'
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = '0'
 
       const notifier = new UpdateNotifier('1.2.3', '@test/package')
 
@@ -349,7 +349,7 @@ describe('UpdateNotifier', () => {
       vi.clearAllMocks()
 
       // Test with negative value (cache should always be stale)
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = '-10'
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = '-10'
 
       const notifier2 = new UpdateNotifier('1.2.3', '@test/package')
       const oneSecondAgo2 = Date.now() - 1000
@@ -371,7 +371,7 @@ describe('UpdateNotifier', () => {
       vi.clearAllMocks()
 
       // Test with very large value (cache effectively never expires)
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = '999999'
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = '999999'
 
       const notifier3 = new UpdateNotifier('1.2.3', '@test/package')
       const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000)
@@ -390,7 +390,7 @@ describe('UpdateNotifier', () => {
 
     it('handles fractional and scientific notation values', async () => {
       // Test with fractional value (should be truncated by parseInt)
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = '1.5'
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = '1.5'
 
       const notifier = new UpdateNotifier('1.2.3', '@test/package')
 
@@ -414,7 +414,7 @@ describe('UpdateNotifier', () => {
       vi.clearAllMocks()
 
       // Test with scientific notation
-      process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS = '1e3' // parseInt stops at 'e', returns 1
+      process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS = '1e3' // parseInt stops at 'e', returns 1
 
       const notifier2 = new UpdateNotifier('1.2.3', '@test/package')
       const thirtySecondsAgo = Date.now() - (30 * 1000) // 0.5 minutes

@@ -29,10 +29,10 @@ describe('SettingsManager', () => {
 			const projectRoot = '/test/project'
 			const validSettings = {
 				agents: {
-					'hatchbox-issue-analyzer': {
+					'iloom-issue-analyzer': {
 						model: 'sonnet',
 					},
-					'hatchbox-issue-planner': {
+					'iloom-issue-planner': {
 						model: 'opus',
 					},
 				},
@@ -65,7 +65,7 @@ describe('SettingsManager', () => {
 			expect(result).toEqual({})
 		})
 
-		it('should return empty object when .hatchbox directory does not exist', async () => {
+		it('should return empty object when .iloom directory does not exist', async () => {
 			const projectRoot = '/test/project'
 			const error: { code?: string; message: string } = {
 				code: 'ENOENT',
@@ -354,7 +354,7 @@ describe('SettingsManager', () => {
 
 		it('should reject prefix with segment containing only hyphens', () => {
 			const settings = {
-				worktreePrefix: 'hatchboxes/-',
+				worktreePrefix: 'looms/-',
 			}
 			expect(() => settingsManager['validateSettings'](settings)).toThrow(
 				/worktreePrefix.*invalid.*character/i,
@@ -372,7 +372,7 @@ describe('SettingsManager', () => {
 
 		it('should reject prefix with first segment containing only hyphens', () => {
 			const settings = {
-				worktreePrefix: '-/hatchboxes',
+				worktreePrefix: '-/looms',
 			}
 			expect(() => settingsManager['validateSettings'](settings)).toThrow(
 				/worktreePrefix.*invalid.*character/i,
@@ -390,7 +390,7 @@ describe('SettingsManager', () => {
 
 		it('should accept prefix with segment containing alphanumeric and trailing separator', () => {
 			const settings = {
-				worktreePrefix: 'hatchboxes/myprefix-',
+				worktreePrefix: 'looms/myprefix-',
 			}
 			expect(() => settingsManager['validateSettings'](settings)).not.toThrow()
 		})
@@ -406,13 +406,13 @@ describe('SettingsManager', () => {
 		it('should accept valid settings with all agents configured', () => {
 			const validSettings = {
 				agents: {
-					'hatchbox-issue-analyzer': {
+					'iloom-issue-analyzer': {
 						model: 'sonnet',
 					},
-					'hatchbox-issue-planner': {
+					'iloom-issue-planner': {
 						model: 'opus',
 					},
-					'hatchbox-issue-implementer': {
+					'iloom-issue-implementer': {
 						model: 'haiku',
 					},
 				},
@@ -425,7 +425,7 @@ describe('SettingsManager', () => {
 		it('should accept valid settings with partial agent configuration', () => {
 			const partialSettings = {
 				agents: {
-					'hatchbox-issue-implementer': {
+					'iloom-issue-implementer': {
 						model: 'haiku',
 					},
 				},

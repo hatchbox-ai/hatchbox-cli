@@ -37,7 +37,7 @@ describe('BuildRunner', () => {
 		it('should detect CLI capability when bin field exists', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -46,7 +46,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -111,7 +111,7 @@ describe('BuildRunner', () => {
 		it('should skip build when no build script exists', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -120,7 +120,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: {}, // No build script
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(false)
 
@@ -135,12 +135,12 @@ describe('BuildRunner', () => {
 		it('should detect build script when it exists', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			const mockPkgJson: PackageJson = {
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -161,7 +161,7 @@ describe('BuildRunner', () => {
 		it('should run build successfully for CLI projects with build script', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -170,7 +170,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -191,7 +191,7 @@ describe('BuildRunner', () => {
 		it('should throw detailed error when build fails', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -200,7 +200,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -214,7 +214,7 @@ describe('BuildRunner', () => {
 		it('should use correct working directory', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -223,7 +223,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -244,7 +244,7 @@ describe('BuildRunner', () => {
 		it('should detect package manager correctly', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -253,7 +253,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -269,7 +269,7 @@ describe('BuildRunner', () => {
 		it('should use correct package manager command (pnpm build)', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -278,7 +278,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -292,7 +292,7 @@ describe('BuildRunner', () => {
 		it('should use correct package manager command (npm run build)', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -301,7 +301,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('npm')
@@ -317,7 +317,7 @@ describe('BuildRunner', () => {
 		it('should use correct package manager command (yarn build)', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -326,7 +326,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('yarn')
@@ -342,7 +342,7 @@ describe('BuildRunner', () => {
 		it('should respect dry-run mode', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -351,7 +351,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -366,7 +366,7 @@ describe('BuildRunner', () => {
 		it('should still detect capabilities in dry-run mode', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -375,7 +375,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -390,12 +390,12 @@ describe('BuildRunner', () => {
 		it('should still detect build script in dry-run mode', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			const mockPkgJson: PackageJson = {
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -437,7 +437,7 @@ describe('BuildRunner', () => {
 		it('should provide clear error message for build failure', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -446,7 +446,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -460,7 +460,7 @@ describe('BuildRunner', () => {
 		it('should include command to run for debugging (pnpm)', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -469,7 +469,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')
@@ -483,7 +483,7 @@ describe('BuildRunner', () => {
 		it('should include command to run for debugging (npm)', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -492,7 +492,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('npm')
@@ -533,7 +533,7 @@ describe('BuildRunner', () => {
 		it('should track duration for successful builds', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
@@ -542,7 +542,7 @@ describe('BuildRunner', () => {
 			vi.mocked(packageJson.readPackageJson).mockResolvedValue({
 				name: 'test',
 				scripts: { build: 'tsup' },
-				bin: { hb: './dist/cli.js' },
+				bin: { il: './dist/cli.js' },
 			})
 			vi.mocked(packageJson.hasScript).mockReturnValue(true)
 			vi.mocked(packageManager.detectPackageManager).mockResolvedValue('pnpm')

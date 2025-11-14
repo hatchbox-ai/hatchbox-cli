@@ -640,7 +640,7 @@ describe('CleanupCommand', () => {
             'Please resolve before cleanup (choose one):\n' +
             '  • Commit changes: cd /path/to/worktree && git commit -am "message"\n' +
             '  • Stash changes: cd /path/to/worktree && git stash\n' +
-            '  • Force cleanup: hb cleanup feat/issue-45 --force (WARNING: will discard changes)'
+            '  • Force cleanup: il cleanup feat/issue-45 --force (WARNING: will discard changes)'
           )
         )
 
@@ -664,7 +664,7 @@ describe('CleanupCommand', () => {
           'Please resolve before cleanup (choose one):\n' +
           '  • Commit changes: cd /path/to/worktree && git commit -am "message"\n' +
           '  • Stash changes: cd /path/to/worktree && git stash\n' +
-          '  • Force cleanup: hb cleanup feat/issue-45 --force (WARNING: will discard changes)'
+          '  • Force cleanup: il cleanup feat/issue-45 --force (WARNING: will discard changes)'
 
         mockResourceCleanup.cleanupWorktree = vi.fn().mockRejectedValue(new Error(errorMessage))
         vi.mocked(promptConfirmation).mockResolvedValueOnce(true)

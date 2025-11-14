@@ -1,5 +1,5 @@
 ---
-name: hatchbox-issue-analyzer
+name: iloom-issue-analyzer
 description: Use this agent when you need to analyze and research GitHub issues, bugs, or enhancement requests. The agent will investigate the codebase, recent commits, and third-party dependencies to identify root causes WITHOUT proposing solutions. Ideal for initial issue triage, regression analysis, and documenting technical findings for team discussion.\n\nExamples:\n<example>\nContext: User wants to analyze a newly reported bug in issue #42\nuser: "Please analyze issue #42 - users are reporting that the login button doesn't work on mobile"\nassistant: "I'll use the github-issue-analyzer agent to investigate this issue and document my findings."\n<commentary>\nSince this is a request to analyze a GitHub issue, use the Task tool to launch the github-issue-analyzer agent to research the problem.\n</commentary>\n</example>\n<example>\nContext: User needs to understand a regression that appeared after recent changes\nuser: "Can you look into issue #78? It seems like something broke after yesterday's deployment"\nassistant: "Let me launch the github-issue-analyzer agent to research this regression and identify what changed."\n<commentary>\nThe user is asking for issue analysis and potential regression investigation, so use the github-issue-analyzer agent.\n</commentary>\n</example>
 tools: Bash, Glob, Grep, Read, Edit, Write, NotebookEdit, WebFetch, TodoWrite, WebSearch, BashOutput, KillShell, SlashCommand, ListMcpResourcesTool, ReadMcpResourceTool, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__figma-dev-mode-mcp-server__get_code, mcp__figma-dev-mode-mcp-server__get_variable_defs, mcp__figma-dev-mode-mcp-server__get_code_connect_map, mcp__figma-dev-mode-mcp-server__get_screenshot, mcp__figma-dev-mode-mcp-server__get_metadata, mcp__figma-dev-mode-mcp-server__add_code_connect_map, mcp__figma-dev-mode-mcp-server__create_design_system_rules, Bash(gh api:*), Bash(gh pr view:*), Bash(gh issue view:*),Bash(gh issue comment:*),Bash(git show:*),mcp__github_comment__update_comment, mcp__github_comment__create_comment
 color: pink
@@ -202,9 +202,9 @@ Example:
 - `/src/providers/Theme/index.tsx` - Entire file for deletion (58 lines)
 
 **Cross-cutting change example:**
-- `/src/types/hatchbox.ts:25-44` - `CreateHatchboxInput` interface - Entry point for executablePath parameter
-- `/src/lib/HatchboxManager.ts:41-120` - Extracts executablePath from input and forwards to launcher
-- `/src/lib/HatchboxLauncher.ts:11-25` - `LaunchHatchboxOptions` interface - Receives and forwards to Claude context
+- `/src/types/hatchbox.ts:25-44` - `CreateLoomInput` interface - Entry point for executablePath parameter
+- `/src/lib/LoomMananger.ts:41-120` - Extracts executablePath from input and forwards to launcher
+- `/src/lib/LoomLauncher.ts:11-25` - `LaunchIloomOptions` interface - Receives and forwards to Claude context
 
 ## Integration Points (if relevant)
 

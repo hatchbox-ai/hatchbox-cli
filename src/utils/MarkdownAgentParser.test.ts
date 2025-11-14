@@ -324,9 +324,9 @@ Content`
 	})
 
 	describe('parse - real-world examples', () => {
-		it('should parse structure similar to actual hatchbox agent files', () => {
+		it('should parse structure similar to actual iloom agent files', () => {
 			const markdown = `---
-name: hatchbox-issue-analyzer
+name: iloom-issue-analyzer
 description: Use this agent when you need to analyze and research GitHub issues, bugs, or enhancement requests. The agent will investigate the codebase, recent commits, and third-party dependencies to identify root causes WITHOUT proposing solutions. Ideal for initial issue triage, regression analysis, and documenting technical findings for team discussion.\\n\\nExamples:\\n<example>\\nContext: User wants to analyze a newly reported bug in issue #42\\nuser: "Please analyze issue #42 - users are reporting that the login button doesn't work on mobile"\\nassistant: "I'll use the github-issue-analyzer agent to investigate this issue and document my findings."\\n<commentary>\\nSince this is a request to analyze a GitHub issue, use the Task tool to launch the github-issue-analyzer agent to research the problem.\\n</commentary>\\n</example>
 tools: Bash, Glob, Grep, Read, Edit, Write, NotebookEdit, WebFetch, TodoWrite, WebSearch, BashOutput, KillShell, SlashCommand, ListMcpResourcesTool, ReadMcpResourceTool, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__figma-dev-mode-mcp-server__get_code, mcp__figma-dev-mode-mcp-server__get_variable_defs, mcp__figma-dev-mode-mcp-server__get_code_connect_map, mcp__figma-dev-mode-mcp-server__get_screenshot, mcp__figma-dev-mode-mcp-server__get_metadata, mcp__figma-dev-mode-mcp-server__add_code_connect_map, mcp__figma-dev-mode-mcp-server__create_design_system_rules, Bash(gh api:*), Bash(gh pr view:*), Bash(gh issue view:*),Bash(gh issue comment:*),Bash(git show:*),mcp__github_comment__update_comment, mcp__github_comment__create_comment
 color: pink
@@ -337,7 +337,7 @@ You are Claude, an elite GitHub issue analyst specializing in deep technical inv
 
 			const result = MarkdownAgentParser.parse(markdown)
 
-			expect(result.data.name).toBe('hatchbox-issue-analyzer')
+			expect(result.data.name).toBe('iloom-issue-analyzer')
 			expect(result.data.description).toContain('Use this agent when you need to analyze')
 			expect(result.data.description).toContain('<example>')
 			expect(result.data.tools).toContain('Bash, Glob, Grep, Read')

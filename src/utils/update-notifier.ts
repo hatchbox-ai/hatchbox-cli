@@ -25,7 +25,7 @@ export class UpdateNotifier {
     this.currentVersion = currentVersion
     this.packageName = packageName
     // Cross-platform cache directory
-    const configDir = path.join(os.homedir(), '.config', 'hatchbox-ai')
+    const configDir = path.join(os.homedir(), '.config', 'iloom-ai')
     this.cacheFilePath = path.join(configDir, 'update-check.json')
     logger.debug(`UpdateNotifier initialized: version=${currentVersion}, package=${packageName}, cachePath=${this.cacheFilePath}`)
   }
@@ -97,7 +97,7 @@ export class UpdateNotifier {
       const cache = JSON.parse(content) as UpdateCheckCache
 
       // Check if cache is still fresh (< configurable hours)
-      const cacheTimeoutMins = parseInt(process.env.HATCHBOX_UPDATE_CACHE_TIMEOUT_MINS ?? '360', 10) // Default 6 hours
+      const cacheTimeoutMins = parseInt(process.env.ILOOM_UPDATE_CACHE_TIMEOUT_MINS ?? '360', 10) // Default 6 hours
       const cacheTimeoutMs = cacheTimeoutMins * 60 * 1000
       logger.debug(`getCachedCheck: Using cache timeout of ${cacheTimeoutMins} minutes`)
       const now = Date.now()
@@ -156,7 +156,7 @@ export class UpdateNotifier {
       /* eslint-disable no-console */
       console.log('')
       console.log('  ' + chalk.bold(`Update available: ${result.currentVersion} → ${result.latestVersion}`))
-      console.log('  ' + chalk.bold('Run: hb update'))
+      console.log('  ' + chalk.bold('Run: il update'))
       console.log('')
       /* eslint-enable no-console */
     } else {

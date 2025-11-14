@@ -77,7 +77,7 @@ execute()
 
 **Option 1: Environment Variable**
 ```bash
-HATCHBOX_DEBUG=true hb start 123
+ILOOM_DEBUG=true hb start 123
 ```
 
 **Option 2: CLI Flag**
@@ -448,7 +448,7 @@ expect(execa).toHaveBeenCalledWith(
 
 ### Debug branch name generation:
 ```bash
-HATCHBOX_DEBUG=true hb start 123
+ILOOM_DEBUG=true hb start 123
 # Look for: "Sending prompt to Claude { prompt: '...' }"
 # Look for: "Claude returned branch name { branchName: '...' }"
 ```
@@ -456,7 +456,7 @@ HATCHBOX_DEBUG=true hb start 123
 ### Debug context detection:
 ```bash
 cd /path/to/workspace
-HATCHBOX_DEBUG=true hb ignite
+ILOOM_DEBUG=true hb ignite
 # Look for: "Auto-detected issue #165 from directory"
 # Look for: "Auto-detected [type] workflow"
 ```

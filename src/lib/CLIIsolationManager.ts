@@ -6,10 +6,10 @@ import { readPackageJson, hasScript } from '../utils/package-json.js'
 import { logger } from '../utils/logger.js'
 
 export class CLIIsolationManager {
-  private readonly hatchboxBinDir: string
+  private readonly iloomBinDir: string
 
   constructor() {
-    this.hatchboxBinDir = path.join(os.homedir(), '.hatchbox', 'bin')
+    this.iloomBinDir = path.join(os.homedir(), '.iloom', 'bin')
   }
 
   /**
@@ -33,8 +33,8 @@ export class CLIIsolationManager {
     // 2. Verify bin targets exist and are executable
     await this.verifyBinTargets(worktreePath, binEntries)
 
-    // 3. Create ~/.hatchbox/bin if needed
-    await fs.ensureDir(this.hatchboxBinDir)
+    // 3. Create ~/.iloom/bin if needed
+    await fs.ensureDir(this.iloomBinDir)
 
     // 4. Create versioned symlinks
     const symlinkNames = await this.createVersionedSymlinks(
@@ -44,7 +44,7 @@ export class CLIIsolationManager {
     )
 
     // 5. Check PATH and provide instructions if needed
-    await this.ensureHatchboxBinInPath()
+    await this.ensureIloomBinInPath()
 
     return symlinkNames
   }
@@ -95,7 +95,7 @@ export class CLIIsolationManager {
   }
 
   /**
-   * Create versioned symlinks in ~/.hatchbox/bin
+   * Create versioned symlinks in ~/.iloom/bin
    * @param worktreePath Path to the worktree
    * @param identifier Issue/PR number or branch identifier
    * @param binEntries Bin entries from package.json
@@ -111,7 +111,7 @@ export class CLIIsolationManager {
     for (const [binName, binPath] of Object.entries(binEntries)) {
       const versionedName = `${binName}-${identifier}`
       const targetPath = path.resolve(worktreePath, binPath)
-      const symlinkPath = path.join(this.hatchboxBinDir, versionedName)
+      const symlinkPath = path.join(this.iloomBinDir, versionedName)
 
       // Create symlink
       await fs.symlink(targetPath, symlinkPath)
@@ -124,11 +124,11 @@ export class CLIIsolationManager {
   }
 
   /**
-   * Check if ~/.hatchbox/bin is in PATH and provide setup instructions
+   * Check if ~/.iloom/bin is in PATH and provide setup instructions
    */
-  private async ensureHatchboxBinInPath(): Promise<void> {
+  private async ensureIloomBinInPath(): Promise<void> {
     const currentPath = process.env.PATH ?? ''
-    if (currentPath.includes('.hatchbox/bin')) {
+    if (currentPath.includes('.iloom/bin')) {
       return // Already configured
     }
 
@@ -139,7 +139,7 @@ export class CLIIsolationManager {
     // Print setup instructions
     logger.warn('\n⚠️  One-time PATH setup required:')
     logger.warn(`   Add to ${rcFile}:`)
-    logger.warn(`   export PATH="$HOME/.hatchbox/bin:$PATH"`)
+    logger.warn(`   export PATH="$HOME/.iloom/bin:$PATH"`)
     logger.warn(`   Then run: source ${rcFile}\n`)
   }
 
@@ -177,11 +177,11 @@ export class CLIIsolationManager {
     const removed: string[] = []
 
     try {
-      const files = await fs.readdir(this.hatchboxBinDir)
+      const files = await fs.readdir(this.iloomBinDir)
 
       for (const file of files) {
         if (this.matchesIdentifier(file, identifier)) {
-          const symlinkPath = path.join(this.hatchboxBinDir, file)
+          const symlinkPath = path.join(this.iloomBinDir, file)
 
           try {
             await fs.unlink(symlinkPath)
@@ -221,7 +221,7 @@ export class CLIIsolationManager {
   }
 
   /**
-   * Find orphaned symlinks in ~/.hatchbox/bin
+   * Find orphaned symlinks in ~/.iloom/bin
    * Returns symlinks that point to non-existent targets
    *
    * @returns Array of orphaned symlink information
@@ -230,10 +230,10 @@ export class CLIIsolationManager {
     const orphaned: Array<{ name: string; path: string; brokenTarget: string }> = []
 
     try {
-      const files = await fs.readdir(this.hatchboxBinDir)
+      const files = await fs.readdir(this.iloomBinDir)
 
       for (const file of files) {
-        const symlinkPath = path.join(this.hatchboxBinDir, file)
+        const symlinkPath = path.join(this.iloomBinDir, file)
 
         try {
           const stats = await fs.lstat(symlinkPath)

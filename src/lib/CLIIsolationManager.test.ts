@@ -23,7 +23,7 @@ vi.mock('../utils/logger.js', () => ({
 describe('CLIIsolationManager', () => {
   let manager: CLIIsolationManager
   const homedir = '/home/testuser'
-  const hatchboxBinDir = path.join(homedir, '.hatchbox', 'bin')
+  const iloomBinDir = path.join(homedir, '.iloom', 'bin')
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -54,7 +54,7 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValueOnce(undefined)
 
       const originalEnv = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       const result = await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
@@ -66,7 +66,7 @@ describe('CLIIsolationManager', () => {
       process.env.PATH = originalEnv
     })
 
-    it('should create ~/.hatchbox/bin directory if not exists', async () => {
+    it('should create ~/.iloom/bin directory if not exists', async () => {
       const worktreePath = '/test/worktree'
       const binEntries = { 'cli': './dist/cli.js' }
 
@@ -84,11 +84,11 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValueOnce(undefined)
 
       const originalEnv = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
-      expect(fs.ensureDir).toHaveBeenCalledWith(hatchboxBinDir)
+      expect(fs.ensureDir).toHaveBeenCalledWith(iloomBinDir)
 
       process.env.PATH = originalEnv
     })
@@ -96,12 +96,12 @@ describe('CLIIsolationManager', () => {
     it('should create versioned symlinks for all bin entries', async () => {
       const worktreePath = '/test/worktree'
       const binEntries = {
-        hb: './dist/cli.js',
-        hatchbox: './dist/cli.js'
+        il: './dist/cli.js',
+        iloom: './dist/cli.js'
       }
 
       const mockPackageJson: PackageJson = {
-        name: 'hatchbox',
+        name: 'iloom',
         scripts: { build: 'tsup' }
       }
 
@@ -114,33 +114,33 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValue(undefined)
 
       const originalEnv = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       const result = await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
       expect(fs.symlink).toHaveBeenCalledTimes(2)
       expect(fs.symlink).toHaveBeenCalledWith(
         path.resolve(worktreePath, './dist/cli.js'),
-        path.join(hatchboxBinDir, 'hb-42')
+        path.join(iloomBinDir, 'il-42')
       )
       expect(fs.symlink).toHaveBeenCalledWith(
         path.resolve(worktreePath, './dist/cli.js'),
-        path.join(hatchboxBinDir, 'hatchbox-42')
+        path.join(iloomBinDir, 'iloom-42')
       )
-      expect(result).toEqual(['hb-42', 'hatchbox-42'])
+      expect(result).toEqual(['il-42', 'iloom-42'])
 
       process.env.PATH = originalEnv
     })
 
-    it('should create multiple symlinks for same target (hb, hatchbox)', async () => {
+    it('should create multiple symlinks for same target (il, iloom)', async () => {
       const worktreePath = '/test/worktree'
       const binEntries = {
-        hb: './dist/cli.js',
-        hatchbox: './dist/cli.js'
+        il: './dist/cli.js',
+        iloom: './dist/cli.js'
       }
 
       const mockPackageJson: PackageJson = {
-        name: 'hatchbox',
+        name: 'iloom',
         scripts: { build: 'tsup' }
       }
 
@@ -153,15 +153,15 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValue(undefined)
 
       const originalEnv = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       const result = await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
       expect(result).toHaveLength(2)
-      expect(result).toContain('hb-42')
-      expect(result).toContain('hatchbox-42')
-      expect(logger.success).toHaveBeenCalledWith('CLI available: hb-42')
-      expect(logger.success).toHaveBeenCalledWith('CLI available: hatchbox-42')
+      expect(result).toContain('il-42')
+      expect(result).toContain('iloom-42')
+      expect(logger.success).toHaveBeenCalledWith('CLI available: il-42')
+      expect(logger.success).toHaveBeenCalledWith('CLI available: iloom-42')
 
       process.env.PATH = originalEnv
     })
@@ -227,7 +227,7 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValueOnce(undefined)
 
       const originalEnv = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
@@ -256,7 +256,7 @@ describe('CLIIsolationManager', () => {
 
       const originalEnv = process.env.PATH
       const originalShell = process.env.SHELL
-      process.env.PATH = '/usr/bin:/bin'  // Does not include .hatchbox/bin
+      process.env.PATH = '/usr/bin:/bin'  // Does not include .iloom/bin
       process.env.SHELL = '/bin/zsh'
 
       await manager.setupCLIIsolation(worktreePath, 42, binEntries)
@@ -269,7 +269,7 @@ describe('CLIIsolationManager', () => {
     })
   })
 
-  describe('ensureHatchboxBinInPath', () => {
+  describe('ensureIloomBinInPath', () => {
     it('should detect zsh and check ~/.zshrc', async () => {
       const worktreePath = '/test/worktree'
       const binEntries = { 'cli': './dist/cli.js' }
@@ -378,7 +378,7 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValueOnce(undefined)
 
       const originalPath = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
@@ -417,7 +417,7 @@ describe('CLIIsolationManager', () => {
       await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('One-time PATH setup required'))
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('export PATH="$HOME/.hatchbox/bin:$PATH"'))
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('export PATH="$HOME/.iloom/bin:$PATH"'))
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('source ~/.zshrc'))
 
       process.env.PATH = originalPath
@@ -475,7 +475,7 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValueOnce(undefined)
 
       const originalPath = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
@@ -502,7 +502,7 @@ describe('CLIIsolationManager', () => {
       vi.mocked(fs.symlink).mockResolvedValueOnce(undefined)
 
       const originalPath = process.env.PATH
-      process.env.PATH = `${hatchboxBinDir}:/usr/bin`
+      process.env.PATH = `${iloomBinDir}:/usr/bin`
 
       await manager.setupCLIIsolation(worktreePath, 42, binEntries)
 
@@ -539,10 +539,10 @@ describe('CLIIsolationManager', () => {
 
       // Mock readdir to return files in the bin directory
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-42',
-        'hatchbox-42',
+        'il-42',
+        'iloom-42',
         'other-tool-42',
-        'hb-37',
+        'il-37',
         'some-other-file'
       ] as unknown as string[])
 
@@ -551,27 +551,27 @@ describe('CLIIsolationManager', () => {
 
       const removed = await manager.cleanupVersionedExecutables(identifier)
 
-      expect(removed).toEqual(['hb-42', 'hatchbox-42', 'other-tool-42'])
+      expect(removed).toEqual(['il-42', 'iloom-42', 'other-tool-42'])
       expect(fs.unlink).toHaveBeenCalledTimes(3)
-      expect(fs.unlink).toHaveBeenCalledWith(path.join(hatchboxBinDir, 'hb-42'))
-      expect(fs.unlink).toHaveBeenCalledWith(path.join(hatchboxBinDir, 'hatchbox-42'))
-      expect(fs.unlink).toHaveBeenCalledWith(path.join(hatchboxBinDir, 'other-tool-42'))
+      expect(fs.unlink).toHaveBeenCalledWith(path.join(iloomBinDir, 'il-42'))
+      expect(fs.unlink).toHaveBeenCalledWith(path.join(iloomBinDir, 'iloom-42'))
+      expect(fs.unlink).toHaveBeenCalledWith(path.join(iloomBinDir, 'other-tool-42'))
     })
 
     it('should handle string identifiers with special characters', async () => {
       const identifier = 'feat/issue-42'
 
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-feat/issue-42',
-        'hatchbox-feat/issue-42',
-        'hb-42'
+        'il-feat/issue-42',
+        'iloom-feat/issue-42',
+        'il-42'
       ] as unknown as string[])
 
       vi.mocked(fs.unlink).mockResolvedValue(undefined)
 
       const removed = await manager.cleanupVersionedExecutables(identifier)
 
-      expect(removed).toEqual(['hb-feat/issue-42', 'hatchbox-feat/issue-42'])
+      expect(removed).toEqual(['il-feat/issue-42', 'iloom-feat/issue-42'])
       expect(fs.unlink).toHaveBeenCalledTimes(2)
     })
 
@@ -579,8 +579,8 @@ describe('CLIIsolationManager', () => {
       const identifier = 99
 
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-42',
-        'hatchbox-37',
+        'il-42',
+        'iloom-37',
         'other-tool'
       ] as unknown as string[])
 
@@ -609,28 +609,28 @@ describe('CLIIsolationManager', () => {
       const identifier = 42
 
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-42',
-        'hatchbox-42',
+        'il-42',
+        'iloom-42',
         'tool-42'
       ] as unknown as string[])
 
       vi.mocked(fs.unlink)
-        .mockResolvedValueOnce(undefined) // hb-42 succeeds
-        .mockRejectedValueOnce(new Error('Permission denied')) // hatchbox-42 fails
+        .mockResolvedValueOnce(undefined) // il-42 succeeds
+        .mockRejectedValueOnce(new Error('Permission denied')) // iloom-42 fails
         .mockResolvedValueOnce(undefined) // tool-42 succeeds
 
       const removed = await manager.cleanupVersionedExecutables(identifier)
 
-      expect(removed).toEqual(['hb-42', 'tool-42'])
+      expect(removed).toEqual(['il-42', 'tool-42'])
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to remove symlink hatchbox-42')
+        expect.stringContaining('Failed to remove symlink iloom-42')
       )
     })
 
     it('should silently skip already-deleted symlinks (ENOENT)', async () => {
       const identifier = 42
 
-      vi.mocked(fs.readdir).mockResolvedValueOnce(['hb-42'] as unknown as string[])
+      vi.mocked(fs.readdir).mockResolvedValueOnce(['il-42'] as unknown as string[])
 
       vi.mocked(fs.unlink).mockRejectedValueOnce(
         Object.assign(new Error('ENOENT: no such file or directory'), { code: 'ENOENT' })
@@ -638,7 +638,7 @@ describe('CLIIsolationManager', () => {
 
       const removed = await manager.cleanupVersionedExecutables(identifier)
 
-      expect(removed).toEqual(['hb-42'])
+      expect(removed).toEqual(['il-42'])
       expect(logger.warn).not.toHaveBeenCalled()
     })
   })
@@ -646,12 +646,12 @@ describe('CLIIsolationManager', () => {
   describe('findOrphanedSymlinks', () => {
     it('should detect symlinks pointing to non-existent targets', async () => {
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-42',
-        'hatchbox-42',
+        'il-42',
+        'iloom-42',
         'regular-file'
       ] as unknown as string[])
 
-      // hb-42 is a symlink pointing to deleted worktree
+      // il-42 is a symlink pointing to deleted worktree
       vi.mocked(fs.lstat).mockResolvedValueOnce({
         isSymbolicLink: () => true
       } as unknown as fs.Stats)
@@ -662,7 +662,7 @@ describe('CLIIsolationManager', () => {
         new Error('ENOENT: no such file or directory')
       )
 
-      // hatchbox-42 is a symlink pointing to existing worktree
+      // iloom-42 is a symlink pointing to existing worktree
       vi.mocked(fs.lstat).mockResolvedValueOnce({
         isSymbolicLink: () => true
       } as unknown as fs.Stats)
@@ -680,8 +680,8 @@ describe('CLIIsolationManager', () => {
 
       expect(orphaned).toHaveLength(1)
       expect(orphaned[0]).toEqual({
-        name: 'hb-42',
-        path: path.join(hatchboxBinDir, 'hb-42'),
+        name: 'il-42',
+        path: path.join(iloomBinDir, 'il-42'),
         brokenTarget: '/worktrees/issue-42/dist/cli.js'
       })
     })
@@ -704,9 +704,9 @@ describe('CLIIsolationManager', () => {
 
     it('should find multiple orphaned symlinks', async () => {
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-42',
-        'hb-37',
-        'hb-99'
+        'il-42',
+        'il-37',
+        'il-99'
       ] as unknown as string[])
 
       // All are symlinks pointing to non-existent targets
@@ -725,15 +725,15 @@ describe('CLIIsolationManager', () => {
       const orphaned = await manager.findOrphanedSymlinks()
 
       expect(orphaned).toHaveLength(3)
-      expect(orphaned.map(o => o.name)).toEqual(['hb-42', 'hb-37', 'hb-99'])
+      expect(orphaned.map(o => o.name)).toEqual(['il-42', 'il-37', 'il-99'])
     })
   })
 
   describe('cleanupOrphanedSymlinks', () => {
     it('should remove all orphaned symlinks and return count', async () => {
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-42',
-        'hatchbox-42'
+        'il-42',
+        'iloom-42'
       ] as unknown as string[])
 
       // Both are orphaned symlinks
@@ -755,12 +755,12 @@ describe('CLIIsolationManager', () => {
 
       expect(count).toBe(2)
       expect(fs.unlink).toHaveBeenCalledTimes(2)
-      expect(logger.success).toHaveBeenCalledWith('Removed orphaned symlink: hb-42')
-      expect(logger.success).toHaveBeenCalledWith('Removed orphaned symlink: hatchbox-42')
+      expect(logger.success).toHaveBeenCalledWith('Removed orphaned symlink: il-42')
+      expect(logger.success).toHaveBeenCalledWith('Removed orphaned symlink: iloom-42')
     })
 
     it('should return 0 if no orphaned symlinks found', async () => {
-      vi.mocked(fs.readdir).mockResolvedValueOnce(['hb-42'] as unknown as string[])
+      vi.mocked(fs.readdir).mockResolvedValueOnce(['il-42'] as unknown as string[])
 
       vi.mocked(fs.lstat).mockResolvedValueOnce({
         isSymbolicLink: () => true
@@ -778,8 +778,8 @@ describe('CLIIsolationManager', () => {
 
     it('should handle individual deletion failures gracefully', async () => {
       vi.mocked(fs.readdir).mockResolvedValueOnce([
-        'hb-42',
-        'hb-37'
+        'il-42',
+        'il-37'
       ] as unknown as string[])
 
       // Both are orphaned
@@ -796,14 +796,14 @@ describe('CLIIsolationManager', () => {
       }
 
       vi.mocked(fs.unlink)
-        .mockResolvedValueOnce(undefined) // hb-42 succeeds
-        .mockRejectedValueOnce(new Error('Permission denied')) // hb-37 fails
+        .mockResolvedValueOnce(undefined) // il-42 succeeds
+        .mockRejectedValueOnce(new Error('Permission denied')) // il-37 fails
 
       const count = await manager.cleanupOrphanedSymlinks()
 
       expect(count).toBe(1)
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to remove orphaned symlink hb-37')
+        expect.stringContaining('Failed to remove orphaned symlink il-37')
       )
     })
   })

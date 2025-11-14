@@ -18,7 +18,7 @@ export interface ClaudeCliOptions {
 	agents?: Record<string, unknown> // Agent configurations for --agents flag
 	oneShot?: import('../types/index.js').OneShotMode // One-shot automation mode
 	setArguments?: string[] // Raw --set arguments to forward (e.g., ['workflows.issue.startIde=false'])
-	executablePath?: string // Executable path to use for ignite command (e.g., 'hb', 'hb-125', or '/path/to/dist/cli.js')
+	executablePath?: string // Executable path to use for ignite command (e.g., 'il', 'il-125', or '/path/to/dist/cli.js')
 }
 
 /**
@@ -247,7 +247,7 @@ export async function launchClaude(
 
 /**
  * Launch Claude in a new terminal window with rich context
- * This is specifically for "end of hb start" workflow
+ * This is specifically for "end of il start" workflow
  * Ports the terminal window opening, coloring, and .env sourcing behavior
  */
 export async function launchClaudeInNewTerminalWindow(
@@ -267,8 +267,8 @@ export async function launchClaudeInNewTerminalWindow(
 	const { openTerminalWindow } = await import('./terminal.js')
 
 	// Build launch command with optional --one-shot flag
-	// Use provided executable path or fallback to 'hb'
-	const executable = executablePath ?? 'hb'
+	// Use provided executable path or fallback to 'il'
+	const executable = executablePath ?? 'il'
 	let launchCommand = `${executable} ignite`
 	if (oneShot !== 'default') {
 		launchCommand += ` --one-shot=${oneShot}`

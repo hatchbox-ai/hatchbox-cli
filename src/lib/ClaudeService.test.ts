@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ClaudeService, ClaudeWorkflowOptions } from './ClaudeService.js'
 import { PromptTemplateManager } from './PromptTemplateManager.js'
-import { SettingsManager, HatchboxSettings } from './SettingsManager.js'
+import { SettingsManager, IloomSettings } from './SettingsManager.js'
 import * as claudeUtils from '../utils/claude.js'
 import { logger } from '../utils/logger.js'
 
@@ -55,7 +55,7 @@ describe('ClaudeService', () => {
 			it('should launch Claude with opusplan model and plan permission mode', async () => {
 				// Create a service with a mocked SettingsManager to avoid loading real settings.json
 				const mockSettingsManager = {
-					loadSettings: vi.fn().mockResolvedValue({} as HatchboxSettings),
+					loadSettings: vi.fn().mockResolvedValue({} as IloomSettings),
 				} as unknown as SettingsManager
 				const serviceWithMockedSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
 
@@ -296,7 +296,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'bypassPermissions',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -330,7 +330,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'plan',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -364,7 +364,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'acceptEdits',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -391,7 +391,7 @@ describe('ClaudeService', () => {
 
 		it('should fall back to acceptEdits for issue workflow when no settings', async () => {
 			const mockSettingsManager = {
-				loadSettings: vi.fn().mockResolvedValue({} as HatchboxSettings),
+				loadSettings: vi.fn().mockResolvedValue({} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -419,7 +419,7 @@ describe('ClaudeService', () => {
 
 		it('should fall back to default for pr workflow when no settings', async () => {
 			const mockSettingsManager = {
-				loadSettings: vi.fn().mockResolvedValue({} as HatchboxSettings),
+				loadSettings: vi.fn().mockResolvedValue({} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -450,7 +450,7 @@ describe('ClaudeService', () => {
 			const mockSettingsManager = {
 				loadSettings: vi.fn().mockResolvedValue({
 					mainBranch: 'main',
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -485,7 +485,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'bypassPermissions',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -520,7 +520,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'bypassPermissions',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -556,7 +556,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'bypassPermissions',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -587,7 +587,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'bypassPermissions',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -618,7 +618,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'acceptEdits',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -649,7 +649,7 @@ describe('ClaudeService', () => {
 							permissionMode: 'plan',
 						},
 					},
-				} as HatchboxSettings),
+				} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -674,7 +674,7 @@ describe('ClaudeService', () => {
 
 		it('should not log warning for default mode', async () => {
 			const mockSettingsManager = {
-				loadSettings: vi.fn().mockResolvedValue({} as HatchboxSettings),
+				loadSettings: vi.fn().mockResolvedValue({} as IloomSettings),
 			} as unknown as SettingsManager
 
 			const serviceWithSettings = new ClaudeService(mockTemplateManager, mockSettingsManager)
@@ -717,7 +717,7 @@ describe('ClaudeService', () => {
 			const customManager = new PromptTemplateManager('custom/path')
 			// Use a mocked SettingsManager instead of a real one to avoid filesystem access
 			const mockSettingsManager = {
-				loadSettings: vi.fn().mockResolvedValue({} as HatchboxSettings),
+				loadSettings: vi.fn().mockResolvedValue({} as IloomSettings),
 			} as unknown as SettingsManager
 			const serviceWithBoth = new ClaudeService(customManager, mockSettingsManager)
 

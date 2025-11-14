@@ -27,7 +27,7 @@ vi.mock('./git.js', () => ({
           `   • Remote branch was deleted\n` +
           `   • Push was rejected (non-fast-forward)\n` +
           `   • Network connectivity issues\n\n` +
-          `   To retry: hb finish --pr <number>\n` +
+          `   To retry: il finish --pr <number>\n` +
           `   To force push: git push origin ${branchName} --force`
         )
       }
@@ -92,7 +92,7 @@ describe('pushBranchToRemote', () => {
       '   • Remote branch was deleted\n' +
       '   • Push was rejected (non-fast-forward)\n' +
       '   • Network connectivity issues\n\n' +
-      '   To retry: hb finish --pr <number>\n' +
+      '   To retry: il finish --pr <number>\n' +
       '   To force push: git push origin feature-branch --force'
     )
   })
@@ -110,7 +110,7 @@ describe('pushBranchToRemote', () => {
       '   • Remote branch was deleted\n' +
       '   • Push was rejected (non-fast-forward)\n' +
       '   • Network connectivity issues\n\n' +
-      '   To retry: hb finish --pr <number>\n' +
+      '   To retry: il finish --pr <number>\n' +
       '   To force push: git push origin test-branch --force'
     )
   })

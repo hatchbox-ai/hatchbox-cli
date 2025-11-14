@@ -5,7 +5,7 @@ import { ProjectCapabilityDetector } from '../lib/ProjectCapabilityDetector.js'
 import { DevServerManager } from '../lib/DevServerManager.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
 import type { GitWorktree } from '../types/worktree.js'
-import type { ProjectCapabilities } from '../types/hatchbox.js'
+import type { ProjectCapabilities } from '../types/loom.js'
 import fs from 'fs-extra'
 import path from 'path'
 import { execa } from 'execa'
@@ -81,7 +81,7 @@ describe('RunCommand', () => {
 			// Mock capability detection
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -111,7 +111,7 @@ describe('RunCommand', () => {
 			// Mock capability detection
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -148,7 +148,7 @@ describe('RunCommand', () => {
 			// Mock capability detection
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -185,7 +185,7 @@ describe('RunCommand', () => {
 			// Mock capability detection
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -223,7 +223,7 @@ describe('RunCommand', () => {
 		it('should run CLI for CLI-only project', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -264,7 +264,7 @@ describe('RunCommand', () => {
 		it('should run CLI for web+CLI project (CLI takes precedence)', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['web', 'cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -318,7 +318,7 @@ describe('RunCommand', () => {
 			// Mock capability detection for CLI
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -354,8 +354,8 @@ describe('RunCommand', () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
 				binEntries: {
-					hb: './dist/cli.js',
-					hatchbox: './dist/cli.js',
+					il: './dist/cli.js',
+					iloom: './dist/cli.js',
 					other: './dist/other.js',
 				},
 			}
@@ -365,7 +365,7 @@ describe('RunCommand', () => {
 
 			await command.execute({ identifier: '87' })
 
-			// Should use first entry (hb)
+			// Should use first entry (il)
 			const binPath = path.resolve(mockWorktree.path, './dist/cli.js')
 			expect(execa).toHaveBeenCalledWith('node', [binPath], {
 				stdio: 'inherit',
@@ -481,7 +481,7 @@ describe('RunCommand', () => {
 			// Mock capability detection for CLI
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -605,7 +605,7 @@ describe('RunCommand', () => {
 			// Mock CLI-only capability
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities

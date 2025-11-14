@@ -32,7 +32,7 @@ export class TestPrefixCommand {
       const rootDir = process.cwd()
       logger.info(`Repository: ${rootDir}`)
 
-      // Load settings from .hatchbox/settings.json
+      // Load settings from .iloom/settings.json
       const settings = await this.settingsManager.loadSettings()
 
       // Display configured prefix
@@ -71,7 +71,7 @@ export class TestPrefixCommand {
         logger.info('')
       }
 
-      logger.info('💡 Tip: Edit .hatchbox/settings.json to change the worktreePrefix\n')
+      logger.info('💡 Tip: Edit .iloom/settings.json to change the worktreePrefix\n')
       logger.success('Test completed!')
 
     } catch (error) {

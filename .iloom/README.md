@@ -34,8 +34,8 @@ Configures the directory prefix used when creating worktrees. This allows you to
 | `"looms"` | `looms-issue-123` | Auto-append hyphen |
 | `"looms-"` | `looms-issue-123` | Preserve explicit separator |
 | `"looms/"` | `looms/issue-123` | Explicit folder mode |
-| `"temp/hatchbox"` | `temp/iloom-issue-123` | Auto-append hyphen to last part |
-| `"temp/hatchbox-"` | `temp/iloom-issue-123` | Preserve explicit separator |
+| `"temp/iloom"` | `temp/iloom-issue-123` | Auto-append hyphen to last part |
+| `"temp/iloom-"` | `temp/iloom-issue-123` | Preserve explicit separator |
 | `"temp/looms/"` | `temp/looms/issue-123` | Explicit nested folder mode |
 | `""` (empty string) | `issue-123` | No prefix mode |
 | `undefined` (not set) | `<repo-name>-looms/issue-123` | Use calculated default |
@@ -69,9 +69,9 @@ Configures the directory prefix used when creating worktrees. This allows you to
 Configure per-workflow permission modes for Claude CLI. This allows you to control how Claude interacts with your code in different workflow contexts.
 
 **Available workflow types**:
-- `issue` - When working on GitHub issues (using `hb start <issue-number>`)
-- `pr` - When working on pull requests (using `hb start <pr-number>`)
-- `regular` - When working on regular branches (using `hb start <branch-name>`)
+- `issue` - When working on GitHub issues (using `il start <issue-number>`)
+- `pr` - When working on pull requests (using `il start <pr-number>`)
+- `regular` - When working on regular branches (using `il start <branch-name>`)
 
 **Available permission modes**:
 - `plan` - Claude will create a plan and ask for approval before making changes
@@ -245,6 +245,6 @@ The settings file is validated when loaded. Common validation errors:
 ### Notes
 
 - All settings are optional - iloom will use sensible defaults if settings are not provided
-- Settings are loaded from `<project-root>/.hatchbox/settings.json`
+- Settings are loaded from `<project-root>/.iloom/settings.json`
 - If the file doesn't exist, iloom will use default behavior without error
 - Changes to settings take effect the next time you run an iloom command

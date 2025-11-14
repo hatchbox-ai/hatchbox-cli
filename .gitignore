@@ -49,5 +49,6 @@ logs/
 tmp/
 .vscode/
 
-# Added by Hatchbox AI CLI
+# Added by iloom CLI
 .hatchbox/settings.local.json
+.iloom/settings.local.json

@@ -141,7 +141,7 @@ export class EnhanceCommand {
 			? `\nIMPORTANT: When you create your analysis comment, tag @${author} in the "Questions for Reporter" section if you have questions.\n`
 			: ''
 
-		return `Execute @agent-hatchbox-issue-enhancer ${issueNumber}${authorInstruction}
+		return `Execute @agent-iloom-issue-enhancer ${issueNumber}${authorInstruction}
 
 ## OUTPUT REQUIREMENTS
 * If the issue was not enhanced, return ONLY: "No enhancement needed"

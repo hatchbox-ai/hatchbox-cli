@@ -1,0 +1,14 @@
+{
+  "worktreePrefix": "",
+  "mainBranch": "main",
+  "workflows": {
+    "issue": {
+      "permissionMode": "bypassPermissions",
+      "noVerify": true,
+      "startIde": true,
+      "startDevServer": false,
+      "startAiAgent": true,
+      "startTerminal": true
+    }
+  }
+}

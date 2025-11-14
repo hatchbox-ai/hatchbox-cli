@@ -5,7 +5,7 @@ import { logger } from './logger.js'
 export type InstallationMethod = 'global' | 'local' | 'linked' | 'unknown'
 
 /**
- * Detect how hatchbox-ai is installed
+ * Detect how iloom-cli is installed
  * - global: npm install -g (in global node_modules)
  * - local: Running from source directory (has src/ sibling to dist/)
  * - linked: npm link (symlinked executable)

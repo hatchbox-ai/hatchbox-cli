@@ -1,16 +1,16 @@
-# Hatchbox AI
+# iloom
 
 <div align="center">
 
-[![npm](https://img.shields.io/npm/v/%40hatchbox-ai%2Fhatchbox-cli?label=npm)](https://www.npmjs.com/package/@hatchbox-ai/hatchbox-cli)
-[![License: BSL-1.1](https://img.shields.io/badge/license-BSL--1.1-lightgrey)](https://raw.githubusercontent.com/hatchbox-ai/hatchbox-cli/main/LICENSE)
+[![npm](https://img.shields.io/npm/v/%40hatchbox-ai%2Fhatchbox-cli?label=npm)](https://www.npmjs.com/package/@iloom/cli)
+[![License: BSL-1.1](https://img.shields.io/badge/license-BSL--1.1-lightgrey)](https://raw.githubusercontent.com/iloom-ai/iloom-cli/main/LICENSE)
 [![Built for Claude Code](https://img.shields.io/badge/built%20for-claude%20code-8A6FFF)](https://claude.ai/)
-[![CI](https://github.com/hatchbox-ai/hatchbox-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/hatchbox-ai/hatchbox-cli/actions/workflows/ci.yml)
+[![CI](https://github.com/iloom-ai/iloom-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/iloom-ai/iloom-cli/actions/workflows/ci.yml)
 
 </div>
 
 <div align="center">
-  <img width="327" height="328" alt="hatchbox-ai-logo" src="https://raw.githubusercontent.com/hatchbox-ai/hatchbox-cli/main/assets/logo.png" />
+  <img width="327" height="328" alt="hatchbox-ai-logo" src="https://raw.githubusercontent.com/iloom-ai/iloom-cli/main/assets/logo.png" />
   <div>Scale understanding, not just output.</div>
 
 </div>
@@ -27,7 +27,7 @@
 [![Neon](https://img.shields.io/badge/Neon-00E699?style=for-the-badge)](https://neon.tech/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-8A6FFF?style=for-the-badge)](https://claude.ai/)
 
-*These companies and projects do not endorse Hatchbox AI.*
+*These companies and projects do not endorse iloom.*
 
 ## ...To Solve A Very Modern Problem
 
@@ -47,16 +47,16 @@ The outcome is familiar: more time briefing the AI than building, more time fixi
 
 **The bottleneck isn't output velocity. It's maintaining shared understanding between human and AI at scale.**
 
-*Hatchbox treats context as a first-class concern. It's not a tool for managing branches - it's a control plane for maintaining alignment between you and your AI assistant as you work across multiple issues simultaneously.*
+*iloom treats context as a first-class concern. It's not a tool for managing branches - it's a control plane for maintaining alignment between you and your AI assistant as you work across multiple issues simultaneously.*
 
-## How Hatchbox AI Solves This
+## How iloom Solves This
 
-Hatchbox uses your existing Claude subscription, takes what context you already have, and works with you to build a shared mental model of the task at hand.
+iloom uses your existing Claude subscription, takes what context you already have, and works with you to build a shared mental model of the task at hand.
 
 ```bash
-> npm install -g @hatchbox-ai/hatchbox-cli
+> npm install -g @iloom/cli
 
-# Hatchbox doesn't need your GitHub access token - it uses the GitHub CLI instead.
+# iloom doesn't need your GitHub access token - it uses the GitHub CLI instead.
 > gh auth login 
 
 # Spins up an isolated dev environment.
@@ -82,11 +82,11 @@ Hatchbox uses your existing Claude subscription, takes what context you already 
 > hb finish 
 ```
 
-**The Hatchbox difference**: Surface hidden assumptions up front, then persist all the analysis and reasoning in GitHub issue comments - visible and editable - rather than burning tokens in the context window where they're invisible and set in stone. Each hatchbox builds up structured context over multiple steps, but the AI only loads what's relevant for the current phase.
+**The iloom difference**: Surface hidden assumptions up front, then persist all the analysis and reasoning in GitHub issue comments - visible and editable - rather than burning tokens in the context window where they're invisible and set in stone. Each hatchbox builds up structured context over multiple steps, but the AI only loads what's relevant for the current phase.
 
 ### One Command, Parallel Work, Predictable Flow
 
-Each Hatchbox follows the same workflow - structured, visible, repeatable.
+Each loom follows the same workflow - structured, visible, repeatable.
 
 `hb start` doesn't just create a git worktree. Here's what happens:
 
@@ -108,7 +108,7 @@ Each Hatchbox follows the same workflow - structured, visible, repeatable.
 # ✅ Merges to main, installs dependencies
 # ✅ Cleans up everything - worktree, database branch, and the web server you were using to test your work
 ```
-(as you can see, using Hatchbox does not spare you from copious emoji)
+(as you can see, using iloom does not spare you from copious emoji)
 
 This isn't just convenience automation. You know you're merging the correct code, correctly - the commit message is auto-generated from the issue context, and any build/test/merge failures get fixed automatically with Claude's help. It helps keep resources in check too, local and remote, by safely shutting down servers and cleaning up Neon DB branches.
 
@@ -122,13 +122,13 @@ Traditional approach:
 3. Get pulled into a bug - stash or WIP commit, switch branches, start a new Claude chat.
 4. Lose context on both tasks, repeat the same explanations.
 
-Hatchbox approach:
+iloom approach:
 1. `hb start 45` - begin the feature.
-2. Review Hatchbox's structured analysis in GitHub, clarify assumptions.
+2. Review iloom's structured analysis in GitHub, clarify assumptions.
 3. `hb start 99` - urgent bug; Claude already knows the issue context from the GitHub issue.
-4. Switch between Hatchboxes freely - color coding and context persistence keep everything clear.
+4. Switch between looms freely - color coding and context persistence keep everything clear.
 5. `hb finish` - work validated, merged, cleaned up.
-6. Return to your feature Hatchbox - context, reasoning, and AI alignment all intact.
+6. Return to your feature loom - context, reasoning, and AI alignment all intact.
 
 **The difference**: Your AI becomes a persistent collaborator rather than a tool you're constantly playing catch-up with.
 
@@ -137,9 +137,9 @@ The AI analysis gets posted as GitHub comments, so anyone on your team can see t
 
 ### You Scale Understanding, Not Just Output
 
-Without Hatchbox, adding AI to your workflow increases code production but also increases cognitive load. You're managing what the AI knows, correcting misaligned suggestions, and second-guessing its understanding. Not to mention managing its context window.
+Without iloom, adding AI to your workflow increases code production but also increases cognitive load. You're managing what the AI knows, correcting misaligned suggestions, and second-guessing its understanding. Not to mention managing its context window.
 
-With Hatchbox, the cognitive load stays constant as you scale. Each hatchbox holds a complete shared understanding between you and your AI. Five issues in flight feel (almost) as calm and clear as one.
+With iloom, the cognitive load stays constant as you scale. Each hatchbox holds a complete shared understanding between you and your AI. Five issues in flight feel (almost) as calm and clear as one.
 
 **This is how you achieve sustainable velocity with AI assistance.**
 
@@ -153,13 +153,13 @@ When you and your AI are in lockstep:
 
 ### The Power of Predictable Flow
 
-Every Hatchbox follows the same rhythm - Start → Enhance → Analyze → Plan → Implement → Human review → Finish.  
+Every loom follows the same rhythm - Start → Enhance → Analyze → Plan → Implement → Human review → Finish.  
 The steps never change. The tools stay aligned.  
 Predictability becomes muscle memory - you focus on ideas, not process.
 
 ## How It Works
 
-Hatchbox orchestrates specialized AI agents that analyze issues, evaluate complexity, create implementation plans, and document everything directly in GitHub comments. Each agent has a specific role and writes structured output that becomes permanent project and team knowledge.
+iloom orchestrates specialized AI agents that analyze issues, evaluate complexity, create implementation plans, and document everything directly in GitHub comments. Each agent has a specific role and writes structured output that becomes permanent project and team knowledge.
 
 ### Creating Context
 
@@ -167,10 +167,10 @@ Hatchbox orchestrates specialized AI agents that analyze issues, evaluate comple
 > hb start 25
 ```
 
-Hatchbox executes a multi-phase context-establishment workflow:
+iloom executes a multi-phase context-establishment workflow:
 
 1. **Fetch complete requirements** - GitHub issue body + all comments
-2. **Create isolated hatchbox** - Git worktree at `~/project-hatchboxes/issue-25-auth-issues/` (branch names are generated)
+2. **Create isolated hatchbox** - Git worktree at `~/project-looms/issue-25-auth-issues/` (branch names are generated)
 3. **Run AI workflow agents** - Enhance, analyze, plan, and document directly in GitHub comments:
    - **Enhancement Agent**: Expands brief issues into detailed requirements (if needed)
    - **Complexity Evaluator**: Assesses scope and determines workflow approach
@@ -197,11 +197,11 @@ Each hatchbox is isolated:
 - **Visual identity** - Color-coded VS Code window (40 distinct pastel colors)
 - **GitHub issue comments** - Multi-phase context (enhancement, analysis, planning) persists and is editable by team members
 
-**When you switch hatchboxes, the context switches with you.**
+**When you switch looms, the context switches with you.**
 
 ### Context That Scales With Your Team
 
-Traditional AI workflows store context locally in chat history or Markdown files. Hatchbox stores context where it belongs - in the GitHub issue itself.
+Traditional AI workflows store context locally in chat history or Markdown files. iloom stores context where it belongs - in the GitHub issue itself.
 
 **Benefits:**
 
@@ -219,15 +219,15 @@ When Claude analyzes your issue and creates a comment with "### Root Cause Analy
 
 ### Understanding the Multi-Agent Workflow
 
-When you run `hb start 25`, Hatchbox orchestrates specialized AI agents that work through a structured analysis and planning process:
+When you run `hb start 25`, iloom orchestrates specialized AI agents that work through a structured analysis and planning process:
 
-**Phase 1: Enhancement (optional)** - `hatchbox-issue-enhancer`
+**Phase 1: Enhancement (optional)** - `iloom-issue-enhancer`
 - Checks if issue needs more detail (word count, structure, clarity)
 - Expands brief descriptions into comprehensive requirements
 - Posts enhancement as a GitHub comment
 - **Used for:** All issues that need enhancement
 
-**Phase 2: Complexity Evaluation** - `hatchbox-issue-complexity-evaluator`
+**Phase 2: Complexity Evaluation** - `iloom-issue-complexity-evaluator`
 - Analyzes scope, file changes, breaking changes, risks
 - Classifies as Simple or Complex
 - Posts evaluation as a GitHub comment with metrics
@@ -235,13 +235,13 @@ When you run `hb start 25`, Hatchbox orchestrates specialized AI agents that wor
 
 #### For complex issues
 
-**Phase 3: Dedicated Analysis** - `hatchbox-issue-analyzer`
+**Phase 3: Dedicated Analysis** - `iloom-issue-analyzer`
 - Investigates root causes and technical constraints
 - Documents findings and implementation considerations
 - Posts analysis as a GitHub comment
 - **Used for:** Complex issues only
 
-**Phase 4: Dedicated Planning** - `hatchbox-issue-planner`
+**Phase 4: Dedicated Planning** - `iloom-issue-planner`
 - Creates detailed implementation roadmap
 - Breaks work into phases with validation points
 - Posts plan as a GitHub comment
@@ -249,20 +249,20 @@ When you run `hb start 25`, Hatchbox orchestrates specialized AI agents that wor
 
 #### For simple issues
 
-**Phase 3+4: Combined Analysis & Planning** - `hatchbox-issue-analyze-and-plan`
+**Phase 3+4: Combined Analysis & Planning** - `iloom-issue-analyze-and-plan`
 - Combines analysis and planning in a single step to shorten time and reduce review checkpoints
 - Posts combined analysis and plan as a GitHub comment
 - **Used for:** Simple issues only
 
 #### For all issues
 
-**Phase 5: Implementation** - `hatchbox-issue-implementer`
+**Phase 5: Implementation** - `iloom-issue-implementer`
 - Executes the implementation plan created in previous phases
 - Updates progress in a GitHub comment
 - Documents decisions and completion status
 - **Used for:** All issues
 
-**Phase 6: Review (optional)** - `hatchbox-issue-reviewer`
+**Phase 6: Review (optional)** - `iloom-issue-reviewer`
 - Reviews completed implementation against issue requirements
 - Posts review findings as a GitHub comment
 - **Used for:** All issues (when review is requested)
@@ -271,22 +271,22 @@ All agent output is written to GitHub issue comments using markdown, making the 
 
 ### A Note on Token Usage and Model Selection
 
-Hatchbox optimizes for **building shared understanding** and **long-term efficiency** over short-term token economy. The multi-phase workflow deliberately front-loads analysis and planning to reduce expensive implementation rework.
+iloom optimizes for **building shared understanding** and **long-term efficiency** over short-term token economy. The multi-phase workflow deliberately front-loads analysis and planning to reduce expensive implementation rework.
 
 You can [configure](#configuration) the models used by the agents:
 
 - **Default**: All agents run on the latest Sonnet model to balance capability and cost
-- **Haiku for Implementation**: The `hatchbox-issue-implementer` agent is a good candidate for the latest Haiku model for token-conscious users, as it follows detailed plans created by analysis/planning agents
+- **Haiku for Implementation**: The `iloom-issue-implementer` agent is a good candidate for the latest Haiku model for token-conscious users, as it follows detailed plans created by analysis/planning agents
 - **Maximum Power**: Override to Opus for complex architectural work (more expensive)
 
 **Available agents** (all configurable):
-- `hatchbox-issue-enhancer` - Structures issue descriptions from user perspective
-- `hatchbox-issue-complexity-evaluator` - Assesses scope and determines workflow approach
-- `hatchbox-issue-analyzer` - Investigates root causes (complex issues only)
-- `hatchbox-issue-planner` - Creates implementation roadmap (complex issues only)
-- `hatchbox-issue-analyze-and-plan` - Combined analysis and planning (simple issues only)
-- `hatchbox-issue-implementer` - Executes implementation plans (good candidate for Haiku)
-- `hatchbox-issue-reviewer` - Reviews completed implementations
+- `iloom-issue-enhancer` - Structures issue descriptions from user perspective
+- `iloom-issue-complexity-evaluator` - Assesses scope and determines workflow approach
+- `iloom-issue-analyzer` - Investigates root causes (complex issues only)
+- `iloom-issue-planner` - Creates implementation roadmap (complex issues only)
+- `iloom-issue-analyze-and-plan` - Combined analysis and planning (simple issues only)
+- `iloom-issue-implementer` - Executes implementation plans (good candidate for Haiku)
+- `iloom-issue-reviewer` - Reviews completed implementations
 
 **Hard-coded model usage** (not configurable):
 - **Branch naming** - Uses the latest Haiku model to generate descriptive branch names from issue titles
@@ -294,17 +294,17 @@ You can [configure](#configuration) the models used by the agents:
 
 Both operations use Haiku for fast, cost-effective AI assistance.
 
-**Fun Fact**: Hatchbox originally used Opus (over the latest Sonnet model) for analysis and planning phases. As agent prompts improved, we switched entirely to Sonnet with better results at lower cost.
+**Fun Fact**: iloom originally used Opus (over the latest Sonnet model) for analysis and planning phases. As agent prompts improved, we switched entirely to Sonnet with better results at lower cost.
 
 **Recommendation**: A Claude Max subscription is recommended. The theory is that token investment in structured/shared context pays dividends through reduced debugging, rework, and cognitive overhead.
 
 ## Commands
 
-### Hatchbox Management
+### Loom Management
 
 ```bash
 hb start <issue-number | pr-number | issue-description | branch-name>
-# Create hatchbox with complete context
+# Create loom with complete context
 # Orchestrates AI agents that analyze the issue and post structured comments
 # Phases: Enhancement → Analysis → Planning → Implementation with review checkpoints at every step
 # Aliases: create, up
@@ -315,14 +315,14 @@ hb start <issue-number | pr-number | issue-description | branch-name>
 #                        bypassPermissions: Full automation, skip all prompts. Be careful!
 
 hb finish
-# AI assisted validation, commit, merge steps, as well as hatchbox cleanup (run this from the hatchbox directory)
+# AI assisted validation, commit, merge steps, as well as loom cleanup (run this from the loom directory)
 # Alias: dn
 
 hb cleanup [identifier...]
-# Remove a hatchbox without merging (safely, by default)
+# Remove a loom without merging (safely, by default)
 
 hb list
-# Show active hatchboxes with their ports and paths
+# Show active looms with their ports and paths
 
 hb ignite
 # Launch Claude with auto-detected hatchbox context
@@ -348,7 +348,7 @@ hb enhance <issue-number>
 
 ## Providing Feedback
 
-Found a bug, have a feature request, or want to contribute ideas to improve Hatchbox CLI? Submit feedback directly from your terminal.
+Found a bug, have a feature request, or want to contribute ideas to improve iloom CLI? Submit feedback directly from your terminal.
 
 ```bash
 hb feedback <description>
@@ -361,7 +361,7 @@ hb feedback <description>
 **What happens when you run `hb feedback`:**
 
 1. **AI Enhancement**: Your feedback gets enhanced by Claude to provide clear context and actionable details
-2. **Issue Creation**: Creates a new issue in the [hatchbox-cli repository](https://github.com/hatchbox-ai/hatchbox-cli)
+2. **Issue Creation**: Creates a new issue in the [hatchbox-cli repository](https://github.com/iloom-ai/iloom-cli)
 3. **Browser Opening**: Opens the created issue in your browser for you to review and add additional context
 
 **Open the browser to provide additional context. Please:**
@@ -370,7 +370,7 @@ hb feedback <description>
 - Mention the command or workflow that had issues
 - Suggest improvements or alternative approaches if you have ideas
 
-Your feedback helps make Hatchbox better for everyone! Issues created through `hb feedback` are prioritized and reviewed regularly.
+Your feedback helps make iloom better for everyone! Issues created through `hb feedback` are prioritized and reviewed regularly.
 
 ### Maintenance
 
@@ -385,7 +385,7 @@ hb update
 
 ## Configuration
 
-Hatchbox uses a flexible configuration system with clear priority ordering.
+iloom uses a flexible configuration system with clear priority ordering.
 
 ### Configuration Priority
 
@@ -424,10 +424,10 @@ This allows teams to share project defaults via `settings.json` while individual
     }
   },
   "agents": {
-    "hatchbox-issue-enhancer": "sonnet",
-    "hatchbox-issue-analyzer": "sonnet",
-    "hatchbox-issue-analyze-and-plan": "sonnet",
-    "hatchbox-issue-implementer": "sonnet"
+    "iloom-issue-enhancer": "sonnet",
+    "iloom-issue-analyzer": "sonnet",
+    "iloom-issue-analyze-and-plan": "sonnet",
+    "iloom-issue-implementer": "sonnet"
   }
 }
 ```
@@ -460,7 +460,7 @@ For complete configuration reference, see [.hatchbox/README.md](./.hatchbox/READ
 - GitHub CLI (`gh`) - authenticated with your repository
 
 **Recommended**
-- A Claude Max subscription - Hatchbox uses your own subscription
+- A Claude Max subscription - iloom uses your own subscription
 
 **Optional (auto-detected):**
 - **Neon CLI** - Isolated database branches per hatchbox
@@ -492,7 +492,7 @@ We (Claude and I) are actively working on expanding platform and integration sup
 
 ```bash
 # Install globally
-> npm install -g @hatchbox-ai/hatchbox-cli
+> npm install -g @iloom/cli
 
 # Authenticate with GitHub
 > gh auth login
@@ -508,7 +508,7 @@ We (Claude and I) are actively working on expanding platform and integration sup
 
 ## Pull Request Support
 
-Hatchbox works identically with GitHub pull requests:
+iloom works identically with GitHub pull requests:
 
 ```bash
 > hb start 125  # PR number instead of issue number
@@ -539,7 +539,7 @@ For development guidelines and testing strategy, see [CLAUDE.md](./CLAUDE.md).
 
 ### Node.js Web Project Support
 
-Hatchbox provides first-class support for Node.js web applications (next/express/vite, etc) through standardized package.json scripts:
+iloom provides first-class support for Node.js web applications (next/express/vite, etc) through standardized package.json scripts:
 
 **Required scripts** (auto-detected):
 - `dev` - Start development server (launched automatically with unique port)
@@ -566,11 +566,11 @@ Hatchbox provides first-class support for Node.js web applications (next/express
 
 ### Node.js CLI Tool Support
 
-Hatchbox was built using Hatchbox itself. CLI tools get the same isolation benefits as web projects, plus **isolated executable access per hatchbox**.
+iloom was built using iloom itself. CLI tools get the same isolation benefits as web projects, plus **isolated executable access per hatchbox**.
 
 **How it works:**
 
-When you create a hatchbox for a CLI project, Hatchbox creates workspace-specific binaries so you can test each issue's version independently:
+When you create a loom for a CLI project, iloom creates workspace-specific binaries so you can test each issue's version independently:
 
 ```bash
 > hb start 52  # Working on CLI feature in issue 52
@@ -595,7 +595,7 @@ This enables parallel development and testing of CLI features without conflicts 
 
 
 
-**Other tech stacks**: Projects using different languages/frameworks can work with Hatchbox by providing compatible package.json scripts that wrap their native tooling. Native support for additional tech stacks is planned (but probably not for a while).
+**Other tech stacks**: Projects using different languages/frameworks can work with iloom by providing compatible package.json scripts that wrap their native tooling. Native support for additional tech stacks is planned (but probably not for a while).
 
 ## Roadmap
 
@@ -619,8 +619,8 @@ Traditional approach:
 Git worktree approach:
 ```bash
 # All exist simultaneously:
-~/project-hatchboxes/issue-25/  # feature-a checked out
-~/project-hatchboxes/issue-30/  # feature-b checked out
+~/project-looms/issue-25/  # feature-a checked out
+~/project-looms/issue-30/  # feature-b checked out
 ~/project/                      # main branch
 
 # No branch switching, no stashing, less confusion
@@ -630,7 +630,7 @@ This is the foundation that enables hatchbox isolation and persistent context. O
 
 ### When to Choose Other Git Worktree Solutions
 
-Hatchbox AI isn't the only tool that makes git worktrees more accessible. Several excellent alternatives exist, each with different trade-offs:
+iloom isn't the only tool that makes git worktrees more accessible. Several excellent alternatives exist, each with different trade-offs:
 
 **Editor-Integrated Solutions:**
 - [VS Code Git Worktrees](https://marketplace.visualstudio.com/items?itemName=GitWorktrees.git-worktrees) - Enhanced Git worktree support in VS Code
@@ -650,9 +650,9 @@ Hatchbox AI isn't the only tool that makes git worktrees more accessible. Severa
 - Lightweight - just worktree management, nothing more
 - Conductor and Crystal help you with Agentic coding too
 
-**Where Hatchbox Differs:**
+**Where iloom Differs:**
 
-Most tools focus on **making git worktrees easier to use**, some add-in Agentic coding too. Hatchbox focuses on **making multi-issue AI-assisted development sustainable**.
+Most tools focus on **making git worktrees easier to use**, some add-in Agentic coding too. iloom focuses on **making multi-issue AI-assisted development sustainable**.
 
 **Beyond Worktrees:**
 - **Database isolation**: Neon branch integration for schema/data separation
@@ -663,7 +663,7 @@ Most tools focus on **making git worktrees easier to use**, some add-in Agentic 
 
 **The Trade-off:**
 
-Other tools increase code output with minimal process change. Hatchbox increases **sustainable velocity** with a prescriptive workflow. You trade flexibility for:
+Other tools increase code output with minimal process change. iloom increases **sustainable velocity** with a prescriptive workflow. You trade flexibility for:
 - Persistent shared understanding between you and your AI
 - Reduced time debugging AI misunderstandings
 - Less context switching mental overhead
@@ -675,7 +675,7 @@ Other tools increase code output with minimal process change. Hatchbox increases
 - You just need easier git worktree commands
 - You don't see yourself working on multiple tasks at once
 
-**Choose Hatchbox if:**
+**Choose iloom if:**
 - You're scaling AI-assisted development across multiple issues
 - Cognitive overhead is limiting your velocity more than coding speed
 - You work on projects with database schemas that change per feature
@@ -699,7 +699,7 @@ This project follows Test-Driven Development. All code must:
 - ✅ Build paid applications with it
 
 **You cannot:**
-- ❌ Resell Hatchbox itself as a product or service
+- ❌ Resell iloom itself as a product or service
 - ❌ Incorporate into products/services you sell to others
 - ❌ Offer as a hosted service or SaaS
 
@@ -707,4 +707,4 @@ This project follows Test-Driven Development. All code must:
 
 For commercial licensing inquiries, contact Adam Creeger.
 
-See [LICENSE](https://raw.githubusercontent.com/hatchbox-ai/hatchbox-cli/main/LICENSE) for complete terms.
+See [LICENSE](https://raw.githubusercontent.com/iloom-ai/iloom-cli/main/LICENSE) for complete terms.

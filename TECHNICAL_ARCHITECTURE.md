@@ -1,4 +1,4 @@
-# Hatchbox AI Technical Architecture Documentation
+# iloom Technical Architecture Documentation
 ## Authentication, Environment Management, and System Design
 
 *Generated: November 9, 2025*
@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive technical analysis of Hatchbox AI's architecture, focusing on system design, authentication mechanisms, environment management, and process orchestration. The analysis is based on examining the complete codebase and documenting actual implementation patterns without assumptions about future use cases.
+This document provides a comprehensive technical analysis of iloom's architecture, focusing on system design, authentication mechanisms, environment management, and process orchestration. The analysis is based on examining the complete codebase and documenting actual implementation patterns without assumptions about future use cases.
 
 ---
 
@@ -43,7 +43,7 @@ Application Entry Point
 │
 ├── Business Logic Layer (lib/)
 │   ├── Orchestrators
-│   │   ├── HatchboxManager - Workspace lifecycle
+│   │   ├── LoomMananger - Workspace lifecycle
 │   │   ├── AgentManager - AI agent orchestration
 │   │   └── ProcessManager - Process lifecycle
 │   │
@@ -86,11 +86,11 @@ All command classes use constructor injection with default fallbacks:
 export class StartCommand {
   constructor(
     private github?: GitHubService,
-    private manager?: HatchboxManager,
+    private manager?: LoomMananger,
     private settings?: SettingsManager,
   ) {
     this.github ??= new GitHubService()
-    this.manager ??= new HatchboxManager()
+    this.manager ??= new LoomMananger()
     this.settings ??= new SettingsManager()
   }
 }
@@ -178,7 +178,7 @@ AgentManager.runAgent(agentName, context)
 The system delegates all authentication to external CLI tools:
 
 ```
-Hatchbox AI
+iloom
   ├── GitHub Operations → GitHub CLI (`gh`)
   │   └── Credentials: ~/.config/gh/hosts.yml
   │
@@ -328,12 +328,12 @@ export function loadEnvIntoProcess(options?: {
 // src/commands/start.ts:57
 loadEnvIntoProcess()
 
-// 2. HatchboxManager initialization
-// src/lib/HatchboxManager.ts:14
+// 2. LoomMananger initialization
+// src/lib/LoomMananger.ts:14
 loadEnvIntoProcess()
 
 // 3. Main worktree environment loading
-// src/lib/HatchboxManager.ts:167-174
+// src/lib/LoomMananger.ts:167-174
 private loadMainEnvFile(): void {
   const mainEnvPath = path.join(this.paths.main, '.env')
   if (fs.existsSync(mainEnvPath)) {
@@ -361,7 +361,7 @@ await execa('node', [binFilePath, ...args], {
 - System environment variables (PATH, HOME, etc.)
 - Application configuration (NODE_ENV, DEBUG)
 - Service credentials (DATABASE_URL, API keys)
-- Hatchbox-specific (PORT, NEON_PROJECT_ID)
+- iloom-specific (PORT, NEON_PROJECT_ID)
 
 ### 4.3 Workspace Environment Configuration
 
@@ -497,9 +497,9 @@ CLI Arguments (--set flags, highest priority)
 **Implementation:**
 ```typescript
 // src/lib/SettingsManager.ts:89-134
-async loadSettings(): Promise<HatchboxSettings> {
+async loadSettings(): Promise<IloomSettings> {
   // 1. Start with defaults
-  let mergedSettings: HatchboxSettings = { ...DEFAULT_SETTINGS }
+  let mergedSettings: IloomSettings = { ...DEFAULT_SETTINGS }
 
   // 2. Load and merge project settings
   const projectSettings = await this.loadProjectSettings()
@@ -713,7 +713,7 @@ External Services (API Access)
 
 ```typescript
 // src/types/settings.ts
-interface HatchboxSettings {
+interface IloomSettings {
   mainBranch: string                    // Default: "main"
   worktreePrefix?: string                // Auto-calculated from repo
   protectedBranches: string[]           // Cannot be used for hatchbox
@@ -746,7 +746,7 @@ interface HatchboxSettings {
 **Agent Markdown Format:**
 ```markdown
 ---
-name: hatchbox-issue-analyzer
+name: iloom-issue-analyzer
 description: Analyzes issue root causes
 tools: ["read_file", "list_dir", "search_code"]
 model: "claude-3-5-sonnet-20241022"

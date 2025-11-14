@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hatchbox AI is a TypeScript CLI tool that converts existing bash workflow scripts into a robust, testable system for managing isolated Git worktrees with Claude AI integration. The tool enables developers to work on multiple issues simultaneously without context confusion.
+iloom is a TypeScript CLI tool that converts existing bash workflow scripts into a robust, testable system for managing isolated Git worktrees with Claude AI integration. The tool enables developers to work on multiple issues simultaneously without context confusion.
 
 ## DEVELOPMENT GUIDELINES
 * DO NOT SWALLOW ERRORS

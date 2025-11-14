@@ -1,5 +1,5 @@
 import { readPackageJson, parseBinField, hasWebDependencies } from '../utils/package-json.js'
-import type { ProjectCapability } from '../types/hatchbox.js'
+import type { ProjectCapability } from '../types/loom.js'
 
 export interface ProjectCapabilities {
   capabilities: ProjectCapability[]

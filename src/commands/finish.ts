@@ -425,7 +425,7 @@ export class FinishCommand {
 		if (!worktree) {
 			throw new Error(
 				`No worktree found for ${this.formatParsedInput(parsed)}. ` +
-					`Use 'hb list' to see available worktrees.`
+					`Use 'il list' to see available worktrees.`
 			)
 		}
 
@@ -624,7 +624,7 @@ export class FinishCommand {
 			// Step 4: Log success and guidance
 			logger.success(`PR #${parsed.number} updated successfully`)
 			logger.info('Worktree remains active for continued work')
-			logger.info(`To cleanup when done: hb cleanup ${parsed.number}`)
+			logger.info(`To cleanup when done: il cleanup ${parsed.number}`)
 		}
 	}
 

@@ -13,21 +13,21 @@ import { installDependencies } from '../utils/package-manager.js'
 import { generateColorFromBranchName } from '../utils/color.js'
 import { DatabaseManager } from './DatabaseManager.js'
 import { loadEnvIntoProcess } from '../utils/env.js'
-import type { Hatchbox, CreateHatchboxInput } from '../types/hatchbox.js'
+import type { Loom, CreateLoomInput } from '../types/loom.js'
 import type { GitWorktree } from '../types/worktree.js'
 import type { Issue, PullRequest } from '../types/index.js'
 import { logger } from '../utils/logger.js'
 
 /**
- * HatchboxManager orchestrates the creation and management of hatchboxes (isolated workspaces)
+ * LoomManager orchestrates the creation and management of looms (isolated workspaces)
  * Bridges the gap between input validation and workspace operations
  */
-export class HatchboxManager {
+export class LoomManager {
   constructor(
     private gitWorktree: GitWorktreeManager,
     private github: GitHubService,
     private environment: EnvironmentManager,
-    _claude: ClaudeContextManager, // Not stored - kept for DI compatibility, HatchboxLauncher creates its own
+    _claude: ClaudeContextManager, // Not stored - kept for DI compatibility, LoomLauncher creates its own
     private capabilityDetector: ProjectCapabilityDetector,
     private cliIsolation: CLIIsolationManager,
     private settings: SettingsManager,
@@ -35,11 +35,11 @@ export class HatchboxManager {
   ) {}
 
   /**
-   * Create a new hatchbox (isolated workspace)
+   * Create a new loom (isolated workspace)
    * Orchestrates worktree creation, environment setup, and Claude context generation
    * NEW: Checks for existing worktrees and reuses them if found
    */
-  async createHatchbox(input: CreateHatchboxInput): Promise<Hatchbox> {
+  async createIloom(input: CreateLoomInput): Promise<Loom> {
     // 1. Fetch GitHub data if needed
     logger.info('Fetching GitHub data...')
     const githubData = await this.fetchGitHubData(input)
@@ -47,10 +47,10 @@ export class HatchboxManager {
     // NEW: Check for existing worktree BEFORE generating branch name (for efficiency)
     if (input.type === 'issue' || input.type === 'pr') {
       logger.info('Checking for existing worktree...')
-      const existing = await this.findExistingHatchbox(input, githubData)
+      const existing = await this.findExistingIloom(input, githubData)
       if (existing) {
         logger.success(`Found existing worktree, reusing: ${existing.path}`)
-        return await this.reuseHatchbox(existing, input, githubData)
+        return await this.reuseIloom(existing, input, githubData)
       }
       logger.info('No existing worktree found, creating new one...')
     }
@@ -72,8 +72,8 @@ export class HatchboxManager {
     // 6. Copy environment files (.env) - ALWAYS done regardless of capabilities
     await this.copyEnvironmentFiles(worktreePath)
 
-    // 7. Copy Hatchbox settings (settings.local.json) - ALWAYS done regardless of capabilities
-    await this.copyHatchboxSettings(worktreePath)
+    // 7. Copy Loom settings (settings.local.json) - ALWAYS done regardless of capabilities
+    await this.copyIloomSettings(worktreePath)
 
     // 8. Setup PORT environment variable - ONLY for web projects
     // Load base port from settings
@@ -175,14 +175,14 @@ export class HatchboxManager {
 
     // Only launch if at least one component is enabled
     if (enableClaude || enableCode || enableDevServer || enableTerminal) {
-      const { HatchboxLauncher } = await import('./HatchboxLauncher.js')
+      const { LoomLauncher } = await import('./LoomLauncher.js')
       const { ClaudeContextManager } = await import('./ClaudeContextManager.js')
 
       // Create ClaudeContextManager with shared SettingsManager to ensure CLI overrides work
       const claudeContext = new ClaudeContextManager(undefined, undefined, this.settings)
-      const launcher = new HatchboxLauncher(claudeContext)
+      const launcher = new LoomLauncher(claudeContext)
 
-      await launcher.launchHatchbox({
+      await launcher.launchLoom({
         enableClaude,
         enableCode,
         enableDevServer,
@@ -200,9 +200,9 @@ export class HatchboxManager {
       })
     }
 
-    // 9. Create and return hatchbox metadata
-    const hatchbox: Hatchbox = {
-      id: this.generateHatchboxId(input),
+    // 9. Create and return loom metadata
+    const loom: Loom = {
+      id: this.generateLoomId(input),
       path: worktreePath,
       branch: branchName,
       type: input.type,
@@ -224,34 +224,34 @@ export class HatchboxManager {
       }),
     }
 
-    logger.success(`Created hatchbox: ${hatchbox.id} at ${hatchbox.path}`)
-    return hatchbox
+    logger.success(`Created loom: ${loom.id} at ${loom.path}`)
+    return loom
   }
 
   /**
-   * Finish a hatchbox (merge work and cleanup)
+   * Finish a loom (merge work and cleanup)
    * Not yet implemented - see Issue #7
    */
-  async finishHatchbox(_identifier: string): Promise<void> {
+  async finishIloom(_identifier: string): Promise<void> {
     throw new Error('Not implemented - see Issue #7')
   }
 
 
   /**
-   * List all active hatchboxes
+   * List all active looms
    */
-  async listHatchboxes(): Promise<Hatchbox[]> {
+  async listLooms(): Promise<Loom[]> {
     const worktrees = await this.gitWorktree.listWorktrees()
-    return await this.mapWorktreesToHatchboxes(worktrees)
+    return await this.mapWorktreesToLooms(worktrees)
   }
 
   /**
-   * Find a specific hatchbox by identifier
+   * Find a specific loom by identifier
    */
-  async findHatchbox(identifier: string): Promise<Hatchbox | null> {
-    const hatchboxes = await this.listHatchboxes()
+  async findIloom(identifier: string): Promise<Loom | null> {
+    const looms = await this.listLooms()
     return (
-      hatchboxes.find(
+      looms.find(
         h =>
           h.id === identifier ||
           h.identifier.toString() === identifier ||
@@ -264,7 +264,7 @@ export class HatchboxManager {
    * Fetch GitHub data based on input type
    */
   private async fetchGitHubData(
-    input: CreateHatchboxInput
+    input: CreateLoomInput
   ): Promise<Issue | PullRequest | null> {
     if (input.type === 'issue') {
       return await this.github.fetchIssue(input.identifier as number)
@@ -278,7 +278,7 @@ export class HatchboxManager {
    * Prepare branch name based on input type and GitHub data
    */
   private async prepareBranchName(
-    input: CreateHatchboxInput,
+    input: CreateLoomInput,
     githubData: Issue | PullRequest | null
   ): Promise<string> {
     if (input.type === 'branch') {
@@ -307,10 +307,10 @@ export class HatchboxManager {
   }
 
   /**
-   * Create worktree for the hatchbox (without dependency installation)
+   * Create worktree for the loom (without dependency installation)
    */
   private async createWorktreeOnly(
-    input: CreateHatchboxInput,
+    input: CreateLoomInput,
     branchName: string
   ): Promise<string> {
     // Ensure repository has at least one commit (needed for worktree creation)
@@ -410,19 +410,19 @@ export class HatchboxManager {
   }
 
   /**
-   * Copy Hatchbox configuration (settings.local.json) from main repo to worktree
+   * Copy iloom configuration (settings.local.json) from main repo to worktree
    * Always called regardless of project capabilities
    */
-  private async copyHatchboxSettings(worktreePath: string): Promise<void> {
-    const mainSettingsLocalPath = path.join(process.cwd(), '.hatchbox', 'settings.local.json')
+  private async copyIloomSettings(worktreePath: string): Promise<void> {
+    const mainSettingsLocalPath = path.join(process.cwd(), '.iloom', 'settings.local.json')
 
     try {
-      const worktreeHatchboxDir = path.join(worktreePath, '.hatchbox')
+      const worktreeIloomDir = path.join(worktreePath, '.iloom')
 
-      // Ensure .hatchbox directory exists in worktree
-      await fs.ensureDir(worktreeHatchboxDir)
+      // Ensure .iloom directory exists in worktree
+      await fs.ensureDir(worktreeIloomDir)
 
-      const worktreeSettingsLocalPath = path.join(worktreeHatchboxDir, 'settings.local.json')
+      const worktreeSettingsLocalPath = path.join(worktreeIloomDir, 'settings.local.json')
       // Check if settings.local.json already exists in worktree
       if (await fs.pathExists(worktreeSettingsLocalPath)) {
         logger.warn('settings.local.json already exists in worktree, skipping copy')
@@ -440,7 +440,7 @@ export class HatchboxManager {
    */
   private async setupPortForWeb(
     worktreePath: string,
-    input: CreateHatchboxInput,
+    input: CreateLoomInput,
     basePort: number
   ): Promise<number> {
     const envFilePath = path.join(worktreePath, '.env')
@@ -481,18 +481,18 @@ export class HatchboxManager {
   }
 
   /**
-   * Generate a unique hatchbox ID
+   * Generate a unique loom ID
    */
-  private generateHatchboxId(input: CreateHatchboxInput): string {
+  private generateLoomId(input: CreateLoomInput): string {
     const prefix = input.type
     return `${prefix}-${input.identifier}`
   }
 
   /**
-   * Calculate port for the hatchbox
+   * Calculate port for the loom
    * Base port: configurable via settings.capabilities.web.basePort (default 3000) + issue/PR number (or deterministic hash for branches)
    */
-  private async calculatePort(input: CreateHatchboxInput): Promise<number> {
+  private async calculatePort(input: CreateLoomInput): Promise<number> {
     // Load base port from settings
     const settingsData = await this.settings.loadSettings()
     const basePort = settingsData.capabilities?.web?.basePort ?? 3000
@@ -536,10 +536,10 @@ export class HatchboxManager {
   }
 
   /**
-   * Map worktrees to hatchbox objects
-   * This is a simplified conversion - in production we'd store hatchbox metadata
+   * Map worktrees to loom objects
+   * This is a simplified conversion - in production we'd store loom metadata
    */
-  private async mapWorktreesToHatchboxes(worktrees: GitWorktree[]): Promise<Hatchbox[]> {
+  private async mapWorktreesToLooms(worktrees: GitWorktree[]): Promise<Loom[]> {
     return await Promise.all(worktrees.map(async (wt) => {
       // Extract identifier from branch name
       let type: 'issue' | 'pr' | 'branch' = 'branch'
@@ -567,11 +567,11 @@ export class HatchboxManager {
   }
 
   /**
-   * NEW: Find existing hatchbox for the given input
+   * NEW: Find existing loom for the given input
    * Checks for worktrees matching the issue/PR identifier
    */
-  private async findExistingHatchbox(
-    input: CreateHatchboxInput,
+  private async findExistingIloom(
+    input: CreateLoomInput,
     githubData: Issue | PullRequest | null
   ): Promise<GitWorktree | null> {
     if (input.type === 'issue') {
@@ -586,15 +586,15 @@ export class HatchboxManager {
   }
 
   /**
-   * NEW: Reuse an existing hatchbox
+   * NEW: Reuse an existing loom
    * Includes environment setup and database branching for existing worktrees
    * Ports: handle_existing_worktree() from bash script lines 168-215
    */
-  private async reuseHatchbox(
+  private async reuseIloom(
     worktree: GitWorktree,
-    input: CreateHatchboxInput,
+    input: CreateLoomInput,
     githubData: Issue | PullRequest | null
-  ): Promise<Hatchbox> {
+  ): Promise<Loom> {
     const worktreePath = worktree.path
     const branchName = worktree.branch
 
@@ -606,7 +606,7 @@ export class HatchboxManager {
 
     // 3. Defensively copy .env and settings.local.json if missing
     await this.copyEnvironmentFiles(worktreePath)
-    await this.copyHatchboxSettings(worktreePath)
+    await this.copyIloomSettings(worktreePath)
 
     // 4. Setup PORT for web projects (ensure it's set even if .env existed)
     // Load base port from settings
@@ -648,14 +648,14 @@ export class HatchboxManager {
 
     if (enableClaude || enableCode || enableDevServer || enableTerminal) {
       logger.info('Launching workspace components...')
-      const { HatchboxLauncher } = await import('./HatchboxLauncher.js')
+      const { LoomLauncher } = await import('./LoomLauncher.js')
       const { ClaudeContextManager } = await import('./ClaudeContextManager.js')
 
       // Create ClaudeContextManager with shared SettingsManager to ensure CLI overrides work
       const claudeContext = new ClaudeContextManager(undefined, undefined, this.settings)
-      const launcher = new HatchboxLauncher(claudeContext)
+      const launcher = new LoomLauncher(claudeContext)
 
-      await launcher.launchHatchbox({
+      await launcher.launchLoom({
         enableClaude,
         enableCode,
         enableDevServer,
@@ -673,9 +673,9 @@ export class HatchboxManager {
       })
     }
 
-    // 8. Return hatchbox metadata
-    const hatchbox: Hatchbox = {
-      id: this.generateHatchboxId(input),
+    // 8. Return loom metadata
+    const loom: Loom = {
+      id: this.generateLoomId(input),
       path: worktreePath,
       branch: branchName,
       type: input.type,
@@ -696,7 +696,7 @@ export class HatchboxManager {
       }),
     }
 
-    logger.success(`Reused existing hatchbox: ${hatchbox.id} at ${hatchbox.path}`)
-    return hatchbox
+    logger.success(`Reused existing loom: ${loom.id} at ${loom.path}`)
+    return loom
   }
 }

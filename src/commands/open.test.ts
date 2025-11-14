@@ -5,7 +5,7 @@ import { ProjectCapabilityDetector } from '../lib/ProjectCapabilityDetector.js'
 import { DevServerManager } from '../lib/DevServerManager.js'
 import { IdentifierParser } from '../utils/IdentifierParser.js'
 import type { GitWorktree } from '../types/worktree.js'
-import type { ProjectCapabilities } from '../types/hatchbox.js'
+import type { ProjectCapabilities } from '../types/loom.js'
 import fs from 'fs-extra'
 import path from 'path'
 import { execa } from 'execa'
@@ -266,7 +266,7 @@ describe('OpenCommand', () => {
 		it('should run CLI for CLI-only project', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -288,7 +288,7 @@ describe('OpenCommand', () => {
 		it('should open browser for web+CLI project (web takes precedence)', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['web', 'cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -415,7 +415,7 @@ describe('OpenCommand', () => {
 		it('should execute CLI when no web capability', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -437,7 +437,7 @@ describe('OpenCommand', () => {
 		it('should construct correct path to bin file in worktree', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hatchbox: './dist/cli.js' },
+				binEntries: { iloom: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -459,7 +459,7 @@ describe('OpenCommand', () => {
 		it('should pass through additional arguments', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -482,8 +482,8 @@ describe('OpenCommand', () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
 				binEntries: {
-					hb: './dist/cli.js',
-					hatchbox: './dist/cli.js',
+					il: './dist/cli.js',
+					iloom: './dist/cli.js',
 					other: './dist/other.js',
 				},
 			}
@@ -496,7 +496,7 @@ describe('OpenCommand', () => {
 
 			await command.execute({ identifier: '87' })
 
-			// Should use first entry (hb)
+			// Should use first entry (il)
 			const binPath = path.resolve(mockWorktree.path, './dist/cli.js')
 			expect(execa).toHaveBeenCalledWith('node', [binPath], {
 				stdio: 'inherit',
@@ -508,7 +508,7 @@ describe('OpenCommand', () => {
 		it('should throw error when bin file does not exist', async () => {
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -540,7 +540,7 @@ describe('OpenCommand', () => {
 			// Mock capability detection for CLI
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities
@@ -707,7 +707,7 @@ describe('OpenCommand', () => {
 			// Mock CLI-only capability
 			const mockCapabilities: ProjectCapabilities = {
 				capabilities: ['cli'],
-				binEntries: { hb: './dist/cli.js' },
+				binEntries: { il: './dist/cli.js' },
 			}
 			vi.mocked(mockCapabilityDetector.detectCapabilities).mockResolvedValue(
 				mockCapabilities

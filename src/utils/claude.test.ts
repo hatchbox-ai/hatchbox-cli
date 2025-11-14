@@ -1227,7 +1227,7 @@ describe('claude utils', () => {
 	})
 
 	describe.runIf(process.platform === 'darwin')('launchClaudeInNewTerminalWindow', () => {
-		it('should open new terminal window with hb ignite command', async () => {
+		it('should open new terminal window with il ignite command', async () => {
 			const prompt = 'Work on this issue'
 			const workspacePath = '/path/to/workspace'
 
@@ -1238,9 +1238,9 @@ describe('claude utils', () => {
 
 			await launchClaudeInNewTerminalWindow(prompt, { workspacePath })
 
-			// Verify osascript was called for terminal window with hb ignite command
+			// Verify osascript was called for terminal window with il ignite command
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 			expect(execa).toHaveBeenCalledWith(
 				'osascript',
 				['-e', expect.stringContaining('tell application "Terminal"')]
@@ -1267,9 +1267,9 @@ describe('claude utils', () => {
 
 			await launchClaudeInNewTerminalWindow(prompt, { workspacePath, branchName })
 
-			// Verify terminal window was opened with hb ignite
+			// Verify terminal window was opened with il ignite
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 			expect(execa).toHaveBeenCalledWith(
 				'osascript',
 				['-e', expect.stringContaining('tell application "Terminal"')]
@@ -1289,10 +1289,10 @@ describe('claude utils', () => {
 
 			await launchClaudeInNewTerminalWindow(prompt, { workspacePath })
 
-			// Verify .env sourcing is included and hb ignite is used
+			// Verify .env sourcing is included and il ignite is used
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
 			expect(applescript).toContain('source .env')
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 			expect(existsSync).toHaveBeenCalledWith('/path/to/workspace/.env')
 		})
 
@@ -1309,10 +1309,10 @@ describe('claude utils', () => {
 
 			await launchClaudeInNewTerminalWindow(prompt, { workspacePath })
 
-			// Verify .env sourcing is NOT included but hb ignite is used
+			// Verify .env sourcing is NOT included but il ignite is used
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
 			expect(applescript).not.toContain('source .env')
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 		})
 
 		it('should not build complex claude command with prompt', async () => {
@@ -1326,14 +1326,14 @@ describe('claude utils', () => {
 
 			await launchClaudeInNewTerminalWindow(prompt, { workspacePath })
 
-			// Verify simple hb ignite command is used, not complex claude command with prompt
+			// Verify simple il ignite command is used, not complex claude command with prompt
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 			expect(applescript).not.toContain('--append-system-prompt')
 			expect(applescript).not.toContain(prompt)
 		})
 
-		it('should use hb ignite instead of building claude command with args', async () => {
+		it('should use il ignite instead of building claude command with args', async () => {
 			const prompt = 'Work on this issue'
 			const workspacePath = '/path/to/workspace'
 
@@ -1344,9 +1344,9 @@ describe('claude utils', () => {
 
 			await launchClaudeInNewTerminalWindow(prompt, { workspacePath })
 
-			// Verify hb ignite is used, not claude with model/permission args
+			// Verify il ignite is used, not claude with model/permission args
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 			expect(applescript).not.toContain('--model')
 			expect(applescript).not.toContain('--permission-mode')
 			expect(applescript).not.toContain('--add-dir')
@@ -1368,7 +1368,7 @@ describe('claude utils', () => {
 			// Verify PORT export is included in AppleScript
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
 			expect(applescript).toContain('export PORT=3127')
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 		})
 
 		it('should not export PORT when port is undefined', async () => {
@@ -1405,7 +1405,7 @@ describe('claude utils', () => {
 			const applescript = vi.mocked(execa).mock.calls[0][1]?.[1] as string
 			expect(applescript).toContain('source .env')
 			expect(applescript).toContain('export PORT=3127')
-			expect(applescript).toContain('hb ignite')
+			expect(applescript).toContain('il ignite')
 		})
 	})
 

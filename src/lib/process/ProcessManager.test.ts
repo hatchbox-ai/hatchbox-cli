@@ -91,7 +91,7 @@ describe('ProcessManager', () => {
 
 			// Mock ps output showing postgres command
 			vi.mocked(execa).mockResolvedValueOnce(
-				mockExecaResult('postgres: hatchbox hatchbox [local] idle') as ExecaReturnValue
+				mockExecaResult('postgres: iloom iloom [local] idle') as ExecaReturnValue
 			)
 
 			const result = await processManager.detectDevServer(5432)
@@ -259,7 +259,7 @@ node      12345 user   23u  IPv4 0x123456      0t0  TCP *:3025 (LISTEN)`,
 			} as ExecaReturnValue)
 
 			vi.mocked(execa).mockResolvedValueOnce({
-				stdout: 'postgres: postgres hatchbox [local] idle',
+				stdout: 'postgres: postgres iloom [local] idle',
 				stderr: '',
 				exitCode: 0,
 			} as ExecaReturnValue)

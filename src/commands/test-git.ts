@@ -11,7 +11,7 @@ export interface TestGitCommandInput {
 
 /**
  * Test command to verify the findMainWorktreePath() function
- * Reads settings from .hatchbox/settings.json and uses them to find main worktree
+ * Reads settings from .iloom/settings.json and uses them to find main worktree
  * Implements 3-tier main branch detection strategy:
  * 1. Check for specified mainBranch in settings
  * 2. Look for "main" branch
@@ -35,14 +35,14 @@ export class TestGitCommand {
       // Display the current working directory
       logger.info(`Current directory: ${process.cwd()}`)
 
-      // Load settings from .hatchbox/settings.json
+      // Load settings from .iloom/settings.json
       const settings = await this.settingsManager.loadSettings()
 
       // Build options for findMainWorktreePath
       const options = settings.mainBranch ? { mainBranch: settings.mainBranch } : undefined
 
       if (options?.mainBranch) {
-        logger.info(`Looking for worktree with branch: ${options.mainBranch} (from .hatchbox/settings.json)`)
+        logger.info(`Looking for worktree with branch: ${options.mainBranch} (from .iloom/settings.json)`)
       } else {
         logger.info('No mainBranch in settings, using default detection strategy (main → first worktree)')
       }

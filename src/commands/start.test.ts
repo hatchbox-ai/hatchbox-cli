@@ -18,11 +18,11 @@ vi.mock('../lib/IssueEnhancementService.js', () => ({
 	})),
 }))
 
-// Mock the HatchboxManager and its dependencies
-vi.mock('../lib/HatchboxManager.js', () => ({
-	HatchboxManager: vi.fn(() => ({
-		createHatchbox: vi.fn().mockResolvedValue({
-			id: 'test-hatchbox-123',
+// Mock the LoomManager and its dependencies
+vi.mock('../lib/LoomManager.js', () => ({
+	LoomManager: vi.fn(() => ({
+		createIloom: vi.fn().mockResolvedValue({
+			id: 'test-loom-123',
 			path: '/test/path',
 			branch: 'test-branch',
 			type: 'issue',
@@ -902,7 +902,7 @@ describe('StartCommand', () => {
 				})
 
 				// branchExists should not be called for PRs in validateInput
-				// (it might be called in HatchboxManager but that's a different check)
+				// (it might be called in LoomManager but that's a different check)
 			})
 
 			it('should not check branch existence for issues in validateInput', async () => {
@@ -930,13 +930,13 @@ describe('StartCommand', () => {
 				})
 
 				// branchExists is only called for branch-type inputs in validateInput
-				// Issues get their branch checked in HatchboxManager.createWorktree
+				// Issues get their branch checked in LoomManager.createWorktree
 			})
 		})
 
 		describe('Configuration-Driven Component Launching', () => {
-			let mockHatchboxManager: {
-				createHatchbox: ReturnType<typeof vi.fn>
+			let mockLoomManager: {
+				createIloom: ReturnType<typeof vi.fn>
 			}
 			let mockSettingsManager: {
 				loadSettings: ReturnType<typeof vi.fn>
@@ -944,10 +944,10 @@ describe('StartCommand', () => {
 
 			beforeEach(async () => {
 				// Re-import to get fresh mocked instances
-				const { HatchboxManager } = await import('../lib/HatchboxManager.js')
+				const { LoomManager } = await import('../lib/LoomManager.js')
 				const { SettingsManager } = await import('../lib/SettingsManager.js')
 
-				mockHatchboxManager = new HatchboxManager()
+				mockLoomManager = new LoomManager()
 				mockSettingsManager = new SettingsManager()
 
 				// Mock settings manager loadSettings method
@@ -956,7 +956,7 @@ describe('StartCommand', () => {
 				// Create command with mocked dependencies
 				command = new StartCommand(
 					mockGitHubService,
-					mockHatchboxManager,
+					mockLoomManager,
 					undefined,
 					mockSettingsManager
 				)
@@ -998,7 +998,7 @@ describe('StartCommand', () => {
 						options: {},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: false,
@@ -1045,7 +1045,7 @@ describe('StartCommand', () => {
 						options: {},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: true,
@@ -1076,7 +1076,7 @@ describe('StartCommand', () => {
 						options: {},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: true,
@@ -1116,7 +1116,7 @@ describe('StartCommand', () => {
 						options: {},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: true,
@@ -1164,7 +1164,7 @@ describe('StartCommand', () => {
 					})
 
 					// PR workflow not configured, should default to true
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: true,
@@ -1213,7 +1213,7 @@ describe('StartCommand', () => {
 						},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: false, // CLI override
@@ -1264,7 +1264,7 @@ describe('StartCommand', () => {
 						},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: false,
@@ -1308,7 +1308,7 @@ describe('StartCommand', () => {
 						options: {},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: false, // From config
@@ -1356,7 +1356,7 @@ describe('StartCommand', () => {
 						options: {},
 					})
 
-					expect(mockHatchboxManager.createHatchbox).toHaveBeenCalledWith(
+					expect(mockLoomManager.createIloom).toHaveBeenCalledWith(
 						expect.objectContaining({
 							options: expect.objectContaining({
 								enableCode: false,

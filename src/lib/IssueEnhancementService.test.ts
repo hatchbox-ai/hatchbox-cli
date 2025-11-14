@@ -87,7 +87,7 @@ describe('IssueEnhancementService', () => {
 				agents: {},
 			})
 			vi.mocked(mockAgentManager.loadAgents).mockResolvedValue({
-				'hatchbox-issue-enhancer': {
+				'iloom-issue-enhancer': {
 					description: 'Test agent',
 					prompt: 'Test prompt',
 					tools: [],
@@ -105,7 +105,7 @@ describe('IssueEnhancementService', () => {
 			await service.enhanceDescription(description)
 
 			expect(launchClaude).toHaveBeenCalledWith(
-				expect.stringContaining('@agent-hatchbox-issue-enhancer'),
+				expect.stringContaining('@agent-iloom-issue-enhancer'),
 				expect.objectContaining({
 					headless: true,
 					model: 'sonnet',
@@ -212,7 +212,7 @@ describe('IssueEnhancementService', () => {
 			expect(calledPrompt).toMatch(/ONLY|DO NOT|NO meta/i)
 
 			// Should reference the agent directly
-			expect(calledPrompt).toMatch(/@agent-hatchbox-issue-enhancer/)
+			expect(calledPrompt).toMatch(/@agent-iloom-issue-enhancer/)
 		})
 	})
 
@@ -450,7 +450,7 @@ describe('IssueEnhancementService', () => {
 				expect(firstCall).toContain('Press any key to open issue for editing...')
 
 				// Check that second waitForKeypress is called with confirmation message
-				expect(waitForKeypress).toHaveBeenNthCalledWith(2, 'Press any key to continue with Hatchbox creation...')
+				expect(waitForKeypress).toHaveBeenNthCalledWith(2, 'Press any key to continue with loom creation...')
 			})
 
 			it('should handle errors gracefully', async () => {

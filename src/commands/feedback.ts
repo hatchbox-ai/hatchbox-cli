@@ -6,7 +6,7 @@ import { SettingsManager } from '../lib/SettingsManager.js'
 import { gatherDiagnosticInfo, formatDiagnosticsAsMarkdown } from '../utils/diagnostics.js'
 
 // Hardcoded target repository for feedback
-const FEEDBACK_REPOSITORY = 'hatchbox-ai/hatchbox-cli'
+const FEEDBACK_REPOSITORY = 'iloom-ai/iloom-cli'
 
 /**
  * Input structure for FeedbackCommand
@@ -17,8 +17,8 @@ export interface FeedbackCommandInput {
 }
 
 /**
- * Command to submit feedback/bug reports to the hatchbox-cli repository.
- * Mirrors add-issue command but targets hatchbox-ai/hatchbox-cli repo.
+ * Command to submit feedback/bug reports to the iloom-cli repository.
+ * Mirrors add-issue command but targets iloom-ai/iloom-cli repo.
  */
 export class FeedbackCommand {
 	private enhancementService: IssueEnhancementService
@@ -36,7 +36,7 @@ export class FeedbackCommand {
 	 * Execute the feedback command workflow:
 	 * 1. Validate description format
 	 * 2. Gather diagnostic information
-	 * 3. Create GitHub issue in hatchbox-ai/hatchbox-cli with CLI marker and diagnostics
+	 * 3. Create GitHub issue in iloom-ai/iloom-cli with CLI marker and diagnostics
 	 * 4. Wait for keypress and open browser for review
 	 * 5. Return issue number
 	 */
@@ -57,7 +57,7 @@ export class FeedbackCommand {
 
 ${description}`
 
-		// Step 4: Create GitHub issue in hatchbox-cli repo (no label needed)
+		// Step 4: Create GitHub issue in iloom-cli repo (no label needed)
 		// The GitHub Action workflow will detect the CLI marker and enhance the issue
 		const result = await this.enhancementService.createEnhancedIssue(
 			description,

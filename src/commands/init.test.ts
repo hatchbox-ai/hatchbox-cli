@@ -57,7 +57,7 @@ describe('InitCommand', () => {
     it('should detect user shell and offer autocomplete setup', async () => {
       vi.mocked(mockShellCompletion.detectShell).mockReturnValue('bash')
       vi.mocked(mockShellCompletion.getSetupInstructions).mockReturnValue(
-        'Add eval "$(hb --completion)" to ~/.bashrc'
+        'Add eval "$(il --completion)" to ~/.bashrc'
       )
       vi.mocked(prompt.promptConfirmation).mockResolvedValue(true)
 
@@ -86,7 +86,7 @@ describe('InitCommand', () => {
       expect(mockShellCompletion.getSetupInstructions).not.toHaveBeenCalled()
 
       // Verify project configuration still runs
-      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.hatchbox'), { recursive: true })
+      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.iloom'), { recursive: true })
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('settings.local.json'),
         '{}\n',
@@ -131,7 +131,7 @@ describe('InitCommand', () => {
       expect(prompt.promptConfirmation).not.toHaveBeenCalled()
 
       // Verify project configuration still runs
-      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.hatchbox'), { recursive: true })
+      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.iloom'), { recursive: true })
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('settings.local.json'),
         '{}\n',
@@ -153,7 +153,7 @@ describe('InitCommand', () => {
       expect(prompt.promptConfirmation).not.toHaveBeenCalled()
 
       // Verify project configuration still runs
-      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.hatchbox'), { recursive: true })
+      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.iloom'), { recursive: true })
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('settings.local.json'),
         '{}\n',
@@ -186,7 +186,7 @@ describe('InitCommand', () => {
       initCommand = new InitCommand(mockShellCompletion)
       await initCommand.execute()
 
-      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.hatchbox'), { recursive: true })
+      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.iloom'), { recursive: true })
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('settings.local.json'),
         '{}\n',
@@ -203,7 +203,7 @@ describe('InitCommand', () => {
       initCommand = new InitCommand(mockShellCompletion)
       await initCommand.execute()
 
-      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.hatchbox'), { recursive: true })
+      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining('.iloom'), { recursive: true })
       // writeFile should only be called once for .gitignore, not for settings.local.json
       const writeFileCalls = vi.mocked(writeFile).mock.calls
       const settingsLocalCalls = writeFileCalls.filter(call =>
@@ -221,7 +221,7 @@ describe('InitCommand', () => {
 
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('.gitignore'),
-        'node_modules/\n\n# Added by Hatchbox AI CLI\n.hatchbox/settings.local.json\n',
+        'node_modules/\n\n# Added by iloom CLI\n.iloom/settings.local.json\n',
         'utf-8'
       )
     })
@@ -234,14 +234,14 @@ describe('InitCommand', () => {
 
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('.gitignore'),
-        '\n# Added by Hatchbox AI CLI\n.hatchbox/settings.local.json\n',
+        '\n# Added by iloom CLI\n.iloom/settings.local.json\n',
         'utf-8'
       )
     })
 
     it('should not duplicate entry in .gitignore', async () => {
       vi.mocked(existsSync).mockReturnValueOnce(false).mockReturnValueOnce(true)
-      vi.mocked(readFile).mockResolvedValue('.hatchbox/settings.local.json\n')
+      vi.mocked(readFile).mockResolvedValue('.iloom/settings.local.json\n')
 
       initCommand = new InitCommand(mockShellCompletion)
       await initCommand.execute()
@@ -263,7 +263,7 @@ describe('InitCommand', () => {
 
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('.gitignore'),
-        'node_modules/\n\n# Added by Hatchbox AI CLI\n.hatchbox/settings.local.json\n',
+        'node_modules/\n\n# Added by iloom CLI\n.iloom/settings.local.json\n',
         'utf-8'
       )
     })

@@ -25,7 +25,7 @@ export class MockProcessManager {
 		this.processInfoMap.set(port, {
 			pid,
 			name,
-			command: 'postgres: postgres hatchbox [local] idle',
+			command: 'postgres: postgres iloom [local] idle',
 			port,
 			isDevServer: false,
 		})
