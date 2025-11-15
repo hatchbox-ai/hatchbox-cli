@@ -182,9 +182,15 @@ export class LoomLauncher {
 		const hasEnvFile = existsSync(join(options.worktreePath, '.env'))
 		const claudeTitle = `Claude - ${this.formatIdentifier(options.workflowType, options.identifier)}`
 
-		let claudeCommand = 'il ignite'
+		const executable = options.executablePath ?? 'il'
+		let claudeCommand = `${executable} ignite`
 		if (options.oneShot !== undefined && options.oneShot !== 'default') {
 			claudeCommand += ` --one-shot=${options.oneShot}`
+		}
+		if (options.setArguments && options.setArguments.length > 0) {
+			for (const setArg of options.setArguments) {
+				claudeCommand += ` --set ${setArg}`
+			}
 		}
 
 		return {

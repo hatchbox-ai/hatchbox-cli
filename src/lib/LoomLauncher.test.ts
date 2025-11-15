@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { LoomLauncher } from './LoomLauncher.js'
 import type { LaunchLoomOptions } from './LoomLauncher.js'
 import * as terminal from '../utils/terminal.js'
+import type { TerminalWindowOptions } from '../utils/terminal.js'
 import * as vscode from '../utils/vscode.js'
 import * as devServer from '../utils/dev-server.js'
 import { ClaudeContextManager } from './ClaudeContextManager.js'
@@ -433,6 +434,39 @@ describe('LoomLauncher', () => {
 				const call = vi.mocked(terminal.openTerminalWindow).mock.calls[0][0]
 				expect(call.includePortExport).toBe(true)
 				expect(call.port).toBe(3042)
+			})
+
+			it('should use custom executablePath in multi-terminal mode', async () => {
+				await launcher.launchLoom({
+					...baseOptions,
+					enableClaude: true,
+					enableCode: false,
+					enableDevServer: true,
+					enableTerminal: false,
+					executablePath: '/custom/path/to/cli.js',
+				})
+
+				const calls = vi.mocked(terminal.openMultipleTerminalWindows).mock.calls[0][0]
+				const claudeTab = calls.find((tab: TerminalWindowOptions) => tab.title?.includes('Claude'))
+				expect(claudeTab).toBeDefined()
+				expect(claudeTab?.command).toContain('/custom/path/to/cli.js ignite')
+			})
+
+			it('should include setArguments in multi-terminal Claude command', async () => {
+				await launcher.launchLoom({
+					...baseOptions,
+					enableClaude: true,
+					enableCode: false,
+					enableDevServer: true,
+					enableTerminal: false,
+					setArguments: ['foo=bar', 'baz=qux'],
+				})
+
+				const calls = vi.mocked(terminal.openMultipleTerminalWindows).mock.calls[0][0]
+				const claudeTab = calls.find((tab: TerminalWindowOptions) => tab.title?.includes('Claude'))
+				expect(claudeTab).toBeDefined()
+				expect(claudeTab?.command).toContain('--set foo=bar')
+				expect(claudeTab?.command).toContain('--set baz=qux')
 			})
 		})
 	})
