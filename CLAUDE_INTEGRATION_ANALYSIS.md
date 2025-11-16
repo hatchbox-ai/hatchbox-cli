@@ -168,12 +168,12 @@ export const logger: Logger = {
 
 **1. Environment Variable:**
 ```bash
-ILOOM_DEBUG=true hb start 123
+ILOOM_DEBUG=true il start 123
 ```
 
 **2. CLI Flag:**
 ```bash
-hb --debug start 123
+il --debug start 123
 ```
 
 **3. Programmatic:**
@@ -241,8 +241,8 @@ program
 ```
 
 **Behavior:**
-- `hb list` - Human-readable with logger formatting (emoji + colors)
-- `hb list --json` - Raw JSON output (no emoji, no colors)
+- `il list` - Human-readable with logger formatting (emoji + colors)
+- `il list --json` - Raw JSON output (no emoji, no colors)
 
 ### Streaming Capabilities
 
@@ -338,12 +338,12 @@ Directory PR pattern → Directory issue pattern → Git branch pattern → Regu
 
 ### Entry Points to Claude
 
-1. **Start Command** (`hb start <issue>`):
+1. **Start Command** (`il start <issue>`):
    - Creates worktree and environment
    - Calls LoomLauncher to open terminals
    - LoomLauncher → ClaudeContextManager → ClaudeService → launchClaude()
 
-2. **Ignite Command** (`hb ignite`):
+2. **Ignite Command** (`il ignite`):
    - Auto-detects context in current directory
    - Loads prompt templates and agents
    - Directly calls launchClaude() with system instructions
@@ -360,7 +360,7 @@ Directory PR pattern → Directory issue pattern → Git branch pattern → Regu
 ### Data Flow Diagram
 
 ```
-Command Input (e.g., hb start 123)
+Command Input (e.g., il start 123)
     ↓
 Command Handler (StartCommand, FinishCommand, etc.)
     ↓
@@ -465,7 +465,7 @@ disallowedTools: ['Bash(gh api:*)']
 ## 10. Settings and Configuration
 
 ### Settings File Location
-`~/.hatchbox/settings.json`
+`~/.iloom/settings.json`
 
 ### Configurable Options
 
@@ -508,7 +508,7 @@ Opens terminal tabs with:
 - Background color based on branch name (consistent color hashing)
 - Environment sourcing (`.env` file if exists)
 - Port export (if development server)
-- Command execution (e.g., `hb ignite` for Claude launch)
+- Command execution (e.g., `il ignite` for Claude launch)
 
 **Supported Platforms:**
 - macOS (AppleScript via Terminal.app)

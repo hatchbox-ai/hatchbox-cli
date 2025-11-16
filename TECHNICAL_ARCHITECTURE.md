@@ -71,7 +71,7 @@ Application Entry Point
 // Primary execution pattern
 CLI Command → Command Class → Service Layer → Utility Layer → External CLI
 
-// Example: hb start 25
+// Example: il start 25
 StartCommand.execute()
   → GitHubService.fetchIssue(25)
     → executeGhCommand(['issue', 'view', '25'])
@@ -100,7 +100,7 @@ export class StartCommand {
 
 ## 2. Core Workflows
 
-### 2.1 Workspace Creation Workflow (`hb start`)
+### 2.1 Workspace Creation Workflow (`il start`)
 
 ```
 Input Processing
@@ -131,7 +131,7 @@ Component Launch
   └── Claude CLI with context
 ```
 
-### 2.2 Workspace Completion Workflow (`hb finish`)
+### 2.2 Workspace Completion Workflow (`il finish`)
 
 ```
 Validation Phase
@@ -487,9 +487,9 @@ async createSymlinks(worktreePath: string, identifier: string): Promise<void> {
 ```
 Built-in Defaults (lowest priority)
          ↓
-Project Settings (.hatchbox/settings.json)
+Project Settings (.iloom/settings.json)
          ↓
-Local Overrides (.hatchbox/settings.local.json)
+Local Overrides (.iloom/settings.local.json)
          ↓
 CLI Arguments (--set flags, highest priority)
 ```
@@ -605,10 +605,10 @@ Validation:     300000ms (5 minutes)
 ```
 <repository-root>/
 ├── .git/                          # Git repository
-├── .hatchbox/                     # Configuration directory
+├── .iloom/                     # Configuration directory
 │   ├── settings.json              # Project settings (committed)
 │   ├── settings.local.json        # Local overrides (gitignored)
-│   └── bin/ → ~/.hatchbox/bin/    # Symlink to global bin directory
+│   └── bin/ → ~/.iloom/bin/    # Symlink to global bin directory
 │
 ├── .env                           # Main environment variables
 ├── .env.local                     # Local environment overrides
@@ -628,7 +628,7 @@ Validation:     300000ms (5 minutes)
 ### 8.2 Global User Directory
 
 ```
-~/.hatchbox/
+~/.iloom/
 └── bin/                           # Global symlink directory
     ├── cli-tool-25 → /path/to/issue-25/dist/cli.js
     ├── cli-tool-26 → /path/to/issue-26/dist/cli.js
@@ -716,7 +716,7 @@ External Services (API Access)
 interface IloomSettings {
   mainBranch: string                    // Default: "main"
   worktreePrefix?: string                // Auto-calculated from repo
-  protectedBranches: string[]           // Cannot be used for hatchbox
+  protectedBranches: string[]           // Cannot be used for iloom
   databaseBranchPrefix?: string         // Prefix for Neon branches
 
   capabilities?: {

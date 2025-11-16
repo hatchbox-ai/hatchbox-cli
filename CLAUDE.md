@@ -27,11 +27,11 @@ The README.md is the primary user-facing documentation. Keeping it synchronized 
 
 **Core Commands**:
 
-- `hb start <issue-number>` - Create isolated workspace for an issue/PR
-- `hb finish <issue-number>` - Merge work and cleanup workspace
-- `hb cleanup [identifier]` - Remove workspaces
-- `hb list` - Show active workspaces
-- `hb switch <identifier>` - Switch to workspace context
+- `il start <issue-number>` - Create isolated workspace for an issue/PR
+- `il finish <issue-number>` - Merge work and cleanup workspace
+- `il cleanup [identifier]` - Remove workspaces
+- `il list` - Show active workspaces
+- `il switch <identifier>` - Switch to workspace context
 
 ## Development Commands
 

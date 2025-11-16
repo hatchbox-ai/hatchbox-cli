@@ -105,7 +105,7 @@ Estimate the following metrics:
    4. Identify if change affects multiple architectural layers (CLI → Manager → Service → Utility)
 
    **Real Example (Issue #149 - executablePath)**:
-   - Issue text: "Any argument that is passed to hb start should be passed to hb ignite"
+   - Issue text: "Any argument that is passed to il start should be passed to il ignite"
    - Appeared SIMPLE: ~3 files, <200 LOC, no breaking changes
    - Actually COMPLEX: Required updating 5 TypeScript interfaces across 6 layers
    - **This should trigger COMPLEX classification immediately**

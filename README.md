@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![npm](https://img.shields.io/npm/v/%40hatchbox-ai%2Fhatchbox-cli?label=npm)](https://www.npmjs.com/package/@iloom/cli)
+[![npm](https://img.shields.io/npm/v/%40iloom-ai%2Fcli?label=npm)](https://www.npmjs.com/package/@iloom/cli)
 [![License: BSL-1.1](https://img.shields.io/badge/license-BSL--1.1-lightgrey)](https://raw.githubusercontent.com/iloom-ai/iloom-cli/main/LICENSE)
 [![Built for Claude Code](https://img.shields.io/badge/built%20for-claude%20code-8A6FFF)](https://claude.ai/)
 [![CI](https://github.com/iloom-ai/iloom-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/iloom-ai/iloom-cli/actions/workflows/ci.yml)
@@ -10,7 +10,7 @@
 </div>
 
 <div align="center">
-  <img width="327" height="328" alt="hatchbox-ai-logo" src="https://raw.githubusercontent.com/iloom-ai/iloom-cli/main/assets/logo.png" />
+  <img width="327" height="328" alt="iloom-ai-logo" src="https://raw.githubusercontent.com/iloom-ai/iloom-cli/main/assets/iloom-logo.png" />
   <div>Scale understanding, not just output.</div>
 
 </div>
@@ -62,46 +62,46 @@ iloom uses your existing Claude subscription, takes what context you already hav
 # Spins up an isolated dev environment.
 # Pulls in issue 25 from GitHub, even if it's just an issue title.
 # Fills in the blanks with you.
-> hb start 25 
+> iloom start 25 
 
 # or 
 
 # Creates an issue, builds that same shared mental model from scratch.
-> hb start "user auth broken" 
+> iloom start "user auth broken" 
 
 # or
 
 # Grabs context from this PR and its original issue, then iterates on it alongside you 
-> hb start 34 
+> iloom start 34 
 
 # then
 
-# Knows which hatchbox you're in, validates, merges your code back to your primary branch.
+# Knows which loom you're in, validates, merges your code back to your primary branch.
 # If you hit compilation/lint/test failures or merge conflicts along the way,
 # Claude will help resolve them automatically.
-> hb finish 
+> iloom finish 
 ```
 
-**The iloom difference**: Surface hidden assumptions up front, then persist all the analysis and reasoning in GitHub issue comments - visible and editable - rather than burning tokens in the context window where they're invisible and set in stone. Each hatchbox builds up structured context over multiple steps, but the AI only loads what's relevant for the current phase.
+**The iloom difference**: Surface hidden assumptions up front, then persist all the analysis and reasoning in GitHub issue comments - visible and editable - rather than burning tokens in the context window where they're invisible and set in stone.
 
 ### One Command, Parallel Work, Predictable Flow
 
 Each loom follows the same workflow - structured, visible, repeatable.
 
-`hb start` doesn't just create a git worktree. Here's what happens:
+`iloom start` doesn't just create a git worktree. It spins up a loom. Here's what happens:
 
 - Fetches the full GitHub issue (or PR) including all comments and requirements - or not, if they don't exist.
 - Creates an isolated environment (Git worktree, database branch, web server on a deterministic unique port)
 - Enhances the GitHub issue with a better description, and structured analysis & planning. Asking questions and stating assumptions along the way, all in GitHub comments.
 - Launches Claude with this context preloaded from the issue, guides you through a structured workflow. You can stop at any time, pick up where you left off.
-- Each hatchbox is color-coded, from terminal windows to VS Code, so you visually know which context you're in.
+- Each loom is color-coded, from terminal windows to VS Code, so you visually know which context you're in.
 
-**When you switch to this hatchbox, both you and Claude know exactly what you're working on and why.**
+**When you switch to this loom, both you and Claude know exactly what you're working on and why.**
 
 ### Merge with Confidence
 
 ```bash
-> hb finish
+> iloom finish
 # ✅ Runs tests, types, lint - Claude helps fix any failures automatically
 # ✅ Generates commit message from the issue context
 # ✅ Handles merge conflicts with AI assistance
@@ -123,11 +123,11 @@ Traditional approach:
 4. Lose context on both tasks, repeat the same explanations.
 
 iloom approach:
-1. `hb start 45` - begin the feature.
+1. `il start 45` - begin the feature. Note: `il` is an alias for `iloom`.
 2. Review iloom's structured analysis in GitHub, clarify assumptions.
-3. `hb start 99` - urgent bug; Claude already knows the issue context from the GitHub issue.
+3. `il start 99` - urgent bug; Claude already knows the issue context from the GitHub issue.
 4. Switch between looms freely - color coding and context persistence keep everything clear.
-5. `hb finish` - work validated, merged, cleaned up.
+5. `il finish` - work validated, merged, cleaned up.
 6. Return to your feature loom - context, reasoning, and AI alignment all intact.
 
 **The difference**: Your AI becomes a persistent collaborator rather than a tool you're constantly playing catch-up with.
@@ -139,7 +139,7 @@ The AI analysis gets posted as GitHub comments, so anyone on your team can see t
 
 Without iloom, adding AI to your workflow increases code production but also increases cognitive load. You're managing what the AI knows, correcting misaligned suggestions, and second-guessing its understanding. Not to mention managing its context window.
 
-With iloom, the cognitive load stays constant as you scale. Each hatchbox holds a complete shared understanding between you and your AI. Five issues in flight feel (almost) as calm and clear as one.
+With iloom, the cognitive load stays constant as you scale. Each loom holds a complete shared understanding between you and your AI. Five issues in flight feel (almost) as calm and clear as one.
 
 **This is how you achieve sustainable velocity with AI assistance.**
 
@@ -164,13 +164,13 @@ iloom orchestrates specialized AI agents that analyze issues, evaluate complexit
 ### Creating Context
 
 ```bash
-> hb start 25
+> il start 25
 ```
 
 iloom executes a multi-phase context-establishment workflow:
 
 1. **Fetch complete requirements** - GitHub issue body + all comments
-2. **Create isolated hatchbox** - Git worktree at `~/project-looms/issue-25-auth-issues/` (branch names are generated)
+2. **Create isolated loom** - Git worktree at `~/project-looms/issue-25-auth-bugs/` (branch names are generated)
 3. **Run AI workflow agents** - Enhance, analyze, plan, and document directly in GitHub comments:
    - **Enhancement Agent**: Expands brief issues into detailed requirements (if needed)
    - **Complexity Evaluator**: Assesses scope and determines workflow approach
@@ -179,21 +179,21 @@ iloom executes a multi-phase context-establishment workflow:
 4. **Establish environment** - Unique web server port (e.g., 3025), isolated database branch, `.env` file with correct DATABASE_URL environment variable
 5. **Launch tools** - VS Code with color theme, dev server, Claude with preloaded context from GitHub comments
 
-**Result**: A complete bounded context where both you and your AI share understanding, with all context stored as structured GitHub comments. Open the issue in your browser to see:
+**Result**: A continer where both you and your AI share understanding, with all context stored as structured GitHub comments. Open the issue in your browser to see:
 - Enhancement analysis (if the issue was brief)
 - Complexity evaluation with metrics
 - Root cause analysis and technical findings
-- Implementation plan (for complex issues)
+- Implementation plan
 - All context is editable, reviewable, and persists across machines
 
 ### Maintaining Context
 
-Each hatchbox is isolated:
+Each loom is isolated:
 
 - **Git worktree** - Separate filesystem, different branch checked out, no switching overhead
 - **Database branch** - Schema changes don't affect other contexts (optional, requires Neon - other provider support coming soon)
 - **Unique port** - Multiple dev servers run simultaneously (base port + issue number)
-- **Environment variables** - Each hatchbox has correct database URL
+- **Environment variables** - Each loom has correct database URL
 - **Visual identity** - Color-coded VS Code window (40 distinct pastel colors)
 - **GitHub issue comments** - Multi-phase context (enhancement, analysis, planning) persists and is editable by team members
 
@@ -219,7 +219,7 @@ When Claude analyzes your issue and creates a comment with "### Root Cause Analy
 
 ### Understanding the Multi-Agent Workflow
 
-When you run `hb start 25`, iloom orchestrates specialized AI agents that work through a structured analysis and planning process:
+When you run `il start 25`, iloom orchestrates specialized AI agents that work through a structured analysis and planning process:
 
 **Phase 1: Enhancement (optional)** - `iloom-issue-enhancer`
 - Checks if issue needs more detail (word count, structure, clarity)
@@ -294,7 +294,7 @@ You can [configure](#configuration) the models used by the agents:
 
 Both operations use Haiku for fast, cost-effective AI assistance.
 
-**Fun Fact**: iloom originally used Opus (over the latest Sonnet model) for analysis and planning phases. As agent prompts improved, we switched entirely to Sonnet with better results at lower cost.
+**Fun Fact**: iloom originally used Opus (over the latest Sonnet model) for analysis and planning phases. As agent prompts improved, we switched entirely to Sonnet with equivalent results at lower cost.
 
 **Recommendation**: A Claude Max subscription is recommended. The theory is that token investment in structured/shared context pays dividends through reduced debugging, rework, and cognitive overhead.
 
@@ -303,7 +303,7 @@ Both operations use Haiku for fast, cost-effective AI assistance.
 ### Loom Management
 
 ```bash
-hb start <issue-number | pr-number | issue-description | branch-name>
+iloom start <issue-number | pr-number | issue-description | branch-name>
 # Create loom with complete context
 # Orchestrates AI agents that analyze the issue and post structured comments
 # Phases: Enhancement → Analysis → Planning → Implementation with review checkpoints at every step
@@ -311,39 +311,39 @@ hb start <issue-number | pr-number | issue-description | branch-name>
 # Options:
 #   --one-shot <mode>  - Automation level for Claude CLI
 #                        default: Standard behavior with prompts
-#                        noReview: Skip template approval prompts
-#                        bypassPermissions: Full automation, skip all prompts. Be careful!
+#                        noReview: Skip phase approval prompts
+#                        bypassPermissions: Full automation, skip all permission prompts. Be careful!
 
-hb finish
+iloom finish
 # AI assisted validation, commit, merge steps, as well as loom cleanup (run this from the loom directory)
 # Alias: dn
 
-hb cleanup [identifier...]
+iloom cleanup [identifier...]
 # Remove a loom without merging (safely, by default)
 
-hb list
+iloom list
 # Show active looms with their ports and paths
 
-hb ignite
-# Launch Claude with auto-detected hatchbox context
+iloom ignite
+# Launch Claude with auto-detected loom context
 # Options:
 #   --one-shot=<mode>  - Same automation modes as 'start'
 
-hb open [identifier]
-# Open hatchbox in browser (web projects) or run configured CLI tool
+iloom open [identifier]
+# Open loom in browser (web projects) or run configured CLI tool
 ```
 
 ### Issue Management
 
 ```bash
-hb add-issue <description>
-# Create and AI-enhance GitHub issue (doesn't start hatchbox)
+iloom add-issue <description>
+# Create and AI-enhance GitHub issue (doesn't spin up a loom)
 # Alias: a
-# Example: hb add-issue "Add dark mode toggle to settings"
+# Example: il add-issue "Add dark mode toggle to settings"
 
-hb enhance <issue-number>
+iloom enhance <issue-number>
 # Apply AI enhancement agent to existing GitHub issue
-# Expands requirements and adds implementation context
+# Expands requirements, asks clarifying questions and adds implementation context
 ```
 
 ## Providing Feedback
@@ -351,18 +351,18 @@ hb enhance <issue-number>
 Found a bug, have a feature request, or want to contribute ideas to improve iloom CLI? Submit feedback directly from your terminal.
 
 ```bash
-hb feedback <description>
-# Submit feedback/bug report to hatchbox-cli repository
+iloom feedback <description>
+# Submit feedback/bug report to iloom-cli repository
 # Alias: f
-# Example: hb feedback "Add support for Linear issue tracking"
-# Example: hb feedback "The worktree cleanup seems to leave temp files behind"
+# Example: il feedback "Add support for Linear issue tracking"
+# Example: il feedback "The worktree cleanup seems to leave temp files behind"
 ```
 
-**What happens when you run `hb feedback`:**
+**What happens when you run `iloom feedback`:**
 
-1. **AI Enhancement**: Your feedback gets enhanced by Claude to provide clear context and actionable details
-2. **Issue Creation**: Creates a new issue in the [hatchbox-cli repository](https://github.com/iloom-ai/iloom-cli)
-3. **Browser Opening**: Opens the created issue in your browser for you to review and add additional context
+1. **Issue Creation**: Creates a new issue in the [iloom-cli repository](https://github.com/iloom-ai/iloom-cli)
+2. **Browser Opening**: Opens the created issue in your browser for you to review and add additional context
+3. **AI Enhancement**: Within a couple of minutes, your feedback gets enhanced by iloom to provide clear context and actionable details
 
 **Open the browser to provide additional context. Please:**
 - Be specific about what you expected vs. what happened
@@ -370,17 +370,17 @@ hb feedback <description>
 - Mention the command or workflow that had issues
 - Suggest improvements or alternative approaches if you have ideas
 
-Your feedback helps make iloom better for everyone! Issues created through `hb feedback` are prioritized and reviewed regularly.
+Your feedback helps make iloom better for everyone! Issues created through `iloom feedback` are prioritized and reviewed regularly.
 
 ### Maintenance
 
 ```bash
-hb init
-# Setup guide for shell autocomplete (will do much more soon)
+iloom init
+# Setup guide for shell autocomplete, settings file initialization (will do much more soon)
 # Run this once per project
 
-hb update
-# Update hatchbox-cli to the latest version
+iloom update
+# Update iloom-cli to the latest version
 ```
 
 ## Configuration
@@ -392,8 +392,8 @@ iloom uses a flexible configuration system with clear priority ordering.
 Settings are loaded in this order (highest to lowest priority):
 
 1. **CLI arguments** - Command-line flags (e.g., `--one-shot bypassPermissions`)
-2. **`.hatchbox/settings.local.json`** - Local machine settings (gitignored, not committed)
-3. **`.hatchbox/settings.json`** - Project-wide settings (committed to repository)
+2. **`.iloom/settings.local.json`** - Local machine settings (gitignored, not committed)
+3. **`.iloom/settings.json`** - Project-wide settings (committed to repository)
 4. **Built-in defaults** - Hardcoded fallback values
 
 This allows teams to share project defaults via `settings.json` while individual developers maintain personal overrides in `settings.local.json`.
@@ -403,7 +403,7 @@ This allows teams to share project defaults via `settings.json` while individual
 - Local database connection strings that differ from team defaults
 - Personal preferences for `permissionMode` or component launch flags
 
-**Note:** The `.hatchbox/settings.local.json` file is automatically created and gitignored when you run `hb init`.
+**Note:** The `.iloom/settings.local.json` file is automatically created and gitignored when you run `il init`.
 
 ### Key Configuration:
 
@@ -444,12 +444,12 @@ This allows teams to share project defaults via `settings.json` while individual
 - `workflows` - Per-workflow Claude CLI permission modes and tool launching
 - `agents` - Claude model selection (sonnet/opus/haiku) per agent type
 
-All options can be specified in either `settings.json` (project-wide) or `settings.local.json` (local overrides).
+All options can be specified in either `settings.json` (project-wide) or `settings.local.json` (local overrides, gitignored).
 
 Port calculation: `assignedPort = basePort + issueNumber`
 Example: Issue #25 with basePort 3000 = port 3025
 
-For complete configuration reference, see [.hatchbox/README.md](./.hatchbox/README.md)
+For complete configuration reference, see [.iloom/README.md](./.iloom/README.md)
 
 ## Requirements
 
@@ -463,7 +463,7 @@ For complete configuration reference, see [.hatchbox/README.md](./.hatchbox/READ
 - A Claude Max subscription - iloom uses your own subscription
 
 **Optional (auto-detected):**
-- **Neon CLI** - Isolated database branches per hatchbox
+- **Neon CLI** - Isolated database branches per loom
 - **VS Code** - Color-coded editor windows for visual context
 - **iTerm2** (macOS only) - Enhanced terminal experience with dual tabs in a single window (when configured to open both Claude and start a dev server)
 
@@ -479,7 +479,7 @@ This is an early stage product - platform/tech stack support is limited for now.
 
 **Issue Tracking Integration:**
 - ✅ **GitHub Issues** - Full support with AI enhancement, analysis, and planning
-- 🚧 **Linear** - Coming soon
+- 🚧 **Linear** - Native integration coming soon. A two way sync between Linear and your github repo works great currently.
 
 **Project Type Support:**
 - ✅ **Node.js web projects** - First-class support via package.json scripts (`dev`, `test`, `build`)
@@ -500,10 +500,11 @@ We (Claude and I) are actively working on expanding platform and integration sup
 
 # Initialize in your project
 > cd your-project
+> il init
 
 # Start working
-> hb start 25 # existing issue
-> hb start "Enable log in/sign up with Google account" # new issue
+> il start 25 # existing issue
+> il start "Enable log in/sign up with Google account" # new issue
 ```
 
 ## Pull Request Support
@@ -511,16 +512,16 @@ We (Claude and I) are actively working on expanding platform and integration sup
 iloom works identically with GitHub pull requests:
 
 ```bash
-> hb start 125  # PR number instead of issue number
+> il start 125  # PR number instead of issue number
 ```
 
-Automatically detects PR, fetches the branch, and creates hatchbox with PR context. Everything else works the same.
+Automatically detects PR, fetches the branch, and creates loom with PR context. Everything else works the same.
 
 ## Architecture
 
 **Technologies:**
 - TypeScript CLI built with Commander.js
-- Git worktrees for hatchbox isolation
+- Git worktrees for loom isolation
 - GitHub CLI integration for issues/PRs
 - Integration with node-based web servers via standard package.json scripts
 - Database branching (Neon) - optional
@@ -543,21 +544,21 @@ iloom provides first-class support for Node.js web applications (next/express/vi
 
 **Required scripts** (auto-detected):
 - `dev` - Start development server (launched automatically with unique port)
-- `test` - Run test suite (executed during `hb finish` validation)
+- `test` - Run test suite (executed during `il finish` validation)
 
 **Optional scripts**:
-- `lint` - Code quality checks (run during `hb finish` if present)
-- `typecheck` - TypeScript validation (run during `hb finish` if present)
+- `lint` - Code quality checks (run during `il finish` if present)
+- `typecheck` - TypeScript validation (run during `il finish` if present)
 
 **How it integrates:**
 
 ```bash
-> hb start 25
+> il start 25
 # ✅ Runs `pnpm install` in worktree
 # ✅ Launches `pnpm dev` on port 3025 (3000 + issue number)
 # ✅ Sets up database branch with correct DATABASE_URL
 
-> hb finish
+> il finish
 # ✅ Runs `pnpm test` (fails if tests fail)
 # ✅ Runs `pnpm typecheck` if configured
 # ✅ Runs `pnpm lint` if configured
@@ -566,21 +567,21 @@ iloom provides first-class support for Node.js web applications (next/express/vi
 
 ### Node.js CLI Tool Support
 
-iloom was built using iloom itself. CLI tools get the same isolation benefits as web projects, plus **isolated executable access per hatchbox**.
+iloom was built using iloom itself. CLI tools get the same isolation benefits as web projects, plus **isolated executable access per loom**.
 
 **How it works:**
 
 When you create a loom for a CLI project, iloom creates workspace-specific binaries so you can test each issue's version independently:
 
 ```bash
-> hb start 52  # Working on CLI feature in issue 52
+> il start 52  # Working on CLI feature in issue 52
 > cli-tool-52 --version  # Test issue 52's version
 
-> hb start 137  # Switch to different CLI issue
+> il start 137  # Switch to different CLI issue
 > cli-tool-137 --help    # Test issue 137's version
 
 # Original binary still works from main branch
-> cli-tool --version     # Unaffected by hatchbox CLIs
+> cli-tool --version     # Unaffected by iloom CLIs
 ```
 
 **Binary naming**: `<original-name>-<issue/pr-number>`
@@ -589,7 +590,7 @@ When you create a loom for a CLI project, iloom creates workspace-specific binar
 - Issue 137: `cli-tool-137`
 - PR 200: `cli-tool-200`
 
-**Cleanup**: When you run `hb finish`, the workspace-specific binary is automatically removed along with the worktree and any database branches.
+**Cleanup**: When you run `il finish`, the workspace-specific binary is automatically removed along with the worktree and any database branches.
 
 This enables parallel development and testing of CLI features without conflicts or manual PATH manipulation.
 
@@ -626,7 +627,7 @@ Git worktree approach:
 # No branch switching, no stashing, less confusion
 ```
 
-This is the foundation that enables hatchbox isolation and persistent context. Other awesome tools use worktrees too.
+This is the foundation that enables loom isolation and persistent context. Other awesome tools use worktrees too.
 
 ### When to Choose Other Git Worktree Solutions
 

@@ -202,7 +202,7 @@ Example:
 - `/src/providers/Theme/index.tsx` - Entire file for deletion (58 lines)
 
 **Cross-cutting change example:**
-- `/src/types/hatchbox.ts:25-44` - `CreateLoomInput` interface - Entry point for executablePath parameter
+- `/src/types/loom.ts:25-44` - `CreateLoomInput` interface - Entry point for executablePath parameter
 - `/src/lib/LoomMananger.ts:41-120` - Extracts executablePath from input and forwards to launcher
 - `/src/lib/LoomLauncher.ts:11-25` - `LaunchIloomOptions` interface - Receives and forwards to Claude context
 

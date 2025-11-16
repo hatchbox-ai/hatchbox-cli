@@ -37,7 +37,7 @@
   "bin": {
     "iloom": "./dist/cli.js",
     "il": "./dist/cli.js",
-    "hb": "./dist/cli.js"
+    "il": "./dist/cli.js"
   },
   "files": [
     "dist"
