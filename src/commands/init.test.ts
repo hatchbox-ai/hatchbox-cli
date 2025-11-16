@@ -21,7 +21,15 @@ vi.mock('../utils/logger.js', () => ({
     error: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
+    success: vi.fn(),
   },
+}))
+
+// Mock SettingsMigrationManager
+vi.mock('../lib/SettingsMigrationManager.js', () => ({
+  SettingsMigrationManager: vi.fn().mockImplementation(() => ({
+    migrateSettingsIfNeeded: vi.fn().mockResolvedValue(undefined),
+  })),
 }))
 
 describe('InitCommand', () => {
@@ -177,6 +185,18 @@ describe('InitCommand', () => {
       vi.mocked(mockShellCompletion.detectShell).mockReturnValue('bash')
       vi.mocked(mockShellCompletion.getSetupInstructions).mockReturnValue('Instructions')
       vi.mocked(prompt.promptConfirmation).mockResolvedValue(true)
+    })
+
+    it('should run settings migration before creating new settings files', async () => {
+      vi.mocked(existsSync).mockReturnValue(false)
+      vi.mocked(readFile).mockResolvedValue('') // Empty .gitignore
+
+      initCommand = new InitCommand(mockShellCompletion)
+      await initCommand.execute()
+
+      // Verify migration manager was imported and used
+      const { SettingsMigrationManager } = await import('../lib/SettingsMigrationManager.js')
+      expect(SettingsMigrationManager).toHaveBeenCalled()
     })
 
     it('should create empty settings.local.json if not exists', async () => {

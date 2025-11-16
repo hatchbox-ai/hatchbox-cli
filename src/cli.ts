@@ -72,6 +72,16 @@ program
       // Silently fail - update check should never break user experience
     }
 
+    // Migrate legacy .hatchbox settings to .iloom (BEFORE settings validation)
+    try {
+      const { SettingsMigrationManager } = await import('./lib/SettingsMigrationManager.js')
+      const migrationManager = new SettingsMigrationManager()
+      await migrationManager.migrateSettingsIfNeeded()
+    } catch (error) {
+      // Log warning but don't fail - migration is best-effort
+      logger.debug(`Settings migration failed: ${error instanceof Error ? error.message : 'Unknown'}`)
+    }
+
     // Validate settings for all commands
     await validateSettingsForCommand()
   })

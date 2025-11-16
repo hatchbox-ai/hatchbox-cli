@@ -91,6 +91,16 @@ export class InitCommand {
    * Creates settings.local.json and updates .gitignore
    */
   private async setupProjectConfiguration(): Promise<void> {
+    // Migrate legacy .hatchbox settings to .iloom (BEFORE creating new files)
+    try {
+      const { SettingsMigrationManager } = await import('../lib/SettingsMigrationManager.js')
+      const migrationManager = new SettingsMigrationManager()
+      await migrationManager.migrateSettingsIfNeeded()
+    } catch (error) {
+      // Log warning but don't fail
+      logger.warn(`Settings migration failed: ${error instanceof Error ? error.message : 'Unknown'}`)
+    }
+
     // Ensure .iloom directory exists
     const iloomDir = path.join(process.cwd(), '.iloom')
     await mkdir(iloomDir, { recursive: true })
