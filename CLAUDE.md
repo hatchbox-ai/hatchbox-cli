@@ -67,7 +67,6 @@ src/
 │   ├── finish.ts            # Port of merge-and-clean.sh
 │   ├── cleanup.ts           # Port of cleanup-worktree.sh
 │   ├── list.ts              # Enhanced workspace listing
-│   └── switch.ts            # Context switching
 ├── lib/                     # Core business logic
 │   ├── WorkspaceManager.ts  # Main orchestrator
 │   ├── GitWorktreeManager.ts # Git operations

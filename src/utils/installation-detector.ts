@@ -1,6 +1,7 @@
 import { dirname, join } from 'path'
 import { existsSync, lstatSync, realpathSync } from 'fs'
 import { logger } from './logger.js'
+import { getPackageInfo } from './package-info.js'
 
 export type InstallationMethod = 'global' | 'local' | 'linked' | 'unknown'
 
@@ -98,4 +99,33 @@ export function detectInstallationMethod(scriptPath: string): InstallationMethod
  */
 export function shouldShowUpdateNotification(method: InstallationMethod): boolean {
   return method === 'global'
+}
+
+/**
+ * Detect if the current CLI instance is running from the legacy hatchbox-cli package
+ * Returns package name if running from legacy package, null otherwise
+ *
+ * This checks the package.json of the currently running CLI instance rather than
+ * checking globally installed packages to avoid false positives when both packages
+ * are installed simultaneously.
+ */
+export function detectLegacyPackage(scriptPath: string): string | null {
+  logger.debug('[installation-detector] Checking if running from legacy @hatchbox-ai/hatchbox-cli package')
+
+  try {
+    // Use getPackageInfo to read package.json
+    const packageJson = getPackageInfo(scriptPath)
+
+    // Check if the package name is the legacy package
+    if (packageJson.name === '@hatchbox-ai/hatchbox-cli') {
+      logger.debug('[installation-detector] Current CLI instance is running from legacy @hatchbox-ai/hatchbox-cli package')
+      return '@hatchbox-ai/hatchbox-cli'
+    }
+
+    logger.debug(`[installation-detector] Current CLI instance is running from package: ${packageJson.name}`)
+    return null
+  } catch (error) {
+    logger.debug(`[installation-detector] Error checking for legacy package: ${error}`)
+    return null
+  }
 }

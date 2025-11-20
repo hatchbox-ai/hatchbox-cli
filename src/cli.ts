@@ -3,37 +3,12 @@ import { logger } from './utils/logger.js'
 import { GitWorktreeManager } from './lib/GitWorktreeManager.js'
 import { ShellCompletion } from './lib/ShellCompletion.js'
 import type { StartOptions, CleanupOptions, FinishOptions } from './types/index.js'
-import { readFileSync } from 'fs'
+import { getPackageInfo } from './utils/package-info.js'
 import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 
 // Get package.json for version
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
-  name: string
-  version: string
-  description: string
-}
-
-// Helper for unimplemented commands
-function notImplemented(
-  commandName: string,
-  requirements: string[],
-  bashScript?: string
-): void {
-  logger.error(`❌ The "${commandName}" command is not yet implemented`)
-  logger.info('This command requires:')
-  for (const requirement of requirements) {
-    logger.info(`  - ${requirement}`)
-  }
-  if (bashScript) {
-    
-    logger.info('For now, use the bash script:')
-    logger.info(`  ${bashScript}`)
-  }
-  process.exit(1)
-}
+const packageJson = getPackageInfo(__filename)
 
 program
   .name('hatchbox')
@@ -61,13 +36,36 @@ program
     // Check for updates before command execution for global installations
     try {
       const { checkAndNotifyUpdate } = await import('./utils/update-notifier.js')
-      const { detectInstallationMethod } = await import('./utils/installation-detector.js')
+      const { detectInstallationMethod, detectLegacyPackage } = await import('./utils/installation-detector.js')
 
       // Detect installation method
       const installMethod = detectInstallationMethod(__filename)
 
       // Check and notify (non-blocking, all errors handled internally)
       await checkAndNotifyUpdate(packageJson.version, packageJson.name, installMethod)
+
+      // Block execution if running from legacy hatchbox package (global mode only)
+      const legacyPackage = detectLegacyPackage(__filename)
+      if (legacyPackage !== null && installMethod === 'global') {
+        // Get the command being executed from process.argv
+        // process.argv = ['node', 'hatchbox', 'commandName', ...]
+        const commandName = process.argv[2]
+
+        // Allow update/migrate commands to proceed (so users can migrate)
+        if (commandName !== 'update' && commandName !== 'migrate') {
+          logger.error('Legacy package detected: You are using the legacy "@hatchbox-ai/hatchbox-cli" package')
+          logger.error('This package has been renamed to "@iloom/cli"')
+          logger.error('')
+          logger.error('Please run the following command to migrate:')
+          logger.error('  hb update')
+          logger.error('')
+          logger.error('This will automatically:')
+          logger.error('  1. Install @iloom/cli@latest')
+          logger.error('  2. Verify the installation')
+          logger.error('  3. Remove @hatchbox-ai/hatchbox-cli')
+          process.exit(1)
+        }
+      }
     } catch {
       // Silently fail - update check should never break user experience
     }
@@ -344,17 +342,6 @@ program
     }
   })
 
-program
-  .command('switch')
-  .description('Switch to workspace context')
-  .argument('<identifier>', 'Issue number, PR number, or branch name')
-  .action((identifier: string) => {
-    notImplemented(
-      'switch',
-      ['Workspace context management'],
-      `cd $(git worktree list | grep ${identifier} | awk '{print $1}')`
-    )
-  })
 
 program
   .command('init')
@@ -372,6 +359,7 @@ program
 
 program
   .command('update')
+  .alias('migrate')
   .description('Update hatchbox-cli to the latest version')
   .option('--dry-run', 'Show what would be done without actually updating')
   .action(async (options: { dryRun?: boolean }) => {
