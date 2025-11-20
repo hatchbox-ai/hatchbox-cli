@@ -55,7 +55,6 @@ describe('CLI', () => {
     expect(stdout).toContain('finish')
     expect(stdout).toContain('cleanup')
     expect(stdout).toContain('list')
-    expect(stdout).toContain('switch')
   })
 
   it('should show command-specific help', async () => {

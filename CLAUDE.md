@@ -31,7 +31,6 @@ The README.md is the primary user-facing documentation. Keeping it synchronized 
 - `il finish <issue-number>` - Merge work and cleanup workspace
 - `il cleanup [identifier]` - Remove workspaces
 - `il list` - Show active workspaces
-- `il switch <identifier>` - Switch to workspace context
 
 ## Development Commands
 
@@ -67,7 +66,6 @@ src/
 │   ├── finish.ts            # Port of merge-and-clean.sh
 │   ├── cleanup.ts           # Port of cleanup-worktree.sh
 │   ├── list.ts              # Enhanced workspace listing
-│   └── switch.ts            # Context switching
 ├── lib/                     # Core business logic
 │   ├── WorkspaceManager.ts  # Main orchestrator
 │   ├── GitWorktreeManager.ts # Git operations
