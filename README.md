@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![npm](https://img.shields.io/npm/v/%40iloom-ai%2Fcli?label=npm)](https://www.npmjs.com/package/@iloom/cli)
+[![npm](https://img.shields.io/npm/v/%40iloom%2Fcli?label=npm)](https://www.npmjs.com/package/@iloom/cli)
 [![License: BSL-1.1](https://img.shields.io/badge/license-BSL--1.1-lightgrey)](https://raw.githubusercontent.com/iloom-ai/iloom-cli/main/LICENSE)
 [![Built for Claude Code](https://img.shields.io/badge/built%20for-claude%20code-8A6FFF)](https://claude.ai/)
 [![CI](https://github.com/iloom-ai/iloom-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/iloom-ai/iloom-cli/actions/workflows/ci.yml)
