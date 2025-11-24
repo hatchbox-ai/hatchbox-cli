@@ -1,0 +1,18 @@
+#!/usr/bin/env node
+
+console.log('\n' + '='.repeat(70))
+console.log('\n⚠️  IMPORTANT: This package has been renamed to iloom\n')
+console.log('This is the LEGACY version and is no longer maintained.')
+console.log('')
+console.log('Please migrate immediately by running:')
+console.log('')
+console.log('  hb update')
+console.log('')
+console.log('This will automatically:')
+console.log('  1. Install @iloom/cli@latest')
+console.log('  2. Verify the installation')
+console.log('  3. Remove @hatchbox-ai/hatchbox-cli')
+console.log('')
+console.log('New repository: https://github.com/iloom-ai/iloom-cli')
+console.log('New npm package: https://www.npmjs.com/package/@iloom/cli')
+console.log('\n' + '='.repeat(70) + '\n')

@@ -39,7 +39,8 @@
     "hb": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "scripts/postinstall.js"
   ],
   "publishConfig": {
     "access": "public"
@@ -61,7 +62,8 @@
     "validate:commit": "pnpm run typecheck && pnpm run lint && pnpm run test",
     "clean": "rimraf dist",
     "prepublishOnly": "pnpm run build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",

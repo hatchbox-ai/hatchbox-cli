@@ -1,5 +1,21 @@
 # Hatchbox AI
 
+> **IMPORTANT: This project has been renamed to iloom**
+>
+> - **New GitHub Repository**: [iloom-ai/iloom-cli](https://github.com/iloom-ai/iloom-cli)
+> - **New NPM Package**: [@iloom/cli](https://www.npmjs.com/package/@iloom/cli)
+> - **This repository** (`hatchbox-ai/hatchbox-cli`) is the legacy version and is no longer actively maintained
+>
+> **Migration**: Update to iloom with the command:
+>
+> ```bash
+> hb update
+> ```
+>
+> This will automatically migrate you from `@hatchbox-ai/hatchbox-cli` to `@iloom/cli`.
+>
+> All new development, bug fixes, and features are happening in the iloom repository. Please update your installation.
+
 <div align="center">
 
 [![npm](https://img.shields.io/npm/v/%40hatchbox-ai%2Fhatchbox-cli?label=npm)](https://www.npmjs.com/package/@hatchbox-ai/hatchbox-cli)
