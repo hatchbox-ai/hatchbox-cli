@@ -1,6 +1,6 @@
 {
   "name": "@hatchbox-ai/hatchbox-cli",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Control plane for maintaining alignment between you and Claude AI as you work across multiple issues using isolated environments, visible context, and multi-agent workflows to scale understanding, not just output",
   "keywords": [
     "ai",
